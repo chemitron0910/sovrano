@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function ServicesScreen({navigation}) {
+export default function ServicesScreen() {
 
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;

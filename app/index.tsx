@@ -1,9 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import React from 'react';
 import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
-import HomeScreenNav from "../screens/HomeScreenNav";
+import HomeStack from "../screens/HomeStack";
 import ProfileScreen from "../screens/ProfileScreen";
 
 const Tab = createBottomTabNavigator();
@@ -16,7 +17,7 @@ export default function Index() {
           tabBarActiveTintColor: '#e91e63',
           }}>
           <Tab.Screen name="Inicio" 
-            component={HomeScreenNav}
+            component={HomeStack}
             options={{headerShown:false}} />
           <Tab.Screen name="Perfil" component={ProfileScreen} 
               options={{

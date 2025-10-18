@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "849373199215",
+    "project_id": "sovrano-2d0d3",
+    "storage_bucket": "sovrano-2d0d3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:849373199215:android:22e6e7ecfa2d8f196bc69a",
+        "android_client_info": {
+          "package_name": "com.innovativesolutions.sovrano"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCX9txSSSMuUsSWjE9-V4Beb4POaG-jFK0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

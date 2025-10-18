@@ -2,15 +2,18 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet } from "react-native";
 import BookingScreen from "../screens/BookingScreen";
 import HomeScreen from '../screens/HomeScreen';
+import LoginScreen from "../screens/LoginScreen";
 import ServicesScreen from "../screens/ServicesScreen";
 
 const Stack = createNativeStackNavigator();
 
-export default function HomeScreenNav() {
+export default function UserStack() {
   return (
     <Stack.Navigator screenOptions={{
-    headerTitleAlign: 'center',}}>
+    headerTitleAlign: 'center',
+    headerBackVisible: false ,}}>
       <Stack.Screen name="Menu" component={HomeScreen}/>
+      <Stack.Screen name="Credenciales" component={LoginScreen}/>
       <Stack.Screen name="Nuestros servicios" component={ServicesScreen}/>
       <Stack.Screen name="Agenda tu cita" component={BookingScreen}/>
     </Stack.Navigator>
