@@ -8,7 +8,8 @@ const Stack = createNativeStackNavigator();
 
 export default function HomeScreenNav() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{
+    headerTitleAlign: 'center',}}>
       <Stack.Screen name="Menu" component={HomeScreen}/>
       <Stack.Screen name="Nuestros servicios" component={ServicesScreen}/>
       <Stack.Screen name="Agenda tu cita" component={BookingScreen}/>
