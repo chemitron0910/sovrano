@@ -1,0 +1,8 @@
+npm install @react-navigation/native-stack
+npm install @react-navigation/bottom-tabs @react-navigation/native-stack
+npm install react-native-screens 
+npm react-native-safe-area-context
+npx expo install react-native-gesture-handler react-native-reanimated
+npm install react-native-calendar-picker date-fns
+npm install react-native-linear-gradient
+

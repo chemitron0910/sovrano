@@ -1,16 +1,40 @@
-import { Button, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Button_style2 from "../Components/Button_style2";
 
-export default function HomeScreen({navigation, route}) {
+export default function HomeScreen({navigation}) {
+
+  const windowDimensions = useWindowDimensions();
+  const windowWidth = windowDimensions.width;
+  const windowHeight = windowDimensions.height;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Home Screen</Text>
-      {route.params?.result && <Text style={styles.text}>Result: {route.params.result}</Text>}
-      <Button title="Go to About" onPress={() => navigation.navigate('About')} />
+    <SafeAreaView style={styles.safeContainer}>
+      <View style={styles.container}>
+        <View style={{
+            width: windowWidth > 500 ? "70%" : "90%", 
+            height: windowHeight > 600 ? "60%" : "90%",
+            flexDirection: 'column', 
+            gap: 10
+            } }>
+          <Button_style2 title="Ir a servicios" onPress={()=>navigation.navigate("Nuestros servicios")}></Button_style2>
+          <Button_style2 
+            title="Agenda tu cita" 
+            onPress={()=>navigation.navigate("Agenda tu cita")}
+            gradientColors={['#00c6ff', '#0072ff']}
+            textColor="#fff">
+          </Button_style2>
+        </View>
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeContainer: {
+    flex: 1,
+    backgroundColor: "white",
+  },
   container: {
     flex: 1,
     justifyContent: "center",
