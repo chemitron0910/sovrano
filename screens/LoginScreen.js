@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import {
-    Button,
-    KeyboardAvoidingView, Platform,
-    StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions
+  KeyboardAvoidingView, Platform,
+  StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button_style2 from "../Components/Button_style2";
 
-export default function LoginScreen() {
+export default function LoginScreen({navigation}) {
 
 const windowDimensions = useWindowDimensions();
 const windowWidth = windowDimensions.width;
@@ -41,16 +41,31 @@ const validateForm = () => {
   return (
     <SafeAreaView style={styles.safeContainer}>
     <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} style={styles.container}>
-      <View style={styles.form}>
+      <View style={styles.form} >
+        <View style={{
+            flexDirection: 'column', 
+            gap: 10
+            } }>
         <Text>Username</Text>
         <TextInput style={styles.inputText}
         placeholder='Enter your username' value={username} onChangeText={setUsername} />
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
+
         <Text>Password</Text>
         <TextInput style={styles.inputText} secureTextEntry
         placeholder='Enter your password' value={password} onChangeText={setPassword} />
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-        <Button title="Login" onPress={handleSubmit} />
+
+        <Button_style2 title="Ingresa" onPress={handleSubmit}
+          gradientColors={['#00c6ff', '#0072ff']}
+          textColor="#fff">
+        </Button_style2>
+
+        <Button_style2 title="Registrate" onPress={()=>navigation.navigate("Registrate")}
+          gradientColors={['#00c6ff', '#0072ff']}
+          textColor="#fff">
+        </Button_style2>
+        </View>
       </View>
     </KeyboardAvoidingView>
     </SafeAreaView>

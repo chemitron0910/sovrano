@@ -11,7 +11,7 @@ export default function ServicesScreen() {
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
         <View style={{width: windowWidth > 500 ? "70%" : "90%", height: windowHeight > 600 ? "60%" : "90%"}}>
-          <Text style={styles.text}>Nuestro servicios</Text>
+          <Text style={styles.text}>Seleccionar servicio</Text>
         </View>
     </View>
     </SafeAreaView>

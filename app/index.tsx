@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from 'react';
 import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
-import HomeStack from "../screens/HomeStack";
+import LoginStack from "../screens/LoginStack";
 import ProfileScreen from "../screens/ProfileScreen";
 
 const Tab = createBottomTabNavigator();
@@ -17,7 +17,7 @@ export default function Index() {
           tabBarActiveTintColor: '#e91e63',
           }}>
           <Tab.Screen name="Inicio" 
-            component={HomeStack}
+            component={LoginStack}
             options={{headerShown:false}} />
           <Tab.Screen name="Perfil" component={ProfileScreen} 
               options={{
