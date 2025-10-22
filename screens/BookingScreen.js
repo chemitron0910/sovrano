@@ -1,7 +1,11 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
 import { addDoc, collection } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions
+} from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from '../Services/firebaseConfig';
 
@@ -15,16 +19,20 @@ export default function BookingScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
 
   const handleBooking = async () => {
-  const bookingData = {
-    service,
-    date: date.toISOString(), // UTC format
-    name,
-    phone,
-    userId: auth.currentUser.uid,
-    createdAt: new Date().toISOString(),
-  };
+    setLoading(true); // ✅ show spinner
+    const bookingData = {
+      service,
+      date: date.toISOString(), // UTC format
+      time: date.toISOString(),
+      name,
+      phone,
+      userId: auth.currentUser.uid,
+      createdAt: new Date().toISOString(),
+    };
 
   if (!auth.currentUser) {
     console.warn('User not authenticated');
@@ -34,19 +42,36 @@ export default function BookingScreen() {
   try {
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
     console.log('Booking saved with ID:', docRef.id);
+    // ✅ Navigate to confirmation screen with required params
+    navigation.navigate('Cita confirmada', {
+      service: bookingData.service,
+      date: bookingData.date.split('T')[0], // format as YYYY-MM-DD
+      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // e.g., "14:00"
+      guestName: bookingData.name,
+      bookingId: docRef.id,});
   } catch (error) {
     console.error('Error saving booking:', error);
+  } finally {
+    setLoading(false); // ✅ hide spinner
   }
 };
 
   return (
+    
     <SafeAreaView style={styles.safeContainer}>
+      {loading && (
+        <View style={styles.overlay}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Guardando tu cita...</Text>
+      </View>
+      )}
       <View style={styles.container}>
-        <View style={{width: windowWidth > 500 ? "70%" : "90%", height: windowHeight > 600 ? "60%" : "90%"}}>
+        <View style={{width: windowWidth > 500 ? "70%" : "90%", height: windowHeight > 600 ? "60%" : "90%"}}
+          >
           <Text style={styles.label}>Select Service</Text>
             <TextInput style={styles.input} value={service} onChangeText={setService} placeholder="e.g. Haircut" />
 
-          <Text style={styles.label}>Choose Date & Time</Text>
+          <Text style={styles.label}>Escoge fecha y hora</Text>
             <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
               <Text>{date.toLocaleString()}</Text>
             </TouchableOpacity>
@@ -62,14 +87,13 @@ export default function BookingScreen() {
               />
             )}
 
-          <Text style={styles.label}>Your Name</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Full Name" />
-
-          <Text style={styles.label}>Phone Number</Text>
-            <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Phone" keyboardType="phone-pad" />
-
-          <TouchableOpacity onPress={handleBooking} style={styles.button}>
-            <Text style={styles.buttonText}>Confirm Booking</Text>
+          <Text style={styles.label}>Tu nombre</Text>
+            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Tu nombre completo" />
+          <Text style={styles.label}>Numero telefonico</Text>
+            <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Telefono" 
+            keyboardType="phone-pad" />
+          <TouchableOpacity onPress={handleBooking} disabled={loading} style={styles.button}>
+            <Text style={styles.buttonText}>Confirma tu cita</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -109,4 +133,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#fff',
+    fontSize: 16,
+  },
 });
