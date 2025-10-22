@@ -16,19 +16,13 @@ export default function BookingScreen() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
 
-  const handleBookingTest = () => {
-    // TODO: Send booking to backend or local store
-    //const localDate = date.toLocaleString();
-    //console.log({ service, date: localDate, name, phone }); this to save time in local time not UTC
-    console.log({ service, date, name, phone });
-  };
-
   const handleBooking = async () => {
   const bookingData = {
     service,
     date: date.toISOString(), // UTC format
     name,
     phone,
+    userId: auth.currentUser.uid,
     createdAt: new Date().toISOString(),
   };
 

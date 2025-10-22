@@ -1,3 +1,4 @@
+import { signInAnonymously } from 'firebase/auth';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView, Platform,
@@ -5,6 +6,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
+import { auth } from '../Services/firebaseConfig';
+import { handleSubmit } from "../utils/handleSubmit";
 
 export default function LoginScreen({navigation}) {
 
@@ -29,9 +32,9 @@ const validateForm = () => {
    return Object.keys(errors).length === 0;
  };
 
- const handleSubmit = () => {
+ const onFormSubmit = () => {
    if (validateForm()) {
-     // Handle successful form submission
+     handleSubmit();// Handle successful form submission
      console.log('Form submitted:', { username, password });
      setUsername("");
      setPassword("");
@@ -46,22 +49,34 @@ const validateForm = () => {
             flexDirection: 'column', 
             gap: 10
             } }>
-        <Text>Username</Text>
+        <Text>Nombre de usuario</Text>
         <TextInput style={styles.inputText}
-        placeholder='Enter your username' value={username} onChangeText={setUsername} />
+        placeholder='Entra tu nombre de usuario' value={username} onChangeText={setUsername} />
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
 
-        <Text>Password</Text>
+        <Text>Clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
-        placeholder='Enter your password' value={password} onChangeText={setPassword} />
+        placeholder='Entra tu clave' value={password} onChangeText={setPassword} />
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
-        <Button_style2 title="Ingresa" onPress={handleSubmit}
+        <Button_style2 title="Ingresa como invitado" onPress={async()=>{
+          try{
+            const result = await signInAnonymously(auth);
+            console.log('Signed in anonymously:', result.user.uid);
+            navigation.navigate("Ingresa como invitado");
+            } catch (error) {
+          console.error('Anonymous sign-in failed:', error);
+          }}}
           gradientColors={['#00c6ff', '#0072ff']}
           textColor="#fff">
         </Button_style2>
 
-        <Button_style2 title="Registrate" onPress={()=>navigation.navigate("Registrate")}
+        <Button_style2 title="Ingresa como usuario" onPress={()=>navigation.navigate("Ingresa como usuario")}
+          gradientColors={['#00c6ff', '#0072ff']}
+          textColor="#fff">
+        </Button_style2>
+
+        <Button_style2 title="Ingresa como administrador" onPress={()=>navigation.navigate("Ingresa como administrador")}
           gradientColors={['#00c6ff', '#0072ff']}
           textColor="#fff">
         </Button_style2>

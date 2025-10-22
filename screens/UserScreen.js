@@ -2,7 +2,7 @@ import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
 
-export default function GuestScreen({navigation}) {
+export default function UserScreen({navigation}) {
 
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
@@ -17,17 +17,12 @@ export default function GuestScreen({navigation}) {
             flexDirection: 'column', 
             gap: 10
             } }>
-          <Button_style2 title="Nuestros servicios" onPress={()=>navigation.navigate("Nuestros servicios")}
+          <Button_style2 title="Ir a servicios" onPress={()=>navigation.navigate("Nuestros servicios")}
             gradientColors={['#00c6ff', '#0072ff']}
             textColor="#fff"
           ></Button_style2>
 
           <Button_style2 title="Agenda tu cita" onPress={()=>navigation.navigate("Agenda tu cita")}
-            gradientColors={['#00c6ff', '#0072ff']}
-            textColor="#fff">
-          </Button_style2>
-
-          <Button_style2 title="Registrate" onPress={()=>navigation.navigate("Registrate")}
             gradientColors={['#00c6ff', '#0072ff']}
             textColor="#fff">
           </Button_style2>
