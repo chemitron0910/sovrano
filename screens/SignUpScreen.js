@@ -1,3 +1,5 @@
+import { useNavigation } from '@react-navigation/native';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
@@ -6,17 +8,7 @@ import {
   StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { upgradeAnonymousAccount } from '../Services/authService';
-import { db } from '../Services/firebaseConfig';
-
-const handleUpgrade = async () => {
-  await upgradeAnonymousAccount(email, password);
-  // Redirect to dashboard or show success message
-};
-
-const saveUserData = async (uid, data) => {
-  await setDoc(doc(db, 'users', uid), data);
-};
+import { auth, db } from '../Services/firebaseConfig';
 
 export default function SignUpScreen() {
 
@@ -25,48 +17,99 @@ const windowWidth = windowDimensions.width;
 const windowHeight = windowDimensions.height;
 const [username, setUsername] = useState('');
 const [password, setPassword] = useState('');
+const [passwordConfirmation, setPasswordConfirmation] = useState('');
+const [email, setEmail] = useState('');
 const [errors, setErrors] = useState({});
+const [formIsValid, setFormIsValid] = useState(false);
+const navigation = useNavigation();
 
 const validateForm = () => {
-   let errors = {};
-   if (!username) {
-     errors.username = 'Username is required';
-   }
-   if (!password) {
-     errors.password = 'Password is required';
-   } else if (password.length < 6) {
-     errors.password = 'Password must be at least 6 characters';
-   }
-   setErrors(errors);
-   return Object.keys(errors).length === 0;
+    let errors = {};
+    if (!username) {
+      errors.username = 'Nombre de usuario es requerido';
+    }
+    if (!email) {
+      errors.email = 'Correo electronico es requerido';
+    }
+    if (!password) {
+      errors.password = 'Clave es requerida';
+    } else if (password.length < 6) {
+      errors.password = 'Clave debe ser al menos de 6 caracteres';
+    }
+    if (!passwordConfirmation) {
+      errors.passwordConfirmation = 'Confirmacion de clave es requerida';
+    } else if (passwordConfirmation.length < 6) {
+      errors.passwordConfirmation = 'Clave debe ser al menos de 6 caracteres';
+    } else if (password !== passwordConfirmation) {
+      errors.passwordConfirmation = 'Las claves no coinciden';
+    }
+    setErrors(errors);
+    const isValid = Object.keys(errors).length === 0;
+    setFormIsValid(isValid); // ✅ update state to control button
+  return isValid;
  };
 
- const handleSubmit = () => {
-   if (validateForm()) {
-     // Handle successful form submission
-     console.log('Form submitted:', { username, password });
-     setUsername("");
-     setPassword("");
-     setErrors({});
-   }
- };
+ const handleSubmit = async () => {
+  if (!validateForm()) return;
+
+  try {
+    // ✅ Create user in Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    // ✅ Create user record in Firestore
+    await setDoc(doc(db, 'users', uid), {
+      username,
+      email,
+      createdAt: new Date().toISOString(),
+      role: 'user', // optional: for role-based access
+    });
+
+    // ✅ Navigate to confirmation screen
+    navigation.navigate('Registro exitoso', {
+      username,
+      email,
+      userId: uid,
+    });
+
+    // ✅ Clear form
+    setUsername('');
+    setPassword('');
+    setEmail('');
+    setErrors({});
+  } catch (error) {
+    console.error('Error creating user:', error);
+    Alert.alert('Error', 'No se pudo crear el usuario');
+  }
+};
   return (
     <SafeAreaView style={styles.safeContainer}>
-    <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} style={styles.container}>
+    <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} 
+    style={styles.container}>
       <View style={styles.form}>
         <Text>Nombre de usuario</Text>
         <TextInput style={styles.inputText}
         placeholder='Entra tu nombre de usuario' value={username} onChangeText={setUsername} />
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
+
+        <Text>Coreo electronico</Text>
+        <TextInput style={styles.inputText}
+        placeholder='Entra tu corrreo electronico' value={username} onChangeText={setEmail} />
+        {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+
         <Text>Entra tu clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
         placeholder='Entra tu clave' value={password} onChangeText={setPassword} />
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-        <Text>Re-entra tu clave</Text>
+
+        <Text>Confirmacion de clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
-        placeholder='Re-entra tu clave' value={password} onChangeText={setPassword} />
+        placeholder='Re-entra tu clave' value={passwordConfirmation} onChangeText={setPasswordConfirmation} />
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-        <Button title="Registrate" onPress={handleSubmit} />
+
+        <Button title="Registrate" onPress={handleSubmit}
+          disabled={!formIsValid}
+          style={[styles.button, !formIsValid && styles.buttonDisabled]} />
       </View>
     </KeyboardAvoidingView>
     </SafeAreaView>
@@ -106,5 +149,21 @@ const styles = StyleSheet.create({
   errorText: { 
     color: 'red',
     marginBottom: 10,
+  },
+  button: {
+    backgroundColor: '#0072ff',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonDisabled: {
+    backgroundColor: '#cccccc', // light gray
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

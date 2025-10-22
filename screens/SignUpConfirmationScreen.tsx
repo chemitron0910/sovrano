@@ -3,23 +3,21 @@ import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RouteParams = {
-  BookingConfirmation: {
-    service: string;
-    date: string;
-    time: string;
-    guestName: string;
-    bookingId: string;
+  SignUpConfirmation: {
+    username: string;
+    email: string;
+    userId: string;
   };
 };
 
-export default function BookingConfirmationScreen() {
+export default function SignUpConfirmationScreen() {
 
     const windowDimensions = useWindowDimensions();
     const windowWidth = windowDimensions.width;
     const windowHeight = windowDimensions.height;
 
-    const route = useRoute<RouteProp<RouteParams, 'BookingConfirmation'>>(); //BookingConfirmation from RouteParams
-    const { service, date, time, guestName, bookingId } = route.params;
+    const route = useRoute<RouteProp<RouteParams, 'SignUpConfirmation'>>(); //SignUpConfirmation from RouteParams
+    const { username, email, userId } = route.params;
 
     return (
     <SafeAreaView style={styles.safeContainer}>
@@ -30,12 +28,10 @@ export default function BookingConfirmationScreen() {
             flexDirection: 'column', 
             gap: 10
             } }>
-            <Text style={styles.title}>Gracias por agendar tu cita 🎉</Text>
-            <Text style={styles.label}>Nombre: <Text style={styles.value}>{guestName}</Text></Text>
-            <Text style={styles.label}>Servicio: <Text style={styles.value}>{service}</Text></Text>
-            <Text style={styles.label}>Fecha: <Text style={styles.value}>{date}</Text></Text>
-            <Text style={styles.label}>Hora: <Text style={styles.value}>{time}</Text></Text>
-            <Text style={styles.label}>Cita ID: <Text style={styles.value}>{bookingId}</Text></Text>
+            <Text style={styles.title}>Gracias por registrarte 🎉</Text>
+            <Text style={styles.label}>Nombre: <Text style={styles.value}>{username}</Text></Text>
+            <Text style={styles.label}>Correo electronico: <Text style={styles.value}>{email}</Text></Text>
+            <Text style={styles.label}>Usuario ID: <Text style={styles.value}>{userId}</Text></Text>
         </View>
     </View>
     </SafeAreaView>
