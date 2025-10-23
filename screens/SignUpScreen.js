@@ -3,6 +3,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
+  ActivityIndicator, Alert,
   Button,
   KeyboardAvoidingView, Platform,
   StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions
@@ -22,9 +23,12 @@ const [email, setEmail] = useState('');
 const [errors, setErrors] = useState({});
 const [formIsValid, setFormIsValid] = useState(false);
 const navigation = useNavigation();
+const [loading, setLoading] = useState(false);
 
 const validateForm = () => {
     let errors = {};
+
+
     if (!username) {
       errors.username = 'Nombre de usuario es requerido';
     }
@@ -39,8 +43,9 @@ const validateForm = () => {
     if (!passwordConfirmation) {
       errors.passwordConfirmation = 'Confirmacion de clave es requerida';
     } else if (passwordConfirmation.length < 6) {
-      errors.passwordConfirmation = 'Clave debe ser al menos de 6 caracteres';
-    } else if (password !== passwordConfirmation) {
+      errors.passwordConfirmation = 'Confirmacion de clave debe ser al menos de 6 caracteres';
+    }
+    if (password !== passwordConfirmation) {
       errors.passwordConfirmation = 'Las claves no coinciden';
     }
     setErrors(errors);
@@ -51,6 +56,7 @@ const validateForm = () => {
 
  const handleSubmit = async () => {
   if (!validateForm()) return;
+  setLoading(true); // ✅ show spinner
 
   try {
     // ✅ Create user in Firebase Auth
@@ -78,38 +84,45 @@ const validateForm = () => {
     setEmail('');
     setErrors({});
   } catch (error) {
-    console.error('Error creating user:', error);
-    Alert.alert('Error', 'No se pudo crear el usuario');
+    //console.error('Error creating user:', error);
+    Alert.alert('Error', 'No se pudo crear el usuario. Email already in use');
+  }finally {
+    setLoading(false); // ✅ hide spinner
   }
 };
   return (
     <SafeAreaView style={styles.safeContainer}>
+    {loading && (
+      <View style={styles.overlay}>
+        <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Creando tu usuario...</Text>
+      </View>
+    )}
     <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} 
     style={styles.container}>
       <View style={styles.form}>
         <Text>Nombre de usuario</Text>
         <TextInput style={styles.inputText}
-        placeholder='Entra tu nombre de usuario' value={username} onChangeText={setUsername} />
+        placeholder='Entra tu nombre de usuario' value={username} onChangeText={setUsername}/>
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
 
         <Text>Coreo electronico</Text>
         <TextInput style={styles.inputText}
-        placeholder='Entra tu corrreo electronico' value={username} onChangeText={setEmail} />
+        placeholder='Entra tu corrreo electronico' value={email} onChangeText={setEmail}/>
         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
         <Text>Entra tu clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
-        placeholder='Entra tu clave' value={password} onChangeText={setPassword} />
+        placeholder='Entra tu clave' value={password} onChangeText={setPassword}/>
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
         <Text>Confirmacion de clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
-        placeholder='Re-entra tu clave' value={passwordConfirmation} onChangeText={setPasswordConfirmation} />
-        {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+        placeholder='Re-entra tu clave' value={passwordConfirmation} onChangeText={setPasswordConfirmation}/>
+        {errors.passwordConfirmation ? <Text style={styles.errorText}>{errors.passwordConfirmation}</Text> : null}
 
         <Button title="Registrate" onPress={handleSubmit}
-          disabled={!formIsValid}
-          style={[styles.button, !formIsValid && styles.buttonDisabled]} />
+          style={styles.button}/>
       </View>
     </KeyboardAvoidingView>
     </SafeAreaView>
@@ -165,5 +178,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#fff',
+    fontSize: 16,
   },
 });

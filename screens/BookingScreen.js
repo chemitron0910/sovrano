@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { addDoc, collection } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
+  ActivityIndicator, Alert,
   StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,13 +35,14 @@ export default function BookingScreen() {
     };
 
   if (!auth.currentUser) {
-    console.warn('User not authenticated');
+    //console.warn('User not authenticated');
+    Alert.alert('Error', 'No se pudo autenticar el usuario');
     return;
   }
 
   try {
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
-    console.log('Booking saved with ID:', docRef.id);
+    //console.log('Booking saved with ID:', docRef.id);
     // ✅ Navigate to confirmation screen with required params
     navigation.navigate('Cita confirmada', {
       service: bookingData.service,
@@ -50,7 +51,8 @@ export default function BookingScreen() {
       guestName: bookingData.name,
       bookingId: docRef.id,});
   } catch (error) {
-    console.error('Error saving booking:', error);
+    //console.error('Error saving booking:', error);
+    Alert.alert('Error', 'No se pudo crear tu cita');
   } finally {
     setLoading(false); // ✅ hide spinner
   }
@@ -63,7 +65,7 @@ export default function BookingScreen() {
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.loadingText}>Guardando tu cita...</Text>
-      </View>
+        </View>
       )}
       <View style={styles.container}>
         <View style={{width: windowWidth > 500 ? "70%" : "90%", height: windowHeight > 600 ? "60%" : "90%"}}
