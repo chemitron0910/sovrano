@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
@@ -69,6 +69,10 @@ const validateForm = () => {
       email,
       createdAt: new Date().toISOString(),
       role: 'user', // optional: for role-based access
+    });
+
+    await updateProfile(auth.currentUser, {
+    displayName: username,
     });
 
     // ✅ Navigate to confirmation screen

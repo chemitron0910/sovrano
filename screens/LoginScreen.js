@@ -1,46 +1,35 @@
-import { signInAnonymously } from 'firebase/auth';
+import { signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView, Platform,
   StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
 import { auth } from '../Services/firebaseConfig';
-import { handleSubmit } from "../utils/handleSubmit";
 
 export default function LoginScreen({navigation}) {
 
 const windowDimensions = useWindowDimensions();
 const windowWidth = windowDimensions.width;
 const windowHeight = windowDimensions.height;
-const [username, setUsername] = useState('');
+const [email, setEmail] = useState('');
 const [password, setPassword] = useState('');
 const [errors, setErrors] = useState({});
 
 const validateForm = () => {
    let errors = {};
-   if (!username) {
-     errors.username = 'Username is required';
+   if (!email) {
+     errors.email = 'Correo electronico is requerido';
    }
    if (!password) {
-     errors.password = 'Password is required';
-   } else if (password.length < 6) {
-     errors.password = 'Password must be at least 6 characters';
+     errors.password = 'Clave es requerida';
    }
    setErrors(errors);
    return Object.keys(errors).length === 0;
  };
-
- const onFormSubmit = () => {
-   if (validateForm()) {
-     handleSubmit();// Handle successful form submission
-     console.log('Form submitted:', { username, password });
-     setUsername("");
-     setPassword("");
-     setErrors({});
-   }
- };
+ 
   return (
     <SafeAreaView style={styles.safeContainer}>
     <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} style={styles.container}>
@@ -49,10 +38,10 @@ const validateForm = () => {
             flexDirection: 'column', 
             gap: 10
             } }>
-        <Text>Nombre de usuario</Text>
+        <Text>Correo electronico</Text>
         <TextInput style={styles.inputText}
-        placeholder='Entra tu nombre de usuario' value={username} onChangeText={setUsername} />
-        {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
+        placeholder='Entra tu correo electronico' value={email} onChangeText={setEmail} />
+        {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
         <Text>Clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
@@ -66,12 +55,27 @@ const validateForm = () => {
             navigation.navigate("Ingresa como invitado");
             } catch (error) {
           console.error('Anonymous sign-in failed:', error);
+          Alert.alert('Error', 'No se pudo entrar como invitado');
           }}}
           gradientColors={['#00c6ff', '#0072ff']}
           textColor="#fff">
         </Button_style2>
 
-        <Button_style2 title="Ingresa como usuario" onPress={()=>navigation.navigate("Ingresa como usuario")}
+        <Button_style2 title="Ingresa como usuario" onPress={async()=>{
+          if (!validateForm()) return;
+          try{
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            console.log('Signed in with credentials:', result.user.uid);
+            // ✅ Clear form
+            setPassword('');
+            setEmail('');
+            navigation.navigate("Ingresa como usuario");
+            } catch(error){
+            console.error('Sign-in failed:', error);
+            Alert.alert('Error', 'No se pudo entrar como usuario');
+            }
+          }
+        }
           gradientColors={['#00c6ff', '#0072ff']}
           textColor="#fff">
         </Button_style2>
