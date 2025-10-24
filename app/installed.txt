@@ -8,4 +8,5 @@ npm install react-native-linear-gradient
 expo install @react-native-community/datetimepicker
 npm install firebase
 npm install -g eas-cli
+npm install @react-native-picker/picker
 

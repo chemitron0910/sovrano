@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AdminRoleManager from "./AdminRoleManager";
+import AdminRoleManager from "../screens/AdminRoleManager";
 
 const Stack = createNativeStackNavigator();
 

@@ -75,6 +75,8 @@ const validateForm = () => {
     displayName: username,
     });
 
+    await sendEmailVerification(auth.currentUser);
+
     // ✅ Navigate to confirmation screen
     navigation.navigate('Registro exitoso', {
       username,

@@ -51,10 +51,8 @@ const validateForm = () => {
         <Button_style2 title="Ingresa como invitado" onPress={async()=>{
           try{
             const result = await signInAnonymously(auth);
-            console.log('Signed in anonymously:', result.user.uid);
-            navigation.navigate("Ingresa como invitado");
+            navigation.navigate("Invitado");
             } catch (error) {
-          console.error('Anonymous sign-in failed:', error);
           Alert.alert('Error', 'No se pudo entrar como invitado');
           }}}
           gradientColors={['#00c6ff', '#0072ff']}
@@ -65,13 +63,21 @@ const validateForm = () => {
           if (!validateForm()) return;
           try{
             const result = await signInWithEmailAndPassword(auth, email, password);
-            console.log('Signed in with credentials:', result.user.uid);
+            const user = result.user;
+
+            if (!user.emailVerified) {
+            Alert.alert(
+              'Por favor verifica tu correo electrónico antes de continuar.'
+            );
+            navigation.navigate("Re-enviar correo electronico");
+            return; // ⛔ Stop further navigation
+            }
+
             // ✅ Clear form
             setPassword('');
             setEmail('');
-            navigation.navigate("Ingresa como usuario");
+            navigation.navigate("Usuario");
             } catch(error){
-            console.error('Sign-in failed:', error);
             Alert.alert('Error', 'No se pudo entrar como usuario');
             }
           }
@@ -80,10 +86,41 @@ const validateForm = () => {
           textColor="#fff">
         </Button_style2>
 
-        <Button_style2 title="Ingresa como administrador" onPress={()=>navigation.navigate("Ingresa como administrador")}
+        <Button_style2 title="Ingresa como administrador" onPress={async()=>{
+          if (!validateForm()) return;
+          try{
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            const uid = result.user.uid;
+            const user = result.user;
+
+            if (!user.emailVerified) {
+            Alert.alert(
+              'Por favor verifica tu correo electrónico antes de continuar.'
+            );
+            navigation.navigate("Re-enviar correo electronico");
+            return; // ⛔ Stop navigation
+            }
+
+            // 🔍 Fetch user role from Firestore
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            const userData = userDoc.data();
+
+            if (userData?.role === 'admin') {
+              // ✅ Clear form
+              setPassword('');
+              setEmail('');
+              navigation.navigate("Administrador");
+            } else {
+                Alert.alert('Acceso denegado', 'No tienes permisos de administrador');
+              }
+            } catch(error){            
+            Alert.alert('Error', 'No se pudo entrar como administrador');
+            }
+        }}
           gradientColors={['#00c6ff', '#0072ff']}
           textColor="#fff">
         </Button_style2>
+
         </View>
       </View>
     </KeyboardAvoidingView>

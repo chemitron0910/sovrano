@@ -1,5 +1,4 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
 import { StyleSheet } from "react-native";
 import BookingScreen from "../screens/BookingScreen";
 import GuestStack from "../screens/GuestStack";
@@ -18,8 +17,8 @@ export default function HomeStack() {
     headerBackVisible: false ,}}>
       <Stack.Screen name="Inicio" component={HomeScreen}/>
       <Stack.Screen name="Nuestros servicios" component={ServicesScreen}/>
-      <Stack.Screen name="Invitado" component={GuestStack}/>
-      <Stack.Screen name="Usuario registrado" component={UserStack}/>      
+      <Stack.Screen name="Invitado" component={GuestStack} options={{headerBackVisible: false }}/>
+      <Stack.Screen name="Usuario registrado" component={UserStack} options={{headerBackVisible: false }}/>      
       <Stack.Screen name="Agenda tu cita" component={BookingScreen}/>
     </Stack.Navigator>
   );

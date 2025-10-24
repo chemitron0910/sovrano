@@ -34,7 +34,6 @@ export default function UserScreen({navigation}) {
             gradientColors={['#00c6ff', '#0072ff']}
             textColor="#fff">
           </Button_style2>
-
         </View>
     </View>
     </SafeAreaView>

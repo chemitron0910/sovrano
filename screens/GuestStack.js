@@ -12,7 +12,7 @@ export default function GuestStack() {
   return (
     <Stack.Navigator screenOptions={{
     headerTitleAlign: 'center'}}>
-      <Stack.Screen name="Inicio invitado" component={GuestScreen} options={{headerBackVisible: true }}/>
+      <Stack.Screen name="Menu" component={GuestScreen} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Nuestros servicios" component={ServicesScreen} options={{headerBackVisible: true }}/>
       <Stack.Screen name="Agenda tu cita" component={BookingScreen} options={{headerBackVisible: true }}/>
       <Stack.Screen name="Registrate" component={SignUpScreen} options={{headerBackVisible: true }}/>

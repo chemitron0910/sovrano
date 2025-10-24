@@ -1,6 +1,7 @@
+import { Picker } from '@react-native-picker/picker';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Alert, Button, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AdminRoleManager() {
@@ -41,7 +42,6 @@ const assignRole = async () => {
   return (
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
-        <Text style={styles.title}>Promote User</Text>
 
       <TextInput
         style={styles.input}
@@ -50,14 +50,17 @@ const assignRole = async () => {
         onChangeText={setTargetUid}
       />
 
-      <TextInput
+      <Picker
+        selectedValue={role}
+        onValueChange={(itemValue) => setRole(itemValue)}
         style={styles.input}
-        placeholder="Role (e.g. admin, staff)"
-        value={role}
-        onChangeText={setRole}
-      />
+      >
+        <Picker.Item label="Admin" value="admin" />
+        <Picker.Item label="Empleado" value="staff" />
+        <Picker.Item label="Usuario" value="user" />
+      </Picker>
 
-      <Button title="Assign Role" onPress={assignRole} />
+      <Button title="Assigna responsabilidad" onPress={assignRole} />
       </View>
     </SafeAreaView>
   );

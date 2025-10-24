@@ -17,7 +17,7 @@ export default function BookingScreen() {
   const [service, setService] = useState('');
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(auth.currentUser?.displayName || '');
   const [phone, setPhone] = useState('');
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
@@ -79,7 +79,7 @@ export default function BookingScreen() {
             </TouchableOpacity>
             {showPicker && (
               <DateTimePicker
-                value={date.tol}
+                value={date}
                 mode="datetime"
                 display="default"
                 onChange={(e, selectedDate) => {
