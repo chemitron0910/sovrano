@@ -1,4 +1,5 @@
 import { signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
   Alert,
@@ -7,7 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
-import { auth } from '../Services/firebaseConfig';
+import { auth, db } from '../Services/firebaseConfig';
 
 export default function LoginScreen({navigation}) {
 
@@ -92,6 +93,8 @@ const validateForm = () => {
             const result = await signInWithEmailAndPassword(auth, email, password);
             const uid = result.user.uid;
             const user = result.user;
+            console.log(uid);
+            console.log(user);
 
             if (!user.emailVerified) {
             Alert.alert(
@@ -112,6 +115,9 @@ const validateForm = () => {
               navigation.navigate("Administrador");
             } else {
                 Alert.alert('Acceso denegado', 'No tienes permisos de administrador');
+                //console.log('userDoc.exists:', userDoc.exists());
+                //console.log('userDoc.data:', userDoc.data());
+
               }
             } catch(error){            
             Alert.alert('Error', 'No se pudo entrar como administrador');

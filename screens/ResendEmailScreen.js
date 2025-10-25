@@ -1,6 +1,7 @@
 import { sendEmailVerification } from 'firebase/auth';
-import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { Alert, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button_style2 from "../Components/Button_style2";
 import { auth } from '../Services/firebaseConfig';
 
 export default function ResendEmailScreen() {
@@ -13,7 +14,7 @@ export default function ResendEmailScreen() {
     try {
       if (auth.currentUser) {
         await sendEmailVerification(auth.currentUser);
-        Alert.alert('Correo enviado', 'Revisa tu bandeja de entrada.');
+        Alert.alert('Correo enviado', 'Revisa tu bandeja de entrada y tu folder the spam (Correo no deseado).');
       } else {
         Alert.alert('Error', 'No hay usuario autenticado.');
       }
