@@ -1,5 +1,5 @@
 import { signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
   Alert,
@@ -41,7 +41,8 @@ const validateForm = () => {
             } }>
         <Text>Correo electronico</Text>
         <TextInput style={styles.inputText}
-        placeholder='Entra tu correo electronico' value={email} onChangeText={setEmail} />
+        placeholder='Entra tu correo electronico' value={email} onChangeText={setEmail}
+        autoCapitalize='none' />
         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
         <Text>Clave</Text>
@@ -104,11 +105,25 @@ const validateForm = () => {
             return; // ⛔ Stop navigation
             }
 
+            await setDoc(doc(db, 'users', uid), { role: 'empleado' }, { merge: true });
+
+            await setDoc(doc(db, 'users', uid), { role: 'admin' }, { merge: true });
+
+            let token; //Add a short delay before refreshing the token again (getIdTokenResult)
+            for (let i = 0; i < 5; i++) {
+            await new Promise((res) => setTimeout(res, 1000));
+            await auth.currentUser?.getIdToken(true);
+            token = await auth.currentUser?.getIdTokenResult();
+            if (token.claims.role) break;
+            }
+
             // 🔍 Fetch user role from Firestore
             const userDoc = await getDoc(doc(db, 'users', uid));
             const userData = userDoc.data();
 
             if (userData?.role === 'admin') {
+              const token = await auth.currentUser?.getIdTokenResult(); // ✅ fetch token with custom claims
+              console.log('Role from token:', token.claims.role);
               // ✅ Clear form
               setPassword('');
               setEmail('');

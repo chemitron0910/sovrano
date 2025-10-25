@@ -11,6 +11,14 @@ export default function RoleAssignmentScreen() {
 
   const handleUpdate = async () => {
     try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+      Alert.alert('Error', 'No authenticated user found.');
+      return;
+      }
+
+    const token = await currentUser.getIdTokenResult();
+      console.log('Current role:', token.claims.role);
       const uid = await updateUserRoleByUsername(username, selectedRole);
       await auth.currentUser?.getIdToken(true); // 🔄 Refresh token
       Alert.alert('Success', `Role updated to "${selectedRole}" for ${username}`);
