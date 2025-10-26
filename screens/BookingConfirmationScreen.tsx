@@ -1,5 +1,6 @@
-import { RouteProp, useRoute } from '@react-navigation/native';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RouteParams = {
@@ -7,19 +8,34 @@ type RouteParams = {
     service: string;
     date: string;
     time: string;
-    guestName: string;
+    stylistName: string;
     bookingId: string;
   };
+  Inicio: undefined;
 };
 
-export default function BookingConfirmationScreen() {
+type BookingConfirmationScreenNavigationProp = NativeStackNavigationProp<
+  RouteParams,
+  'BookingConfirmation'
+>;
+
+type BookingConfirmationScreenRouteProp = RouteProp<
+  RouteParams,
+  'BookingConfirmation'
+>;
+
+type Props = {
+  navigation: BookingConfirmationScreenNavigationProp;
+  route: BookingConfirmationScreenRouteProp;
+};
+
+export default function BookingConfirmationScreen({ navigation, route }: Props) {
 
     const windowDimensions = useWindowDimensions();
     const windowWidth = windowDimensions.width;
     const windowHeight = windowDimensions.height;
 
-    const route = useRoute<RouteProp<RouteParams, 'BookingConfirmation'>>(); //BookingConfirmation from RouteParams
-    const { service, date, time, guestName, bookingId } = route.params;
+    const { service, date, time, stylistName, bookingId } = route.params;
 
     return (
     <SafeAreaView style={styles.safeContainer}>
@@ -31,11 +47,15 @@ export default function BookingConfirmationScreen() {
             gap: 10
             } }>
             <Text style={styles.title}>Gracias por agendar tu cita 🎉</Text>
-            <Text style={styles.label}>Nombre: <Text style={styles.value}>{guestName}</Text></Text>
+            <Text style={styles.label}>Estilista: <Text style={styles.value}>{stylistName}</Text></Text>
             <Text style={styles.label}>Servicio: <Text style={styles.value}>{service}</Text></Text>
             <Text style={styles.label}>Fecha: <Text style={styles.value}>{date}</Text></Text>
             <Text style={styles.label}>Hora: <Text style={styles.value}>{time}</Text></Text>
             <Text style={styles.label}>Cita ID: <Text style={styles.value}>{bookingId}</Text></Text>
+
+            <TouchableOpacity onPress={()=>navigation.navigate("Inicio")} style={styles.button}>
+              <Text style={styles.buttonText}>Vuelve al inicio</Text>
+            </TouchableOpacity>
         </View>
     </View>
     </SafeAreaView>
@@ -67,4 +87,12 @@ const styles = StyleSheet.create({
     value: {
         fontWeight: '600',
     },
+    button: {
+    backgroundColor: '#007AFF',
+    padding: 14,
+    borderRadius: 30,
+    marginTop: 30,
+    alignItems: 'center',
+  },
+  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });

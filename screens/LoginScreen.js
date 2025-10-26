@@ -64,6 +64,7 @@ export default function LoginScreen({ navigation }) {
           navigation.navigate('Usuario');
       }
     } catch (error) {
+      console.log('Login error:', error);
       Alert.alert('Error', 'No se pudo iniciar sesión');
     } finally {
       setLoading(false);

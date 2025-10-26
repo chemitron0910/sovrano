@@ -12,11 +12,11 @@ export default function UserStack() {
     <Stack.Navigator screenOptions={{
     headerTitleAlign: 'center',
     headerBackVisible: false ,}}>
-      <Stack.Screen name="Menu" component={UserScreen}/>
+      <Stack.Screen name="Inicio" component={UserScreen}/>
       <Stack.Screen name="Credenciales" component={LoginScreen}/>
       <Stack.Screen name="Nuestros servicios" component={ServicesScreen}/>
       <Stack.Screen name="Agenda tu cita" component={BookingScreen} options={{headerBackVisible: true }}/>
-      <Stack.Screen name="Cita confirmada" component={BookingConfirmationScreen} options={{headerBackVisible: true }}/>
+      <Stack.Screen name="Cita confirmada" component={BookingConfirmationScreen} options={{headerBackVisible: false }}/>
     </Stack.Navigator>
   );
 };

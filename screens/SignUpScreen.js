@@ -80,7 +80,7 @@ const validateForm = () => {
       username,
       email,
       createdAt: new Date().toISOString(),
-      role: 'user', // optional: for role-based access
+      role: 'usuario', // optional: for role-based access
     });
 
     await updateProfile(auth.currentUser, {

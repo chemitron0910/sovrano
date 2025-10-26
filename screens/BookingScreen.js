@@ -1,14 +1,18 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform,
+  ScrollView,
   StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from '../Services/firebaseConfig';
 import { fetchUserProfile } from '../Services/userService';
+
 
 export default function BookingScreen() {
 
@@ -21,6 +25,8 @@ export default function BookingScreen() {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [stylists, setStylists] = useState([]);
+  const [selectedStylist, setSelectedStylist] = useState(null);
 
   const user = auth.currentUser;
   const guestName = user?.displayName || '';
@@ -36,8 +42,25 @@ export default function BookingScreen() {
       setPhoneNumber(profile.phoneNumber);
     }
   };
-
   loadUserProfile();
+}, []);
+
+  useEffect(() => {
+  const loadStylists = async () => {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('role', 'in', ['empleado', 'admin']));
+      const snapshot = await getDocs(q);
+      const stylistList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().username || doc.data().email || 'Sin nombre',
+      }));
+      setStylists(stylistList);
+    } catch (error) {
+      console.error('Error fetching stylists:', error);
+    }
+  };
+  loadStylists();
 }, []);
 
   const handleBooking = async () => {
@@ -53,9 +76,11 @@ export default function BookingScreen() {
       date: date.toISOString(), // UTC format
       time: date.toISOString(),
       guestName: auth.currentUser.displayName || '',
+      userId: auth.currentUser.uid,
       email: auth.currentUser.email || '',
       phoneNumber: phoneNumber || '',
-      userId: auth.currentUser.uid,
+      stylistId: selectedStylist?.id || "",
+      stylistName: selectedStylist?.name || '',
       createdAt: new Date().toISOString(),
     };
 
@@ -74,6 +99,7 @@ export default function BookingScreen() {
       date: bookingData.date.split('T')[0], // format as YYYY-MM-DD
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // e.g., "14:00"
       guestName: bookingData.guestName,
+      stylistName: bookingData.stylistName,
       bookingId: docRef.id,});
   } catch (error) {
     console.error('Error saving booking:', error);
@@ -85,16 +111,24 @@ export default function BookingScreen() {
 
   return (
     
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView
+      style={styles.safeContainer}
+      edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : undefined}
+    >
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.loadingText}>Guardando tu cita...</Text>
         </View>
       )}
-      <View style={styles.container}>
-        <View style={{width: windowWidth > 500 ? "70%" : "90%"}}
-          >
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}>
+    <ScrollView 
+      style={{ flex: 1 }}
+      contentContainerStyle={styles.scrollContent}>
+        <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
           <Text style={styles.label}>Select Service</Text>
             <TextInput style={styles.input} value={service} onChangeText={setService} placeholder="e.g. Haircut" />
 
@@ -129,11 +163,30 @@ export default function BookingScreen() {
             <Text>{phoneNumber || 'No disponible'}</Text>
           </View>
 
+          <Text style={styles.label}>Selecciona estilista</Text>
+          <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
+          <Picker
+            selectedValue={selectedStylist?.id || ''}
+            onValueChange={(value) => {
+            const stylist = stylists.find(s => s.id === value);
+            setSelectedStylist(stylist || null);
+            }}
+            style={Platform.OS === 'android' ? { height: 120 } : undefined}
+          >
+          <Picker.Item label="Selecciona..." value="" />
+            {stylists.map(stylist => (
+            <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
+            ))}
+          </Picker>
+
+          </View>
+
           <TouchableOpacity onPress={handleBooking} disabled={loading} style={styles.button}>
             <Text style={styles.buttonText}>Confirma tu cita</Text>
           </TouchableOpacity>
         </View>
-      </View>
+    </ScrollView>
+    </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -142,11 +195,6 @@ const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
     backgroundColor: "white",
-  },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   text: {
     fontSize: 24,
@@ -192,5 +240,13 @@ const styles = StyleSheet.create({
   padding: 12,
   marginTop: 8,
   backgroundColor: '#f5f5f5',
-}
+},
+scrollContent: {
+  justifyContent: 'flex-start',
+  paddingBottom: 40,
+  alignItems: 'center',
+},
+formContainer: {
+  alignSelf: 'center',
+},
 });
