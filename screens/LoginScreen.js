@@ -2,6 +2,7 @@ import { signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView, Platform,
   StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions
@@ -18,6 +19,7 @@ const windowHeight = windowDimensions.height;
 const [email, setEmail] = useState('');
 const [password, setPassword] = useState('');
 const [errors, setErrors] = useState({});
+const [loading, setLoading] = useState(false);
 
 const validateForm = () => {
    let errors = {};
@@ -33,6 +35,12 @@ const validateForm = () => {
  
   return (
     <SafeAreaView style={styles.safeContainer}>
+      {loading && (
+        <View style={styles.overlay}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Verificando credenciales...</Text>
+        </View>
+      )}
     <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} style={styles.container}>
       <View style={styles.form} >
         <View style={{
@@ -63,6 +71,7 @@ const validateForm = () => {
 
         <Button_style2 title="Ingresa como usuario" onPress={async()=>{
           if (!validateForm()) return;
+          setLoading(true); // ✅ show spinner
           try{
             const result = await signInWithEmailAndPassword(auth, email, password);
             const user = result.user;
@@ -81,6 +90,8 @@ const validateForm = () => {
             navigation.navigate("Usuario");
             } catch(error){
             Alert.alert('Error', 'No se pudo entrar como usuario');
+            }finally {
+              setLoading(false); // ✅ hide spinner
             }
           }
         }
@@ -90,12 +101,13 @@ const validateForm = () => {
 
         <Button_style2 title="Ingresa como administrador" onPress={async()=>{
           if (!validateForm()) return;
+          setLoading(true); // ✅ show spinner
           try{
             const result = await signInWithEmailAndPassword(auth, email, password);
             const uid = result.user.uid;
             const user = result.user;
-            console.log(uid);
-            console.log(user);
+            //console.log(uid);
+            //console.log(user);
 
             if (!user.emailVerified) {
             Alert.alert(
@@ -136,6 +148,8 @@ const validateForm = () => {
               }
             } catch(error){            
             Alert.alert('Error', 'No se pudo entrar como administrador');
+            }finally {
+              setLoading(false); // ✅ hide spinner
             }
         }}
           gradientColors={['#00c6ff', '#0072ff']}
@@ -182,5 +196,21 @@ const styles = StyleSheet.create({
   errorText: { 
     color: 'red',
     marginBottom: 10,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#fff',
+    fontSize: 16,
   },
 });

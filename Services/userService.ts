@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../Services/firebaseConfig';
 import { User } from '../src/types';
 
@@ -23,6 +23,12 @@ export const fetchAllUsers = async (): Promise<User[]> => {
       role: data.role,
     };
   });
+};
+
+export const fetchUserProfile = async (uid: string) => {
+  const ref = doc(db, 'users', uid);
+  const snapshot = await getDoc(ref);
+  return snapshot.exists() ? snapshot.data() : null;
 };
 
 

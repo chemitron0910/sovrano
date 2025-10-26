@@ -20,6 +20,7 @@ const [username, setUsername] = useState('');
 const [password, setPassword] = useState('');
 const [passwordConfirmation, setPasswordConfirmation] = useState('');
 const [email, setEmail] = useState('');
+const [phoneNumber, setPhoneNumber] = useState('');
 const [errors, setErrors] = useState({});
 const [formIsValid, setFormIsValid] = useState(false);
 const navigation = useNavigation();
@@ -28,13 +29,17 @@ const [loading, setLoading] = useState(false);
 const validateForm = () => {
     let errors = {};
 
-
     if (!username) {
       errors.username = 'Nombre de usuario es requerido';
     }
     if (!email) {
       errors.email = 'Correo electronico es requerido';
     }
+
+    if (!phoneNumber) {
+      errors.phoneNumber = 'Numero telefonico es requerido';
+    }
+
     if (!password) {
       errors.password = 'Clave es requerida';
     } else if (password.length < 6) {
@@ -116,6 +121,11 @@ const validateForm = () => {
         <TextInput style={styles.inputText}
         placeholder='Entra tu corrreo electronico' value={email} onChangeText={setEmail}/>
         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+
+        <Text>Telefono</Text>
+        <TextInput style={styles.inputText}
+        placeholder='Entra tu numero telefonico' value={phoneNumber} onChangeText={setPhoneNumber}/>
+        {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
         <Text>Entra tu clave</Text>
         <TextInput style={styles.inputText} secureTextEntry

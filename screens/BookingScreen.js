@@ -1,13 +1,14 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { addDoc, collection } from 'firebase/firestore';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
   StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from '../Services/firebaseConfig';
+import { fetchUserProfile } from '../Services/userService';
 
 export default function BookingScreen() {
 
@@ -17,19 +18,43 @@ export default function BookingScreen() {
   const [service, setService] = useState('');
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
-  const [name, setName] = useState(auth.currentUser?.displayName || '');
-  const [phone, setPhone] = useState('');
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+
+  const user = auth.currentUser;
+  const guestName = user?.displayName || '';
+  const email = user?.email || '';
+
+  useEffect(() => {
+  const loadUserProfile = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const profile = await fetchUserProfile(user.uid);
+    if (profile?.phoneNumber) {
+      setPhoneNumber(profile.phoneNumber);
+    }
+  };
+
+  loadUserProfile();
+}, []);
 
   const handleBooking = async () => {
+
+    if (!auth.currentUser) {
+      Alert.alert('Error', 'No se pudo autenticar el usuario');
+      return;
+    }
+
     setLoading(true); // ✅ show spinner
     const bookingData = {
       service,
       date: date.toISOString(), // UTC format
       time: date.toISOString(),
-      name,
-      phone,
+      guestName: auth.currentUser.displayName || '',
+      email: auth.currentUser.email || '',
+      phoneNumber: phoneNumber || '',
       userId: auth.currentUser.uid,
       createdAt: new Date().toISOString(),
     };
@@ -48,10 +73,10 @@ export default function BookingScreen() {
       service: bookingData.service,
       date: bookingData.date.split('T')[0], // format as YYYY-MM-DD
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // e.g., "14:00"
-      guestName: bookingData.name,
+      guestName: bookingData.guestName,
       bookingId: docRef.id,});
   } catch (error) {
-    //console.error('Error saving booking:', error);
+    console.error('Error saving booking:', error);
     Alert.alert('Error', 'No se pudo crear tu cita');
   } finally {
     setLoading(false); // ✅ hide spinner
@@ -68,7 +93,7 @@ export default function BookingScreen() {
         </View>
       )}
       <View style={styles.container}>
-        <View style={{width: windowWidth > 500 ? "70%" : "90%", height: windowHeight > 600 ? "60%" : "90%"}}
+        <View style={{width: windowWidth > 500 ? "70%" : "90%"}}
           >
           <Text style={styles.label}>Select Service</Text>
             <TextInput style={styles.input} value={service} onChangeText={setService} placeholder="e.g. Haircut" />
@@ -90,10 +115,20 @@ export default function BookingScreen() {
             )}
 
           <Text style={styles.label}>Tu nombre</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Tu nombre completo" />
-          <Text style={styles.label}>Numero telefonico</Text>
-            <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Telefono" 
-            keyboardType="phone-pad" />
+          <View style={styles.readOnlyField}>
+            <Text>{guestName || 'No disponible'}</Text>
+          </View>
+
+          <Text style={styles.label}>Correo electrónico</Text>
+          <View style={styles.readOnlyField}>
+            <Text>{email || 'No disponible'}</Text>
+          </View>
+
+          <Text style={styles.label}>Número telefónico</Text>
+          <View style={styles.readOnlyField}>
+            <Text>{phoneNumber || 'No disponible'}</Text>
+          </View>
+
           <TouchableOpacity onPress={handleBooking} disabled={loading} style={styles.button}>
             <Text style={styles.buttonText}>Confirma tu cita</Text>
           </TouchableOpacity>
@@ -112,7 +147,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    justifyContent: "center",
   },
   text: {
     fontSize: 24,
@@ -151,4 +185,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  readOnlyField: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 8,
+  padding: 12,
+  marginTop: 8,
+  backgroundColor: '#f5f5f5',
+}
 });
