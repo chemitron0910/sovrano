@@ -20,9 +20,9 @@ const [username, setUsername] = useState('');
 const [password, setPassword] = useState('');
 const [passwordConfirmation, setPasswordConfirmation] = useState('');
 const [email, setEmail] = useState('');
+const [emailConfirmation, setEmailConfirmation] = useState('');
 const [phoneNumber, setPhoneNumber] = useState('');
 const [errors, setErrors] = useState({});
-const [formIsValid, setFormIsValid] = useState(false);
 const navigation = useNavigation();
 const [loading, setLoading] = useState(false);
 
@@ -34,6 +34,14 @@ const validateForm = () => {
     }
     if (!email) {
       errors.email = 'Correo electronico es requerido';
+    }
+
+    if (!emailConfirmation) {
+      errors.emailConfirmation = 'Correo electronico es requerido';
+    }
+
+    if (email !== emailConfirmation) {
+      errors.emailConfirmation = 'Los correos electronicos no coinciden';
     }
 
     if (!phoneNumber) {
@@ -55,7 +63,6 @@ const validateForm = () => {
     }
     setErrors(errors);
     const isValid = Object.keys(errors).length === 0;
-    setFormIsValid(isValid); // ✅ update state to control button
   return isValid;
  };
 
@@ -117,10 +124,17 @@ const validateForm = () => {
         placeholder='Entra tu nombre de usuario' value={username} onChangeText={setUsername}/>
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
 
-        <Text>Coreo electronico</Text>
+        <Text>Correo electronico</Text>
         <TextInput style={styles.inputText}
+        autoCapitalize="none"
         placeholder='Entra tu corrreo electronico' value={email} onChangeText={setEmail}/>
         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+
+        <Text>Confirma correo electronico</Text>
+        <TextInput style={styles.inputText}
+        autoCapitalize="none"
+        placeholder='Entra tu corrreo electronico' value={emailConfirmation} onChangeText={setEmailConfirmation}/>
+        {errors.emailConfirmation ? <Text style={styles.errorText}>{errors.emailConfirmation}</Text> : null}
 
         <Text>Telefono</Text>
         <TextInput style={styles.inputText}
@@ -132,7 +146,7 @@ const validateForm = () => {
         placeholder='Entra tu clave' value={password} onChangeText={setPassword}/>
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
-        <Text>Confirmacion de clave</Text>
+        <Text>Confirma tu clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
         placeholder='Re-entra tu clave' value={passwordConfirmation} onChangeText={setPasswordConfirmation}/>
         {errors.passwordConfirmation ? <Text style={styles.errorText}>{errors.passwordConfirmation}</Text> : null}

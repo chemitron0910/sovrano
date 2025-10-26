@@ -30,6 +30,7 @@ export default function SignUpConfirmationScreen() {
             } }>
             <Text style={styles.title}>Gracias por registrarte 🎉</Text>
             <Text style={styles.title}>Por favor usa el enlace enviado a tu correo electronico para verificacion de tu cuenta</Text>
+            <Text style={styles.title}>Mira tu folder de correo no deseado si no lo encuentras</Text>
             <Text style={styles.label}>Nombre: <Text style={styles.value}>{username}</Text></Text>
             <Text style={styles.label}>Correo electronico: <Text style={styles.value}>{email}</Text></Text>
             <Text style={styles.label}>Usuario ID: <Text style={styles.value}>{userId}</Text></Text>

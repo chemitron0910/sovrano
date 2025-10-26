@@ -1,38 +1,75 @@
-import { signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView, Platform,
-  StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Button_style2 from "../Components/Button_style2";
+import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 
-export default function LoginScreen({navigation}) {
+export default function LoginScreen({ navigation }) {
+  const windowDimensions = useWindowDimensions();
+  const windowWidth = windowDimensions.width;
+  const windowHeight = windowDimensions.height;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
-const windowDimensions = useWindowDimensions();
-const windowWidth = windowDimensions.width;
-const windowHeight = windowDimensions.height;
-const [email, setEmail] = useState('');
-const [password, setPassword] = useState('');
-const [errors, setErrors] = useState({});
-const [loading, setLoading] = useState(false);
+  const validateForm = () => {
+    let errors = {};
+    if (!email) errors.email = 'Correo electrónico es requerido';
+    if (!password) errors.password = 'Clave es requerida';
+    setErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
-const validateForm = () => {
-   let errors = {};
-   if (!email) {
-     errors.email = 'Correo electronico is requerido';
-   }
-   if (!password) {
-     errors.password = 'Clave es requerida';
-   }
-   setErrors(errors);
-   return Object.keys(errors).length === 0;
- };
- 
+  const handleLogin = async () => {
+    if (!validateForm()) return;
+    setLoading(true);
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const user = result.user;
+
+      if (!user.emailVerified) {
+        Alert.alert('Verifica tu correo electrónico antes de continuar.');
+        navigation.navigate('Re-enviar correo electronico');
+        return;
+      }
+
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userData = userDoc.data();
+
+      setEmail('');
+      setPassword('');
+
+      switch (userData?.role) {
+        case 'admin':
+          navigation.navigate('Administrador');
+          break;
+        case 'empleado':
+          navigation.navigate('Empleado');
+          break;
+        default:
+          navigation.navigate('Usuario');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       {loading && (
@@ -41,124 +78,49 @@ const validateForm = () => {
           <Text style={styles.loadingText}>Verificando credenciales...</Text>
         </View>
       )}
-    <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} style={styles.container}>
-      <View style={styles.form} >
-        <View style={{
-            flexDirection: 'column', 
-            gap: 10
-            } }>
-        <Text>Correo electronico</Text>
-        <TextInput style={styles.inputText}
-        placeholder='Entra tu correo electronico' value={email} onChangeText={setEmail}
-        autoCapitalize='none' />
-        {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+      <KeyboardAvoidingView
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        style={styles.container}
+      >
+        <View style={styles.form}>
+          <View style={{ flexDirection: 'column', gap: 10 }}>
+            <Text>Correo electrónico</Text>
+            <TextInput
+              style={styles.inputText}
+              placeholder="Entra tu correo electrónico"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+            />
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-        <Text>Clave</Text>
-        <TextInput style={styles.inputText} secureTextEntry
-        placeholder='Entra tu clave' value={password} onChangeText={setPassword} />
-        {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+            <Text>Clave</Text>
+            <TextInput
+              style={styles.inputText}
+              secureTextEntry
+              placeholder="Entra tu clave"
+              value={password}
+              onChangeText={setPassword}
+            />
+            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-        <Button_style2 title="Ingresa como invitado" onPress={async()=>{
-          try{
-            const result = await signInAnonymously(auth);
-            navigation.navigate("Invitado");
-            } catch (error) {
-          Alert.alert('Error', 'No se pudo entrar como invitado');
-          }}}
-          gradientColors={['#00c6ff', '#0072ff']}
-          textColor="#fff">
-        </Button_style2>
+            <Button_style2
+              title="Ingresar"
+              onPress={handleLogin}
+              gradientColors={['#00c6ff', '#0072ff']}
+              textColor="#fff"
+            />
 
-        <Button_style2 title="Ingresa como usuario" onPress={async()=>{
-          if (!validateForm()) return;
-          setLoading(true); // ✅ show spinner
-          try{
-            const result = await signInWithEmailAndPassword(auth, email, password);
-            const user = result.user;
-
-            if (!user.emailVerified) {
-            Alert.alert(
-              'Por favor verifica tu correo electrónico antes de continuar.'
-            );
-            navigation.navigate("Re-enviar correo electronico");
-            return; // ⛔ Stop further navigation
-            }
-
-            // ✅ Clear form
-            setPassword('');
-            setEmail('');
-            navigation.navigate("Usuario");
-            } catch(error){
-            Alert.alert('Error', 'No se pudo entrar como usuario');
-            }finally {
-              setLoading(false); // ✅ hide spinner
-            }
-          }
-        }
-          gradientColors={['#00c6ff', '#0072ff']}
-          textColor="#fff">
-        </Button_style2>
-
-        <Button_style2 title="Ingresa como administrador" onPress={async()=>{
-          if (!validateForm()) return;
-          setLoading(true); // ✅ show spinner
-          try{
-            const result = await signInWithEmailAndPassword(auth, email, password);
-            const uid = result.user.uid;
-            const user = result.user;
-            //console.log(uid);
-            //console.log(user);
-
-            if (!user.emailVerified) {
-            Alert.alert(
-              'Por favor verifica tu correo electrónico antes de continuar.'
-            );
-            navigation.navigate("Re-enviar correo electronico");
-            return; // ⛔ Stop navigation
-            }
-
-            await setDoc(doc(db, 'users', uid), { role: 'empleado' }, { merge: true });
-
-            await setDoc(doc(db, 'users', uid), { role: 'admin' }, { merge: true });
-
-            let token; //Add a short delay before refreshing the token again (getIdTokenResult)
-            for (let i = 0; i < 5; i++) {
-            await new Promise((res) => setTimeout(res, 1000));
-            await auth.currentUser?.getIdToken(true);
-            token = await auth.currentUser?.getIdTokenResult();
-            if (token.claims.role) break;
-            }
-
-            // 🔍 Fetch user role from Firestore
-            const userDoc = await getDoc(doc(db, 'users', uid));
-            const userData = userDoc.data();
-
-            if (userData?.role === 'admin') {
-              const token = await auth.currentUser?.getIdTokenResult(); // ✅ fetch token with custom claims
-              console.log('Role from token:', token.claims.role);
-              // ✅ Clear form
-              setPassword('');
-              setEmail('');
-              navigation.navigate("Administrador");
-            } else {
-                Alert.alert('Acceso denegado', 'No tienes permisos de administrador');
-                //console.log('userDoc.exists:', userDoc.exists());
-                //console.log('userDoc.data:', userDoc.data());
-
-              }
-            } catch(error){            
-            Alert.alert('Error', 'No se pudo entrar como administrador');
-            }finally {
-              setLoading(false); // ✅ hide spinner
-            }
-        }}
-          gradientColors={['#00c6ff', '#0072ff']}
-          textColor="#fff">
-        </Button_style2>
-
+            <Button_style2
+              title="Registrarse"
+              onPress={() => navigation.navigate('Registrarse')}
+              gradientColors={['#00c6ff', '#0072ff']}
+              textColor="#fff"
+            />
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -166,14 +128,14 @@ const validateForm = () => {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: '#f5f5f5',
   },
   container: {
     flex: 1,
     justifyContent: 'center',
     backgroundColor: '#f5f5f5',
-    paddingHorizontal : 20,
-    paddingTop: StatusBar.currentHeight || 0, //This only applies to android
+    paddingHorizontal: 20,
+    paddingTop: StatusBar.currentHeight || 0,
   },
   form: {
     backgroundColor: 'white',
@@ -186,14 +148,14 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   inputText: {
-    height: 40, 
-    borderColor: 'gray', 
-    borderWidth: 1, 
-    marginBottom: 20, 
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 20,
     paddingHorizontal: 10,
     borderRadius: 5,
   },
-  errorText: { 
+  errorText: {
     color: 'red',
     marginBottom: 10,
   },
