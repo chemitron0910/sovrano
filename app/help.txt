@@ -1,8 +1,4 @@
 Para crear un administrador:
-Ingresa como invitado
 Registrarse
 Confirma el correo electronico usando el enlace enviado
 Cambiar responsibilidad en la consola de firebase (User --> Admin)
-
-
-The ./ means “from the same folder as this file”

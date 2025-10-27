@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
@@ -79,6 +79,7 @@ const validateForm = () => {
     await setDoc(doc(db, 'users', uid), {
       username,
       email,
+      phoneNumber,
       createdAt: new Date().toISOString(),
       role: 'usuario', // optional: for role-based access
     });
@@ -102,9 +103,28 @@ const validateForm = () => {
     setEmail('');
     setErrors({});
   } catch (error) {
-    //console.error('Error creating user:', error);
-    Alert.alert('Error', 'No se pudo crear el usuario. Email already in use');
-  }finally {
+    if (error.code === 'auth/email-already-in-use') {
+      try {
+        // ✅ Try to log in instead
+        const loginCredential = await signInWithEmailAndPassword(auth, email, password);
+        const uid = loginCredential.user.uid;
+
+        navigation.navigate('Registro exitoso', {
+          username: loginCredential.user.displayName || '',
+          email,
+          userId: uid,
+        });
+
+        Alert.alert('Inicio de sesión', 'Ya tenías una cuenta. Has iniciado sesión correctamente.');
+      } catch (loginError) {
+        Alert.alert('Error al iniciar sesión', loginError.message);
+      }
+    } else {
+      //console.error('Error creating user:', error);
+      //console.error('Login error:', JSON.stringify(loginError, null, 2));
+      Alert.alert('Error', 'No se pudo crear el usuario.');
+    }
+  } finally {
     setLoading(false); // ✅ hide spinner
   }
 };
@@ -141,7 +161,7 @@ const validateForm = () => {
         placeholder='Entra tu numero telefonico' value={phoneNumber} onChangeText={setPhoneNumber}/>
         {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
-        <Text>Entra tu clave</Text>
+        <Text>Entra tu clave - La misma de tu correo</Text>
         <TextInput style={styles.inputText} secureTextEntry
         placeholder='Entra tu clave' value={password} onChangeText={setPassword}/>
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}

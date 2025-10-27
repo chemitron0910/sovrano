@@ -41,8 +41,7 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
         <View style={{
-            width: windowWidth > 500 ? "70%" : "90%", 
-            height: windowHeight > 600 ? "60%" : "90%",
+            width: windowWidth > 500 ? "70%" : "90%",
             flexDirection: 'column', 
             gap: 10
             } }>

@@ -1,4 +1,4 @@
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
@@ -65,11 +65,45 @@ export default function LoginScreen({ navigation }) {
       }
     } catch (error) {
       console.log('Login error:', error);
+      console.log('Login error:', JSON.stringify(error, null, 2));
+      console.log('Trying login with:', email.trim(), 'Password length:', password.trim().length);
+
       Alert.alert('Error', 'No se pudo iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleForgotPassword = async () => {
+  if (!email.trim()) {
+    Alert.alert('Error', 'Por favor ingresa tu correo electrónico para recuperar la clave.');
+    return;
+  }
+
+  Alert.alert(
+    '¿Enviar correo de recuperación?',
+    `Se enviará un correo a ${email.trim()} para restablecer tu clave.`,
+    [
+      {
+        text: 'Cancelar',
+        style: 'cancel',
+      },
+      {
+        text: 'Confirmar',
+        onPress: async () => {
+
+        try {
+          await sendPasswordResetEmail(auth, email.trim());
+          Alert.alert('Correo enviado', 'Revisa tu bandeja de entrada para restablecer tu clave.');
+        } catch (error) {
+          console.error('Password reset error:', error);
+          Alert.alert('Error', 'No se pudo enviar el correo de recuperación.');
+        }
+        },
+      },
+    ]
+  );
+};
 
   return (
     <SafeAreaView style={styles.safeContainer}>
@@ -116,6 +150,13 @@ export default function LoginScreen({ navigation }) {
             <Button_style2
               title="Registrarse"
               onPress={() => navigation.navigate('Registrarse')}
+              gradientColors={['#00c6ff', '#0072ff']}
+              textColor="#fff"
+            />
+
+            <Button_style2
+              title="¿Olvidaste tu clave?"
+              onPress={handleForgotPassword}
               gradientColors={['#00c6ff', '#0072ff']}
               textColor="#fff"
             />

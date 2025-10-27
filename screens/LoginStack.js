@@ -14,8 +14,8 @@ export default function LoginStack() {
     <Stack.Navigator screenOptions={{
     headerTitleAlign: 'center'}}>
       <Stack.Screen name="Inicio" component={LoginScreen}/>
-      <Stack.Screen name="Registrarse" component={SignUpScreen} options={{headerBackVisible: true }}/>
-      <Stack.Screen name="Registro exitoso" component={SignUpConfirmationScreen} options={{headerBackVisible: true }}/>
+      <Stack.Screen name="Registrarse" component={SignUpScreen} options={{headerBackVisible: false }}/>
+      <Stack.Screen name="Registro exitoso" component={SignUpConfirmationScreen} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Usuario" component={UserStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Empleado" component={StaffStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Administrador" component={AdminStack}/>
