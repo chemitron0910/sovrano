@@ -171,8 +171,13 @@ export default function BookingScreen() {
             const stylist = stylists.find(s => s.id === value);
             setSelectedStylist(stylist || null);
             }}
-            style={Platform.OS === 'android' ? { height: 120 } : undefined}
-          >
+            mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+          style={[
+            styles.picker,
+            Platform.OS === 'android' && { color: '#004d40' },
+          ]}
+          itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+        >
           <Picker.Item label="Selecciona..." value="" />
             {stylists.map(stylist => (
             <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
@@ -249,4 +254,25 @@ scrollContent: {
 formContainer: {
   alignSelf: 'center',
 },
+picker: {
+  ...Platform.select({
+    ios: {
+      height: 150, // enough for scroll wheel
+      justifyContent: 'center',
+    },
+    android: {
+      height: 50,
+      color: '#004d40',
+      justifyContent: 'center',
+    },
+  }),
+  backgroundColor: '#e0f7fa',
+  borderRadius: 6,
+  borderWidth: 1,
+  borderColor: '#00796b',
+},
+pickerItem: {
+    fontSize: 16,
+    color: 'black',
+  },
 });

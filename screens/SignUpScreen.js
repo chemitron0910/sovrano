@@ -1,5 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signInWithEmailAndPassword, updateProfile
+} from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
@@ -120,8 +124,8 @@ const validateForm = () => {
         Alert.alert('Error al iniciar sesión', loginError.message);
       }
     } else {
-      //console.error('Error creating user:', error);
-      //console.error('Login error:', JSON.stringify(loginError, null, 2));
+      console.error('Error creating user:', error);
+      console.error('Login error:', JSON.stringify(loginError, null, 2));
       Alert.alert('Error', 'No se pudo crear el usuario.');
     }
   } finally {
@@ -161,7 +165,7 @@ const validateForm = () => {
         placeholder='Entra tu numero telefonico' value={phoneNumber} onChangeText={setPhoneNumber}/>
         {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
-        <Text>Entra tu clave - La misma de tu correo</Text>
+        <Text>Entra tu clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
         placeholder='Entra tu clave' value={password} onChangeText={setPassword}/>
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
