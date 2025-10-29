@@ -34,6 +34,11 @@ export default function UserScreen({navigation}) {
             gradientColors={['#00c6ff', '#0072ff']}
             textColor="#fff">
           </Button_style2>
+
+          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historia de citas")}
+            gradientColors={['#00c6ff', '#0072ff']}
+            textColor="#fff">
+          </Button_style2>
         </View>
     </View>
     </SafeAreaView>

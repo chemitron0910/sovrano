@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
 import { auth } from '../Services/firebaseConfig';
 
-export default function UserScreen({navigation}) {
+export default function AdminScreen({navigation}) {
 
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
@@ -30,7 +30,17 @@ export default function UserScreen({navigation}) {
             textColor="#fff"
           ></Button_style2>
 
-          <Button_style2 title="Calendario de agendas" onPress={()=>navigation.navigate("Calendario de agendas")}
+          <Button_style2 title="Manejar servicios" onPress={()=>navigation.navigate("Manejar servicios")}
+            gradientColors={['#00c6ff', '#0072ff']}
+            textColor="#fff"
+          ></Button_style2>
+
+          <Button_style2 title="Calendario de citas" onPress={()=>navigation.navigate("Calendario de citas")}
+            gradientColors={['#00c6ff', '#0072ff']}
+            textColor="#fff">
+          </Button_style2>
+
+          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historia de citas")}
             gradientColors={['#00c6ff', '#0072ff']}
             textColor="#fff">
           </Button_style2>

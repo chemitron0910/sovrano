@@ -4,9 +4,11 @@ import { db } from './firebaseConfig';
 export type Booking = {
   id: string;
   email: string;
-  name: string;
+  guestName: string;
+  userId: string;
   phone: string;
   service: string;
+  stylistId: string;
   stylistName: string;
   date: string;
   time: string;
@@ -20,9 +22,11 @@ export const fetchAllBookings = async (): Promise<Booking[]> => {
     return {
       id: doc.id, 
       email: data.email,
-      name: data.clientName,
+      guestName: data.guestName,
+      userId: data.userId,
       phone: data.phone,
       service: data.service,
+      stylistId: data.stylistId,
       stylistName: data.stylistName,
       date: data.date,
       time: data.time,

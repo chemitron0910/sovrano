@@ -18,7 +18,7 @@ export default function LoginStack() {
       <Stack.Screen name="Registro exitoso" component={SignUpConfirmationScreen} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Usuario" component={UserStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Empleado" component={StaffStack} options={{headerBackVisible: false }}/>
-      <Stack.Screen name="Administrador" component={AdminStack}/>
+      <Stack.Screen name="Administrador" component={AdminStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Re-enviar correo electronico" component={ResendEmailScreen}/>
     </Stack.Navigator>
   );

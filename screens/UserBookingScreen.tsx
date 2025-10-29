@@ -1,18 +1,21 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform,
   ScrollView,
-  StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions
+  StyleSheet, Text,
+  TouchableOpacity, View, useWindowDimensions
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from '../Services/firebaseConfig';
 import { fetchUserProfile } from '../Services/userService';
-
+import { useServices } from '../hooks/useServices';
+import { RootStackParamList } from '../src/types'; // adjust path
 
 export default function BookingScreen() {
 
@@ -22,11 +25,13 @@ export default function BookingScreen() {
   const [service, setService] = useState('');
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [stylists, setStylists] = useState([]);
-  const [selectedStylist, setSelectedStylist] = useState(null);
+  const [stylists, setStylists] = useState<{ id: string; name: string }[]>([]);
+  const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
+  const services = useServices();
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const user = auth.currentUser;
   const guestName = user?.displayName || '';
@@ -92,7 +97,6 @@ export default function BookingScreen() {
 
   try {
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
-    //console.log('Booking saved with ID:', docRef.id);
     // ✅ Navigate to confirmation screen with required params
     navigation.navigate('Cita confirmada', {
       service: bookingData.service,
@@ -129,9 +133,28 @@ export default function BookingScreen() {
       style={{ flex: 1 }}
       contentContainerStyle={styles.scrollContent}>
         <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
-          <Text style={styles.label}>Select Service</Text>
-            <TextInput style={styles.input} value={service} onChangeText={setService} placeholder="e.g. Haircut" />
-
+          <View style={styles.pickerWrapper}>
+          <Text style={styles.pickerLabel}>Select Service</Text>
+            <Picker
+              selectedValue={selectedServiceId}
+              onValueChange={(value) => setSelectedServiceId(value)}
+              mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+              style={[
+                styles.picker,
+                Platform.OS === 'android' && { color: '#004d40' },
+                ]}
+              itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+            >
+            <Picker.Item label="Selecciona..." value={null} />
+            {services.map((service) => (
+              <Picker.Item
+                key={service.id}
+                label={`${service.name} (${service.duration} min)`}
+                value={service.id}
+              />
+            ))}
+            </Picker>
+          </View>
           <Text style={styles.label}>Escoge fecha y hora</Text>
             <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
               <Text>{date.toLocaleString()}</Text>
@@ -147,7 +170,6 @@ export default function BookingScreen() {
                 }}
               />
             )}
-
           <Text style={styles.label}>Tu nombre</Text>
           <View style={styles.readOnlyField}>
             <Text>{guestName || 'No disponible'}</Text>
@@ -271,8 +293,17 @@ picker: {
   borderWidth: 1,
   borderColor: '#00796b',
 },
+pickerWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+  },
 pickerItem: {
     fontSize: 16,
     color: 'black',
+  },
+  pickerLabel: {
+    fontSize: 14,
+    marginBottom: 4,
+    fontWeight: '600',
   },
 });

@@ -25,12 +25,13 @@ export default function StaffScreen({navigation}) {
           <Text style={styles.welcomeText}>
             {`${greeting}, ${username || 'invitado'} 👋 ¡Nos alegra verte en Sovrano!`}
           </Text>
-          <Button_style2 title="Assignar responsabilidad" onPress={()=>navigation.navigate("Assignar responsabilidad")}
-            gradientColors={['#00c6ff', '#0072ff']}
-            textColor="#fff"
-          ></Button_style2>
 
-          <Button_style2 title="Calendario de agendas" onPress={()=>navigation.navigate("Calendario de agendas")}
+          <Button_style2 title="Calendario de citas" onPress={()=>navigation.navigate("Calendario de citas")}
+            gradientColors={['#00c6ff', '#0072ff']}
+            textColor="#fff">
+          </Button_style2>
+
+          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historia de citas")}
             gradientColors={['#00c6ff', '#0072ff']}
             textColor="#fff">
           </Button_style2>

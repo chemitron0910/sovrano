@@ -43,7 +43,10 @@ export default function AdminBookingsScreen() {
     return (
       <View style={styles.bookingItem}>
         <Text style={styles.bookingText}>
-          Servicio: {item.name} - {item.service}
+          Servicio: {item.service}
+        </Text>
+        <Text style={styles.bookingText}>
+          Cliente: {item.guestName}
         </Text>
         <Text style={styles.bookingText}>
           Date/Time: {formattedDate} / {formattedTime} {item.status}

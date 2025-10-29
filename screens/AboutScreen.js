@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const windowDimensions = useWindowDimensions();
-const windowWidth = windowDimensions.width;
-const windowHeight = windowDimensions.height;
-
 export default function AboutScreen() {
+
+  const windowDimensions = useWindowDimensions();
+  const windowWidth = windowDimensions.width;
+  const windowHeight = windowDimensions.height;
   
   return (
     <SafeAreaView style={styles.safeContainer}>

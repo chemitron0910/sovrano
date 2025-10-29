@@ -3,20 +3,20 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
-import LoginStack from "../screens/LoginStack";
+import AdminScreen from "../screens/AdminScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-export default function TabNavigator() {
+export default function AdminTabNav() {
   return (
         <Tab.Navigator
           screenOptions={{ 
           tabBarActiveTintColor: '#e91e63',
           }}>
           <Tab.Screen name="Inicio" 
-            component={LoginStack}
+            component={AdminScreen}
             options={{headerShown:false}} />
           <Tab.Screen name="Perfil" component={ProfileScreen} 
               options={{
