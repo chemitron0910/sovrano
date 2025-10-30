@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -113,6 +114,15 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.loadingText}>Verificando credenciales...</Text>
         </View>
       )}
+
+      <View style={styles.logoContainer}>
+          <Image            
+            source={require('../assets/images/Logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+      />
+        </View>
+
       <KeyboardAvoidingView
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
@@ -141,24 +151,18 @@ export default function LoginScreen({ navigation }) {
             {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
             <Button_style2
-              title="Ingresar"
-              onPress={handleLogin}
-              gradientColors={['#00c6ff', '#0072ff']}
-              textColor="#fff"
+              title="Invitado"
+              onPress={() => navigation.navigate('Invitado')}
             />
 
             <Button_style2
-              title="Registrarse"
-              onPress={() => navigation.navigate('Registrarse')}
-              gradientColors={['#00c6ff', '#0072ff']}
-              textColor="#fff"
+              title="Usuario registrado"
+              onPress={handleLogin}
             />
 
             <Button_style2
               title="¿Olvidaste tu clave?"
               onPress={handleForgotPassword}
-              gradientColors={['#00c6ff', '#0072ff']}
-              textColor="#fff"
             />
           </View>
         </View>
@@ -177,6 +181,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     paddingHorizontal: 20,
     paddingTop: StatusBar.currentHeight || 0,
+    
   },
   form: {
     backgroundColor: 'white',
@@ -216,4 +221,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  logoContainer: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
+},
+
+logo: {
+  width: 100,
+  height: 100,
+  borderRadius: 10, // optional: softens edges if needed
+},
 });

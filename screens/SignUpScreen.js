@@ -145,34 +145,34 @@ const validateForm = () => {
       <View style={styles.form}>
         <Text>Nombre de usuario</Text>
         <TextInput style={styles.inputText}
-        placeholder='Entra tu nombre de usuario' value={username} onChangeText={setUsername}/>
+        placeholder='Entra tu nombre de usuario' placeholderTextColor="#888" value={username} onChangeText={setUsername}/>
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
 
         <Text>Correo electronico</Text>
         <TextInput style={styles.inputText}
         autoCapitalize="none"
-        placeholder='Entra tu corrreo electronico' value={email} onChangeText={setEmail}/>
+        placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
         <Text>Confirma correo electronico</Text>
         <TextInput style={styles.inputText}
         autoCapitalize="none"
-        placeholder='Entra tu corrreo electronico' value={emailConfirmation} onChangeText={setEmailConfirmation}/>
+        placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={emailConfirmation} onChangeText={setEmailConfirmation}/>
         {errors.emailConfirmation ? <Text style={styles.errorText}>{errors.emailConfirmation}</Text> : null}
 
         <Text>Telefono</Text>
         <TextInput style={styles.inputText}
-        placeholder='Entra tu numero telefonico' value={phoneNumber} onChangeText={setPhoneNumber}/>
+        placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
         {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
         <Text>Entra tu clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
-        placeholder='Entra tu clave' value={password} onChangeText={setPassword}/>
+        placeholder='Entra tu clave' placeholderTextColor="#888" value={password} onChangeText={setPassword}/>
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
         <Text>Confirma tu clave</Text>
         <TextInput style={styles.inputText} secureTextEntry
-        placeholder='Re-entra tu clave' value={passwordConfirmation} onChangeText={setPasswordConfirmation}/>
+        placeholder='Re-entra tu clave' placeholderTextColor="#888" value={passwordConfirmation} onChangeText={setPasswordConfirmation}/>
         {errors.passwordConfirmation ? <Text style={styles.errorText}>{errors.passwordConfirmation}</Text> : null}
 
         <Button title="Registrate" onPress={handleSubmit}
@@ -212,6 +212,9 @@ const styles = StyleSheet.create({
     marginBottom: 20, 
     paddingHorizontal: 10,
     borderRadius: 5,
+    fontSize: 16,         // ✅ Ensures placeholder is visible
+    color: '#000',        // ✅ Ensures input text is visible
+    placeholderTextColor: '#888',
   },
   errorText: { 
     color: 'red',

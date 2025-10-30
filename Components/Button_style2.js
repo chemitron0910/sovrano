@@ -4,8 +4,8 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 export default function Button_style2({
   title,
   onPress,
-  gradientColors = ['#ff6a00', '#ee0979'],
-  textColor = '#fff',
+  gradientColors = ['#c2b280', '#a68f5b'],
+  textColor = '#3e3e3e',
   style = {},
 }) {
   return (
