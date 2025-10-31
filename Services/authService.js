@@ -1,4 +1,4 @@
-import { EmailAuthProvider, linkWithCredential, signInAnonymously } from 'firebase/auth';
+import { signInAnonymously, signOut } from 'firebase/auth';
 import { auth } from '../Services/firebaseConfig';
 
 export const signInAsGuest = async () => {
@@ -11,13 +11,14 @@ export const signInAsGuest = async () => {
     throw error;
   }
 };
-
-export const upgradeAnonymousAccount = async (email, password) => {
+export const logout = async (navigation) => {
   try {
-    const credential = EmailAuthProvider.credential(email, password);
-    const result = await linkWithCredential(auth.currentUser, credential);
-    console.log('Anonymous account upgraded:', result.user.uid);
+    await signOut(auth);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' }], // or your landing screen
+    });
   } catch (error) {
-    console.error('Upgrade error:', error);
+    console.error('Logout error:', error);
   }
 };

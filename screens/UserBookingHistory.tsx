@@ -45,7 +45,7 @@ export default function UserBookingHistory() {
     return (
       <View style={styles.bookingItem}>
         <Text style={styles.bookingText}>Servicio: {item.service}</Text>
-        <Text style={styles.bookingText}>Cliente: {item.guestName}</Text>
+        <Text style={styles.bookingText}>Estilista: {item.stylistName}</Text>
         <Text style={styles.bookingText}>
           Fecha/Hora: {formattedDate} / {formattedTime} {item.status}
         </Text>

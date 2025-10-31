@@ -3,8 +3,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
-import AdminScreen from "../screens/AdminScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import AdminScreen from "./AdminScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

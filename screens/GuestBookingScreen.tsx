@@ -67,6 +67,8 @@ export default function GuestBookingScreen() {
   loadStylists();
 }, []);
 
+  const selectedService = services.find(s => s.id === selectedServiceId);
+
   const handleBooking = async () => {
 
     if (!auth.currentUser) {
@@ -76,7 +78,7 @@ export default function GuestBookingScreen() {
 
     setLoading(true); // ✅ show spinner
     const bookingData = {
-      service,
+      service: selectedService?.name || '',
       date: date.toISOString(), // UTC format
       time: date.toISOString(),
       guestName: guestName || '',
@@ -147,7 +149,7 @@ export default function GuestBookingScreen() {
                     {services.map((service) => (
                     <Picker.Item
                         key={service.id}
-                        label={`${service.name} (${service.duration} min)`}
+                        label={`${service.name} (${service.duration})`}
                         value={service.id}
                     />
                     ))}
@@ -161,11 +163,12 @@ export default function GuestBookingScreen() {
                         <DateTimePicker
                             value={date}
                             mode="datetime"
-                            display="default"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                             onChange={(e, selectedDate) => {
                             setShowPicker(false);
                             if (selectedDate) setDate(selectedDate);
                             }}
+                            textColor="black"
                         />
                         )}
 

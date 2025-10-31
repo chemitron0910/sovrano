@@ -12,7 +12,7 @@ export default function LoginStack() {
   return (
     <Stack.Navigator screenOptions={{
     headerTitleAlign: 'center'}}>
-      <Stack.Screen name="Inicio" component={LoginScreen}/>
+      <Stack.Screen name="Inicio-Sovrano" component={LoginScreen}/>
       <Stack.Screen name="Usuario" component={UserStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Empleado" component={StaffStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Administrador" component={AdminStack} options={{headerBackVisible: false }}/>

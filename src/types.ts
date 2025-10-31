@@ -14,4 +14,10 @@ export type RootStackParamList = {
     stylistName: string;
     bookingId: string;
   };
+  "Inicio-Admin": undefined;
+  "Inicio-Sovrano": undefined;
+  "Assignar responsabilidad": undefined;
+  "Manejar servicios": undefined;
+  "Calendario de citas": undefined;
+  "Historia de citas": undefined;
 };

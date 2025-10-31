@@ -1,10 +1,17 @@
-import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useLayoutEffect } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
+import { logout } from '../Services/authService';
 import { auth } from '../Services/firebaseConfig';
+import { RootStackParamList } from '../src/types'; // adjust path
 
-export default function AdminScreen({navigation}) {
+export default function AdminScreen() {
 
+  type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+const navigation = useNavigation<NavigationProp>();
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
@@ -13,7 +20,27 @@ export default function AdminScreen({navigation}) {
   const greeting =
     hour < 12 ? 'Buenos días' : 'Buenas tardes';
 
+    useLayoutEffect(() => {
+      navigation.setOptions({
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={async () => {
+              await logout();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Inicio-Sovrano' }],
+              });
+            }}
+            style={{ marginRight: 16 }}
+          >
+            <Text style={{ color: '#007AFF', fontWeight: '600' }}>Salir</Text>
+          </TouchableOpacity>
+        ),
+      });
+    }, [navigation]);
+
   return (
+    
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
         <View style={{
@@ -59,7 +86,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    justifyContent: "center",
   },
   text: {
     fontSize: 24,

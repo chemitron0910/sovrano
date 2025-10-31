@@ -25,6 +25,7 @@ export default function BookingScreen() {
   const [service, setService] = useState('');
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -68,6 +69,8 @@ export default function BookingScreen() {
   loadStylists();
 }, []);
 
+  const selectedService = services.find(s => s.id === selectedServiceId);
+
   const handleBooking = async () => {
 
     if (!auth.currentUser) {
@@ -77,7 +80,7 @@ export default function BookingScreen() {
 
     setLoading(true); // ✅ show spinner
     const bookingData = {
-      service,
+      service: selectedService?.name || '',
       date: date.toISOString(), // UTC format
       time: date.toISOString(),
       guestName: auth.currentUser.displayName || '',
@@ -126,6 +129,32 @@ export default function BookingScreen() {
         </View>
       )}
 
+      {showPicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+              onChange={(e, selectedDate) => {
+              setShowPicker(false);
+              if (selectedDate) setDate(selectedDate);
+              }}
+              {...(Platform.OS === 'ios' ? { textColor: 'black' } : {})} // ✅ only apply on iOS
+            />
+            )}
+
+      {showTimePicker && (
+  <DateTimePicker
+    value={date}
+    mode="time"
+    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+    onChange={(e, selectedTime) => {
+      setShowTimePicker(false);
+      if (selectedTime) setDate(selectedTime);
+    }}
+  />
+)}
+
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}>
@@ -159,17 +188,8 @@ export default function BookingScreen() {
             <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
               <Text>{date.toLocaleString()}</Text>
             </TouchableOpacity>
-            {showPicker && (
-              <DateTimePicker
-                value={date}
-                mode="datetime"
-                display="default"
-                onChange={(e, selectedDate) => {
-                  setShowPicker(false);
-                  if (selectedDate) setDate(selectedDate);
-                }}
-              />
-            )}
+            
+
           <Text style={styles.label}>Tu nombre</Text>
           <View style={styles.readOnlyField}>
             <Text>{guestName || 'No disponible'}</Text>

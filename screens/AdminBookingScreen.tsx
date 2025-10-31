@@ -1,19 +1,26 @@
 import { Picker } from '@react-native-picker/picker';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
+import { RootStackParamList } from '../src/types';
+
 
 export default function AdminBookingsScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedStylist, setSelectedStylist] = useState<string | null>(null);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const stylistOptions = Array.from(new Set(bookings.map(b => b.stylistName)));
+  
   const filteredBookings = bookings.filter(b => {
-    const matchesDate = selectedDate ? b.date === selectedDate : true;
-    const matchesStylist = selectedStylist ? b.stylistName === selectedStylist : true;
-    return matchesDate && matchesStylist;
-  });
+  const bookingDay = new Date(b.date).toISOString().split('T')[0];
+  const matchesDate = selectedDate ? bookingDay === selectedDate : true;
+  const matchesStylist = selectedStylist ? b.stylistName === selectedStylist : true;
+  return matchesDate && matchesStylist;
+});
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -106,9 +113,12 @@ export default function AdminBookingsScreen() {
                   (!selectedStylist || b.stylistName === selectedStylist)
                 );
               })
-              .map(b => b.date)
-          )
-        ).map(date => {
+              .map(b => {
+          const d = new Date(b.date);
+          return d.toISOString().split('T')[0]; // ✅ YYYY-MM-DD only
+        })
+    )
+  ).map(date => {
           const formatted = new Date(date).toLocaleDateString('es-ES', {
             day: '2-digit',
             month: '2-digit',
