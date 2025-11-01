@@ -13,11 +13,32 @@ export type RootStackParamList = {
     guestName: string;
     stylistName: string;
     bookingId: string;
-  };
-  "Inicio-Admin": undefined;
+    role: string;
+  }; //Invitado
+  'Cita confirmada.': {
+    service: string;
+    date: string;
+    time: string;
+    guestName: string;
+    stylistName: string;
+    bookingId: string;
+    role: string;
+  }; //Usuario
   "Inicio-Sovrano": undefined;
+  "Inicio-Admin": undefined;
+  "Inicio-Empleado": undefined;
+  "Inicio-Usuario": undefined;
+  "Inicio-Invitado": undefined;
   "Assignar responsabilidad": undefined;
   "Manejar servicios": undefined;
-  "Calendario de citas": undefined;
-  "Historia de citas": undefined;
+  "Calendario de citas": undefined; //Admin
+  "Calendario de citas.": undefined; //Staff
+  "Historia de citas": undefined; //Admin
+  "Historia de citas.": undefined; //Staff
+  ".Historia de citas.": undefined; //Usuario
+  "Nuestros servicios": undefined; //Invitado
+  "Nuestros servicios.": undefined; //Usuario
+  "Agenda tu cita": undefined; //Invitado
+  "Agenda tu cita.": undefined; //Usuario
+  "Registrarse": undefined;
 };

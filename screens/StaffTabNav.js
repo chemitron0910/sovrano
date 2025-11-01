@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
 import ProfileScreen from "../screens/ProfileScreen";
-import StaffScreen from "../screens/StaffScreen";
+import StaffScreen from "./StaffScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

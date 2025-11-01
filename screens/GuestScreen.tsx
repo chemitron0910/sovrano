@@ -1,9 +1,15 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
+import { logout } from '../Services/authService';
+import { RootStackParamList } from '../src/types';
 
-export default function GuestScreen({navigation}) {
+export default function GuestScreen() {
 
+  type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+  const navigation = useNavigation<NavigationProp>();
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
@@ -31,6 +37,14 @@ export default function GuestScreen({navigation}) {
                 title="Registrarse"
                 onPress={() => navigation.navigate('Registrarse')}
             />
+            <Button_style2 title="Salir" onPress={async () => {
+              await logout();
+              navigation.reset({
+              index: 0,
+              routes: [{ name: 'Inicio-Sovrano' }],
+              });
+              }}>
+            </Button_style2>
 
         </View>
     </View>
@@ -47,7 +61,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    justifyContent: "center",
   },
   text: {
     fontSize: 24,

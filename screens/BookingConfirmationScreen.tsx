@@ -2,26 +2,16 @@ import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type RouteParams = {
-  BookingConfirmation: {
-    service: string;
-    date: string;
-    time: string;
-    stylistName: string;
-    bookingId: string;
-  };
-  Inicio: undefined;
-};
+import { RootStackParamList } from '../src/types';
 
 type BookingConfirmationScreenNavigationProp = NativeStackNavigationProp<
-  RouteParams,
-  'BookingConfirmation'
+  RootStackParamList,
+  'Cita confirmada' | 'Cita confirmada.'
 >;
 
 type BookingConfirmationScreenRouteProp = RouteProp<
-  RouteParams,
-  'BookingConfirmation'
+  RootStackParamList,
+  'Cita confirmada' | 'Cita confirmada.'
 >;
 
 type Props = {
@@ -52,9 +42,19 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
             <Text style={styles.label}>Hora: <Text style={styles.value}>{time}</Text></Text>
             <Text style={styles.label}>Cita ID: <Text style={styles.value}>{bookingId}</Text></Text>
 
-            <TouchableOpacity onPress={()=>navigation.navigate("Inicio")} style={styles.button}>
-              <Text style={styles.buttonText}>Vuelve al inicio</Text>
-            </TouchableOpacity>
+            <TouchableOpacity
+  onPress={() => {
+    if (route.params.role === 'Usuario') {
+      navigation.navigate('Inicio-Usuario');
+    } else {
+      navigation.navigate('Inicio-Invitado');
+    }
+  }}
+  style={styles.button}
+>
+  <Text style={styles.buttonText}>Vuelve al inicio</Text>
+</TouchableOpacity>
+
         </View>
     </View>
     </SafeAreaView>

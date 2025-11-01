@@ -1,10 +1,16 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
+import { logout } from '../Services/authService';
 import { auth } from '../Services/firebaseConfig';
+import { RootStackParamList } from '../src/types';
 
-export default function UserScreen({navigation}) {
+export default function StaffScreen() {
 
+  type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+  const navigation = useNavigation<NavigationProp>();
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
@@ -25,19 +31,24 @@ export default function UserScreen({navigation}) {
           <Text style={styles.welcomeText}>
             {`${greeting}, ${username || 'invitado'} 👋 ¡Nos alegra verte en Sovrano!`}
           </Text>
-          <Button_style2 title="Ir a servicios" onPress={()=>navigation.navigate("Nuestros servicios")}
-            gradientColors={['#00c6ff', '#0072ff']}
-            textColor="#fff"
-          ></Button_style2>
 
-          <Button_style2 title="Agenda tu cita" onPress={()=>navigation.navigate("Agenda tu cita")}
+          <Button_style2 title="Calendario de citas" onPress={()=>navigation.navigate("Calendario de citas.")}
             gradientColors={['#00c6ff', '#0072ff']}
             textColor="#fff">
           </Button_style2>
 
-          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historia de citas")}
+          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historia de citas.")}
             gradientColors={['#00c6ff', '#0072ff']}
             textColor="#fff">
+          </Button_style2>
+
+          <Button_style2 title="Salir" onPress={async () => {
+            await logout();
+            navigation.reset({
+            index: 0,
+            routes: [{ name: 'Inicio-Sovrano' }],
+            });
+            }}>
           </Button_style2>
         </View>
     </View>
@@ -54,7 +65,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    justifyContent: "center",
   },
   text: {
     fontSize: 24,

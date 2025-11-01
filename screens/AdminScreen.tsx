@@ -1,17 +1,16 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useLayoutEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
 import { logout } from '../Services/authService';
 import { auth } from '../Services/firebaseConfig';
-import { RootStackParamList } from '../src/types'; // adjust path
+import { RootStackParamList } from '../src/types';
 
 export default function AdminScreen() {
 
   type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<NavigationProp>();
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
@@ -19,25 +18,6 @@ const navigation = useNavigation<NavigationProp>();
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? 'Buenos días' : 'Buenas tardes';
-
-    useLayoutEffect(() => {
-      navigation.setOptions({
-        headerRight: () => (
-          <TouchableOpacity
-            onPress={async () => {
-              await logout();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Inicio-Sovrano' }],
-              });
-            }}
-            style={{ marginRight: 16 }}
-          >
-            <Text style={{ color: '#007AFF', fontWeight: '600' }}>Salir</Text>
-          </TouchableOpacity>
-        ),
-      });
-    }, [navigation]);
 
   return (
     
@@ -53,23 +33,24 @@ const navigation = useNavigation<NavigationProp>();
             {`${greeting}, ${username || 'invitado'} 👋 ¡Nos alegra verte en Sovrano!`}
           </Text>
           <Button_style2 title="Assignar responsabilidad" onPress={()=>navigation.navigate("Assignar responsabilidad")}
-            gradientColors={['#00c6ff', '#0072ff']}
-            textColor="#fff"
           ></Button_style2>
 
           <Button_style2 title="Manejar servicios" onPress={()=>navigation.navigate("Manejar servicios")}
-            gradientColors={['#00c6ff', '#0072ff']}
-            textColor="#fff"
           ></Button_style2>
 
-          <Button_style2 title="Calendario de citas" onPress={()=>navigation.navigate("Calendario de citas")}
-            gradientColors={['#00c6ff', '#0072ff']}
-            textColor="#fff">
+          <Button_style2 title="Calendario de citas" onPress={()=>navigation.navigate("Calendario de citas")}>
           </Button_style2>
 
-          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historia de citas")}
-            gradientColors={['#00c6ff', '#0072ff']}
-            textColor="#fff">
+          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historia de citas")}>
+          </Button_style2>
+
+          <Button_style2 title="Salir" onPress={async () => {
+            await logout();
+            navigation.reset({
+            index: 0,
+            routes: [{ name: 'Inicio-Sovrano' }],
+            });
+            }}>
           </Button_style2>
         </View>
     </View>

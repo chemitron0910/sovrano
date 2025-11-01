@@ -29,6 +29,7 @@ export default function BookingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [role, setRole] = useState('');
   const [stylists, setStylists] = useState<{ id: string; name: string }[]>([]);
   const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
   const services = useServices();
@@ -46,6 +47,7 @@ export default function BookingScreen() {
     const profile = await fetchUserProfile(user.uid);
     if (profile?.phoneNumber) {
       setPhoneNumber(profile.phoneNumber);
+      setRole(profile.role);
     }
   };
   loadUserProfile();
@@ -90,6 +92,7 @@ export default function BookingScreen() {
       stylistId: selectedStylist?.id || "",
       stylistName: selectedStylist?.name || '',
       createdAt: new Date().toISOString(),
+      role: role,
     };
 
   if (!auth.currentUser) {
@@ -101,13 +104,15 @@ export default function BookingScreen() {
   try {
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
     // ✅ Navigate to confirmation screen with required params
-    navigation.navigate('Cita confirmada', {
+    navigation.navigate('Cita confirmada.', {
       service: bookingData.service,
       date: bookingData.date.split('T')[0], // format as YYYY-MM-DD
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // e.g., "14:00"
       guestName: bookingData.guestName,
       stylistName: bookingData.stylistName,
-      bookingId: docRef.id,});
+      bookingId: docRef.id,
+      role: bookingData.role,
+    });
   } catch (error) {
     console.error('Error saving booking:', error);
     Alert.alert('Error', 'No se pudo crear tu cita');

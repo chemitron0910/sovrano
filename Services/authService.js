@@ -14,10 +14,6 @@ export const signInAsGuest = async () => {
 export const logout = async (navigation) => {
   try {
     await signOut(auth);
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }], // or your landing screen
-    });
   } catch (error) {
     console.error('Logout error:', error);
   }

@@ -9,9 +9,9 @@ export default function StaffStack() {
   return (
     <Stack.Navigator screenOptions={{
     headerTitleAlign: 'center'}}>
-      <Stack.Screen name="Inicio" component={StaffTabNav} options={{headerBackVisible: true }}/>
-      <Stack.Screen name="Calendario de citas" component={StaffBookingScreen} options={{headerBackVisible: true }}/>
-      <Stack.Screen name="Historia de citas" component={StaffBookingHistory} options={{headerBackVisible: true }}/>
+      <Stack.Screen name="Inicio-Empleado" component={StaffTabNav} options={{headerBackVisible: true }}/>
+      <Stack.Screen name="Calendario de citas." component={StaffBookingScreen} options={{headerBackVisible: true }}/>
+      <Stack.Screen name="Historia de citas." component={StaffBookingHistory} options={{headerBackVisible: true }}/>
     </Stack.Navigator>
   );
 };

@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useState } from 'react';
@@ -7,6 +8,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -26,6 +28,9 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+
 
   const validateForm = () => {
     let errors = {};
@@ -69,7 +74,7 @@ export default function LoginScreen({ navigation }) {
       console.log('Login error:', JSON.stringify(error, null, 2));
       console.log('Trying login with:', email.trim(), 'Password length:', password.trim().length);
 
-      Alert.alert('Error', 'No se pudo iniciar sesión');
+      Alert.alert('Error', 'No se pudo iniciar sesión. Clave or email incorrecto');
     } finally {
       setLoading(false);
     }
@@ -107,6 +112,10 @@ export default function LoginScreen({ navigation }) {
 };
 
   return (
+    <LinearGradient
+    colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
+    style={{ flex: 1 }}
+  >
     <SafeAreaView style={styles.safeContainer}>
       {loading && (
         <View style={styles.overlay}>
@@ -115,38 +124,66 @@ export default function LoginScreen({ navigation }) {
         </View>
       )}
 
-      <View style={styles.logoContainer}>
+      
+
+      <KeyboardAvoidingView
+  behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+  style={{ flex: 1 }}
+>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+
+        <View style={styles.logoContainer}>
           <Image            
             source={require('../assets/images/Logo.png')}
             style={styles.logo}
             resizeMode="contain"
-      />
+        />
         </View>
 
-      <KeyboardAvoidingView
-        behavior="padding"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-        style={styles.container}
-      >
+        <Text style={styles.welcomeText}>
+          Bienvenido a Sovrano
+        </Text>
+        <Text style={styles.welcomeText}>
+          Tu espacio de belleza y bienestar
+        </Text>
+
         <View style={styles.form}>
           <View style={{ flexDirection: 'column', gap: 10 }}>
             <Text>Correo electrónico</Text>
             <TextInput
-              style={styles.inputText}
+              style={[
+              styles.inputText,
+              { borderColor: emailFocused ? '#d46b37ff' : '#999',
+                shadowColor: emailFocused ? '#d4af37' : 'transparent',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: emailFocused ? 0.3 : 0,
+                shadowRadius: emailFocused ? 4 : 0 }
+              ]}
               placeholder="Entra tu correo electrónico"
               value={email}
               onChangeText={setEmail}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
               autoCapitalize="none"
             />
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
             <Text>Clave</Text>
             <TextInput
-              style={styles.inputText}
+              style={[
+              styles.inputText,
+              { borderColor: passwordFocused ? '#d46b37ff' : '#999' }
+              ]}
               secureTextEntry
               placeholder="Entra tu clave"
               value={password}
               onChangeText={setPassword}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
             />
             {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
@@ -166,22 +203,24 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
         </View>
+      </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent',
     paddingHorizontal: 20,
     paddingTop: StatusBar.currentHeight || 0,
-    
+    justifyContent: 'flex-start',  
   },
   form: {
     backgroundColor: 'white',
@@ -194,13 +233,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   inputText: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-  },
+  height: 40,
+  borderWidth: 1,
+  paddingHorizontal: 10,
+  borderRadius: 5,
+  marginBottom: 20,
+},
   errorText: {
     color: 'red',
     marginBottom: 10,
@@ -230,6 +268,21 @@ const styles = StyleSheet.create({
 logo: {
   width: 100,
   height: 100,
-  borderRadius: 10, // optional: softens edges if needed
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+},
+welcomeText: {
+  fontSize: 18,
+  fontWeight: '500',
+  textAlign: 'center',
+  marginBottom: 20,
+  color: '#6a4e2e', // elegant brown-gold tone
+},
+scrollContainer: {
+  paddingHorizontal: 20,
+  paddingTop: 20,
+  alignItems: 'stretch',
 },
 });

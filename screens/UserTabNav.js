@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
 import ProfileScreen from "../screens/ProfileScreen";
-import UserScreen from "../screens/UserScreen";
+import UserScreen from "./UserScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
