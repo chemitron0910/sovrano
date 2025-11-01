@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -8,11 +9,11 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
   ActivityIndicator, Alert,
-  Button,
   KeyboardAvoidingView, Platform,
+  ScrollView,
   StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 
 export default function SignUpScreen() {
@@ -124,87 +125,103 @@ const validateForm = () => {
         Alert.alert('Error al iniciar sesión', loginError.message);
       }
     } else {
-      console.error('Error creating user:', error);
-      console.error('Login error:', JSON.stringify(loginError, null, 2));
-      Alert.alert('Error', 'No se pudo crear el usuario.');
+      const firstKey = Object.keys(error)[0];
+      const firstEntry = { [firstKey]: error[firstKey] };
+
+      Alert.alert('Error creating user:', JSON.stringify(firstEntry, null, 2));
     }
   } finally {
     setLoading(false); // ✅ hide spinner
   }
 };
   return (
-    <SafeAreaView style={styles.safeContainer}>
-    {loading && (
+    
+    <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} 
+    style={styles.container}>
+      {loading && (
       <View style={styles.overlay}>
         <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.loadingText}>Creando tu usuario...</Text>
       </View>
     )}
-    <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} 
-    style={styles.container}>
+    <LinearGradient
+    colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
+    style={{ flex: 1 }}>
+    <ScrollView
+      contentContainerStyle={styles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.form}>
         <Text>Nombre de usuario</Text>
-        <TextInput style={styles.inputText}
+        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
         placeholder='Entra tu nombre de usuario' placeholderTextColor="#888" value={username} onChangeText={setUsername}/>
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
 
         <Text>Correo electronico</Text>
-        <TextInput style={styles.inputText}
+        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
         autoCapitalize="none"
         placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
         <Text>Confirma correo electronico</Text>
-        <TextInput style={styles.inputText}
+        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
         autoCapitalize="none"
         placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={emailConfirmation} onChangeText={setEmailConfirmation}/>
         {errors.emailConfirmation ? <Text style={styles.errorText}>{errors.emailConfirmation}</Text> : null}
 
         <Text>Telefono</Text>
-        <TextInput style={styles.inputText}
+        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
         placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
         {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
         <Text>Entra tu clave</Text>
-        <TextInput style={styles.inputText} secureTextEntry
+        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]} secureTextEntry
         placeholder='Entra tu clave' placeholderTextColor="#888" value={password} onChangeText={setPassword}/>
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
         <Text>Confirma tu clave</Text>
-        <TextInput style={styles.inputText} secureTextEntry
+        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]} secureTextEntry
         placeholder='Re-entra tu clave' placeholderTextColor="#888" value={passwordConfirmation} onChangeText={setPasswordConfirmation}/>
         {errors.passwordConfirmation ? <Text style={styles.errorText}>{errors.passwordConfirmation}</Text> : null}
 
-        <Button title="Registrate" onPress={handleSubmit}
-          style={styles.button}/>
+        <View style={{ marginTop: 20 }}>
+          <Button_style2 title="Registrate" onPress={handleSubmit} />
+        </View>
+
+        <View style={{ marginTop: 12 }}>
+          <Button_style2
+            title="Vuelve al inicio"
+            onPress={() => navigation.navigate('Inicio-Invitado')}/>
+        </View>    
       </View>
+    </ScrollView>
+    </LinearGradient>
     </KeyboardAvoidingView>
-    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#b00d8fff",
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal : 20,
+    backgroundColor: 'transparent',
     paddingTop: StatusBar.currentHeight || 0, //This only applies to android
   },
   form: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
+  backgroundColor: 'transparent',
+  borderRadius: 10,
+  padding: 20,
+  marginHorizontal: 20, // ✅ Add this for consistent side spacing
+  shadowColor: 'black',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 5,
+},
+
   inputText: {
     height: 40, 
     borderColor: 'gray', 
@@ -252,4 +269,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  scrollContainer: {
+  paddingTop: 20,
+  alignItems: 'stretch',
+},
 });

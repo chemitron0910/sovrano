@@ -1,7 +1,9 @@
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Platform, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Platform, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Button_style2 from '../Components/Button_style2';
+import Logo from '../Components/Logo';
 
 type RouteParams = {
   SignUpConfirmation: {
@@ -10,6 +12,7 @@ type RouteParams = {
     userId: string;
   };
   Inicio: undefined;
+  'Inicio-Invitado': undefined;
 };
 
 type SignUpConfirmationScreenNavigationProp = NativeStackNavigationProp<
@@ -36,14 +39,13 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
     const { username, email, userId } = route.params;
 
     return (
-    <SafeAreaView style={styles.safeContainer}
-    edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : undefined}>
       <View style={styles.container}>
-        <View style={{
-            width: windowWidth > 500 ? "70%" : "90%",
-            flexDirection: 'column', 
-            gap: 10
-            } }>
+      
+      <LinearGradient
+          colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
+          style={[{ flex: 1, padding:10}]}>
+            <View style={{ paddingHorizontal: 24 }}>
+            <Logo/>
             <Text style={styles.title}>Gracias por registrarte 🎉</Text>
             <Text style={styles.title}>Por favor usa el enlace enviado a tu correo electronico para verificacion de tu cuenta</Text>
             <Text style={styles.title}>Mira tu folder de correo no deseado si no lo encuentras</Text>
@@ -51,12 +53,14 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
             <Text style={styles.label}>Correo electronico: <Text style={styles.value}>{email}</Text></Text>
             <Text style={styles.label}>Usuario ID: <Text style={styles.value}>{userId}</Text></Text>
 
-            <TouchableOpacity onPress={()=>navigation.navigate("Inicio")} style={styles.button}>
-              <Text style={styles.buttonText}>Vuelve al inicio</Text>
-            </TouchableOpacity>
-        </View>
+            <View style={{ padding: 24 }}>
+            <Button_style2
+              title="Vuelve al inicio"
+              onPress={()=>navigation.navigate("Inicio-Invitado")}/>
+            </View>
+            </View>
+      </LinearGradient>
     </View>
-    </SafeAreaView>
   );
 
 }
@@ -68,9 +72,8 @@ const styles = StyleSheet.create({
      },
     container: {
         flex: 1,
-        padding: 24,
-        justifyContent: 'center',
-        backgroundColor: '#fff',
+        alignItems: 'center',
+        backgroundColor: 'red',
     },
     title: {
         fontSize: 24,
@@ -93,4 +96,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
     buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+    logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
+  },
 });

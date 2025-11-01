@@ -1,7 +1,8 @@
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Image, Platform, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button_style2 from '../Components/Button_style2';
 import { RootStackParamList } from '../src/types';
 
 type BookingConfirmationScreenNavigationProp = NativeStackNavigationProp<
@@ -29,6 +30,15 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
 
     return (
     <SafeAreaView style={styles.safeContainer}>
+
+      <View style={styles.logoContainer}>
+          <Image            
+            source={require('../assets/images/Logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+        />
+        </View>
+
       <View style={styles.container}>
         <View style={{
             width: windowWidth > 500 ? "70%" : "90%",
@@ -40,20 +50,18 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
             <Text style={styles.label}>Servicio: <Text style={styles.value}>{service}</Text></Text>
             <Text style={styles.label}>Fecha: <Text style={styles.value}>{date}</Text></Text>
             <Text style={styles.label}>Hora: <Text style={styles.value}>{time}</Text></Text>
-            <Text style={styles.label}>Cita ID: <Text style={styles.value}>{bookingId}</Text></Text>
+            <Text style={styles.label}>Cita ID: <Text style={styles.value}>{bookingId}</Text></Text>    
 
-            <TouchableOpacity
-  onPress={() => {
-    if (route.params.role === 'Usuario') {
-      navigation.navigate('Inicio-Usuario');
-    } else {
-      navigation.navigate('Inicio-Invitado');
-    }
-  }}
-  style={styles.button}
->
-  <Text style={styles.buttonText}>Vuelve al inicio</Text>
-</TouchableOpacity>
+            <Button_style2
+              title="Vuelve al inicio"
+              onPress={() => {
+              if (route.params.role === 'Usuario') {
+                navigation.navigate('Inicio-Usuario');
+              } else {
+                navigation.navigate('Inicio-Invitado');
+              }
+              }}
+            />
 
         </View>
     </View>
@@ -70,7 +78,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 24,
-        justifyContent: 'center',
         backgroundColor: '#fff',
     },
     title: {
@@ -86,12 +93,18 @@ const styles = StyleSheet.create({
     value: {
         fontWeight: '600',
     },
-    button: {
-    backgroundColor: '#007AFF',
-    padding: 14,
-    borderRadius: 30,
-    marginTop: 30,
-    alignItems: 'center',
-  },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+    logoContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
+    },
+    
+    logo: {
+      width: 100,
+      height: 100,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+    },
 });

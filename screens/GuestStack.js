@@ -14,7 +14,7 @@ export default function GuestStack() {
         headerTitleAlign: 'center'}}>
         <Stack.Screen name="Inicio-Invitado" component={GuestScreen} options={{headerBackVisible: false }}/>
         <Stack.Screen name="Nuestros servicios" component={ServicesScreen} options={{headerBackVisible: true }}/>
-        <Stack.Screen name="Agenda tu cita" component={GuestBookingScreen} options={{headerBackVisible: true }}/>
+        <Stack.Screen name="Agenda tu cita" component={GuestBookingScreen} options={{headerBackVisible: false }}/>
         <Stack.Screen name="Registrarse" component={SignUpScreen} options={{headerBackVisible: false }}/>
         <Stack.Screen name="Registro exitoso" component={SignUpConfirmationScreen} options={{headerBackVisible: false }}/>
         <Stack.Screen name="Cita confirmada" component={BookingConfirmationScreen} options={{headerBackVisible: false }}/>

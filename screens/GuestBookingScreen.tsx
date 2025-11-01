@@ -2,6 +2,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,10 +12,11 @@ import {
   StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button_style2 from '../Components/Button_style2';
 import { signInAsGuest } from '../Services/authService';
 import { auth, db } from '../Services/firebaseConfig';
 import { useServices } from '../hooks/useServices';
-import { RootStackParamList } from '../src/types'; // adjust path
+import { RootStackParamList } from '../src/types';
 
 
 export default function GuestBookingScreen() {
@@ -105,7 +107,8 @@ export default function GuestBookingScreen() {
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // e.g., "14:00"
       guestName: bookingData.guestName,
       stylistName: bookingData.stylistName,
-      bookingId: docRef.id,});
+      bookingId: docRef.id,
+      role:''});
   } catch (error) {
     console.error('Error saving booking:', error);
     Alert.alert('Error', 'No se pudo crear tu cita');
@@ -127,6 +130,10 @@ export default function GuestBookingScreen() {
         </View>
       )}
 
+    <LinearGradient
+    colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
+    style={{ flex: 1 }}>
+
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ flex: 1 }}>
@@ -139,10 +146,7 @@ export default function GuestBookingScreen() {
                         selectedValue={selectedServiceId}
                         onValueChange={(value) => setSelectedServiceId(value)}
                         mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-                        style={[
-                        styles.picker,
-                        Platform.OS === 'android' && { color: '#004d40' },
-                        ]}
+                        style={[styles.picker, { backgroundColor: '#f0f0f0' }]}
                         itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
                     >
                     <Picker.Item label="Selecciona..." value={null} />
@@ -156,7 +160,8 @@ export default function GuestBookingScreen() {
                     </Picker>
 
                     <Text style={styles.label}>Escoge fecha y hora</Text>
-                    <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
+                    <TouchableOpacity onPress={() => setShowPicker(true)} 
+                      style={[styles.input, { backgroundColor: '#f0f0f0' }]}>
                         <Text>{date.toLocaleString()}</Text>
                     </TouchableOpacity>
                         {showPicker && (
@@ -173,17 +178,20 @@ export default function GuestBookingScreen() {
                         )}
 
                         <Text style={styles.label}>Nombre de usuario</Text>
-                        <TextInput style={styles.inputText}
-                            placeholder='Entra tu nombre' placeholderTextColor="#888" value={guestName} onChangeText={setGuestName}/>
+                        <TextInput 
+                          style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                          placeholder='Entra tu nombre' placeholderTextColor="#888" value={guestName} onChangeText={setGuestName}/>
 
                         <Text style={styles.label}>Correo electronico</Text>
-                        <TextInput style={styles.inputText}
-                            autoCapitalize="none"
-                            placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
+                        <TextInput 
+                          style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                          autoCapitalize="none"
+                          placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
 
                     <Text style={styles.label}>Número telefónico</Text>
-                        <TextInput style={styles.inputText}
-                            placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
+                        <TextInput 
+                          style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                          placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
 
                     <Text style={styles.label}>Selecciona estilista</Text>
                     <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
@@ -194,10 +202,7 @@ export default function GuestBookingScreen() {
                         setSelectedStylist(stylist || null);
                         }}
                         mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-                        style={[
-                        styles.picker,
-                        Platform.OS === 'android' && { color: '#004d40' },
-                        ]}
+                        style={[styles.picker, { backgroundColor: '#f0f0f0' }]}
                         itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
                     >
                     <Picker.Item label="Selecciona..." value="" />
@@ -208,12 +213,21 @@ export default function GuestBookingScreen() {
 
                     </View>
 
-                    <TouchableOpacity onPress={handleBooking} disabled={loading} style={styles.button}>
-                        <Text style={styles.buttonText}>Confirma tu cita</Text>
-                    </TouchableOpacity>
+                    <View style={{ marginTop: 12 }}>
+                    <Button_style2
+                      title="Confirma tu cita"
+                      onPress={handleBooking}/>
+                    </View>
+
+                    <View style={{ marginTop: 12 }}>
+                    <Button_style2
+                      title="Vuelve al inicio"
+                      onPress={() => navigation.navigate('Inicio-Invitado')}/>
+                    </View>
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
+    </LinearGradient>
     </SafeAreaView>
   );
 }

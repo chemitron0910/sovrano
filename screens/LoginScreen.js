@@ -16,7 +16,6 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 
@@ -116,7 +115,6 @@ export default function LoginScreen({ navigation }) {
     colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
     style={{ flex: 1 }}
   >
-    <SafeAreaView style={styles.safeContainer}>
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
@@ -150,18 +148,11 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.welcomeText}>
           Tu espacio de belleza y bienestar
         </Text>
-
-        <View style={styles.form}>
           <View style={{ flexDirection: 'column', gap: 10 }}>
             <Text>Correo electrónico</Text>
             <TextInput
               style={[
-              styles.inputText,
-              { borderColor: emailFocused ? '#d46b37ff' : '#999',
-                shadowColor: emailFocused ? '#d4af37' : 'transparent',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: emailFocused ? 0.3 : 0,
-                shadowRadius: emailFocused ? 4 : 0 }
+              styles.inputText,{ backgroundColor: '#f0f0f0' }
               ]}
               placeholder="Entra tu correo electrónico"
               value={email}
@@ -175,7 +166,7 @@ export default function LoginScreen({ navigation }) {
             <Text>Clave</Text>
             <TextInput
               style={[
-              styles.inputText,
+              styles.inputText,{ backgroundColor: '#f0f0f0' },
               { borderColor: passwordFocused ? '#d46b37ff' : '#999' }
               ]}
               secureTextEntry
@@ -202,10 +193,8 @@ export default function LoginScreen({ navigation }) {
               onPress={handleForgotPassword}
             />
           </View>
-        </View>
       </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
     </LinearGradient>
   );
 }

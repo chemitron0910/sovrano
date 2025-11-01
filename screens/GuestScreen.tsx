@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StyleSheet, View, useWindowDimensions } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Image, Platform, StatusBar, StyleSheet, View, useWindowDimensions } from "react-native";
 import Button_style2 from "../Components/Button_style2";
 import { logout } from '../Services/authService';
 import { RootStackParamList } from '../src/types';
@@ -15,14 +15,21 @@ export default function GuestScreen() {
   const windowHeight = windowDimensions.height;
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <View style={styles.container}>
-        <View style={{
-            width: windowWidth > 500 ? "70%" : "90%", 
-            height: windowHeight > 600 ? "60%" : "90%",
-            flexDirection: 'column', 
-            gap: 10
-            } }>
+
+      <LinearGradient
+        colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
+        style={{ flex: 1 }}
+      >
+
+        <View style={styles.logoContainer}>
+          <Image            
+            source={require('../assets/images/Logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+        />
+        </View>
+        <View style={styles.container}>
+
             <Button_style2 
                 title="Nuestros servicios" 
                 onPress={()=>navigation.navigate("Nuestros servicios")}>
@@ -47,24 +54,40 @@ export default function GuestScreen() {
             </Button_style2>
 
         </View>
-    </View>
-    </SafeAreaView>
+        </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: "white",
-  },
+  
   container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  flex: 1,
+  backgroundColor: 'transparent',
+  paddingTop: StatusBar.currentHeight || 0,
+  justifyContent: 'flex-start',      // ✅ vertical centering
+  alignItems: 'center',          // ✅ horizontal centering
+  alignSelf: 'center',              // ✅ ensures horizontal centering
+  flexDirection: 'column',
+  gap: 16,                          // ✅ slightly more spacing between buttons
+},
   text: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 16,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 50,
+    paddingBottom: 20,
+  },
+  
+  logo: {
+    width: 100,
+    height: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });
