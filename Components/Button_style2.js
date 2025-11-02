@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+
 export default function Button_style2({
   title,
   onPress,
@@ -19,7 +20,6 @@ export default function Button_style2({
 
 const styles = StyleSheet.create({
   wrapper: {
-    alignSelf: 'flex-start',
     alignSelf: 'center',
     borderRadius: 30,
     overflow: 'hidden',
@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
+    fontFamily: 'Playfair-Normal',
   },
   pressed: {
     opacity: 0.8,

@@ -11,3 +11,5 @@ npm install -g eas-cli
 npm install @react-native-picker/picker
 firebase deploy --only functions
 npm install -g firebase-tools
+npm install --save-dev expo-module-scripts
+expo install expo-font

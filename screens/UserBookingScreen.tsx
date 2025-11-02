@@ -12,10 +12,11 @@ import {
   TouchableOpacity, View, useWindowDimensions
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 import { fetchUserProfile } from '../Services/userService';
 import { useServices } from '../hooks/useServices';
-import { RootStackParamList } from '../src/types'; // adjust path
+import { RootStackParamList } from '../src/types';
 
 export default function BookingScreen() {
 
@@ -233,9 +234,15 @@ export default function BookingScreen() {
 
           </View>
 
-          <TouchableOpacity onPress={handleBooking} disabled={loading} style={styles.button}>
-            <Text style={styles.buttonText}>Confirma tu cita</Text>
-          </TouchableOpacity>
+          <Button_style2
+              title="Confirma tu cita"
+              onPress={handleBooking}/>
+
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
+              title="Vuelve al inicio"
+              onPress={() => navigation.navigate('Inicio-Usuario')}/>
+          </View>
         </View>
     </ScrollView>
     </KeyboardAvoidingView>

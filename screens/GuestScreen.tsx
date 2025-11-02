@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, Platform, StatusBar, StyleSheet, View, useWindowDimensions } from "react-native";
+import { StatusBar, StyleSheet, View, useWindowDimensions } from "react-native";
 import Button_style2 from "../Components/Button_style2";
+import Logo from '../Components/Logo';
 import { logout } from '../Services/authService';
 import { RootStackParamList } from '../src/types';
 
@@ -20,15 +21,9 @@ export default function GuestScreen() {
         colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
         style={{ flex: 1 }}
       >
-
-        <View style={styles.logoContainer}>
-          <Image            
-            source={require('../assets/images/Logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-        />
-        </View>
         <View style={styles.container}>
+
+          <Logo/>
 
             <Button_style2 
                 title="Nuestros servicios" 
@@ -63,7 +58,7 @@ const styles = StyleSheet.create({
   container: {
   flex: 1,
   backgroundColor: 'transparent',
-  paddingTop: StatusBar.currentHeight || 0,
+  paddingTop: StatusBar.currentHeight || 50,
   justifyContent: 'flex-start',      // ✅ vertical centering
   alignItems: 'center',          // ✅ horizontal centering
   alignSelf: 'center',              // ✅ ensures horizontal centering
@@ -74,20 +69,5 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 16,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 50,
-    paddingBottom: 20,
-  },
-  
-  logo: {
-    width: 100,
-    height: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
 });

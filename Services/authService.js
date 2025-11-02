@@ -4,7 +4,6 @@ import { auth } from '../Services/firebaseConfig';
 export const signInAsGuest = async () => {
   try {
     const result = await signInAnonymously(auth);
-    console.log('Signed in anonymously:', result.user.uid);
     return result.user;
   } catch (error) {
     console.error('Anonymous sign-in error:', error);

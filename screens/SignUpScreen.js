@@ -121,8 +121,11 @@ const validateForm = () => {
         });
 
         Alert.alert('Inicio de sesión', 'Ya tenías una cuenta. Has iniciado sesión correctamente.');
-      } catch (loginError) {
-        Alert.alert('Error al iniciar sesión', loginError.message);
+      } catch (error) {
+        const firstKey = Object.keys(error)[0];
+        const firstEntry = { [firstKey]: error[firstKey] };
+
+        Alert.alert('Error al iniciar sesión:', JSON.stringify(firstEntry, null, 2));
       }
     } else {
       const firstKey = Object.keys(error)[0];

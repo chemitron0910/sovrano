@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Button_style2 from "../Components/Button_style2";
+import Logo from '../Components/Logo';
 import { logout } from '../Services/authService';
 import { auth } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
@@ -20,26 +21,32 @@ export default function UserScreen() {
     hour < 12 ? 'Buenos días' : 'Buenas tardes';
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <View style={styles.container}>
-        <View style={{
-            width: windowWidth > 500 ? "70%" : "90%", 
-            height: windowHeight > 600 ? "60%" : "90%",
-            flexDirection: 'column', 
-            gap: 10
-            } }>
+    
+      <LinearGradient
+          colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
+          style={{ flex: 1 }}
+        >
+            <Logo/>
+            <View style={styles.container}>
           <Text style={styles.welcomeText}>
             {`${greeting}, ${username || 'invitado'} 👋 ¡Nos alegra verte en Sovrano!`}
           </Text>
+          <View style={{ padding: 10 }}>
           <Button_style2 title="Ir a servicios" onPress={()=>navigation.navigate("Nuestros servicios.")}
           ></Button_style2>
+          </View>
 
+          <View style={{ padding: 10 }}>
           <Button_style2 title="Agenda tu cita" onPress={()=>navigation.navigate("Agenda tu cita.")}>
           </Button_style2>
+          </View>
 
+          <View style={{ padding: 10 }}>
           <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate(".Historia de citas.")}>
           </Button_style2>
+          </View>
 
+          <View style={{ padding: 10 }}>
           <Button_style2 title="Salir" onPress={async () => {
             await logout();
             navigation.reset({
@@ -48,22 +55,20 @@ export default function UserScreen() {
             });
             }}>
           </Button_style2>
-        </View>
-    </View>
-    </SafeAreaView>
+          </View>
+          </View>
+      </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: "white",
-  },
   container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+      flex: 1,
+      backgroundColor: 'transparent',
+      alignContent: 'center', 
+      padding:10,
+      paddingTop: StatusBar.currentHeight || 50,
+    },
   text: {
     fontSize: 24,
     fontWeight: "bold",
