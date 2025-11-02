@@ -1,6 +1,6 @@
+import GradientBackground from '@/Components/GradientBackground';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar, StyleSheet, View, useWindowDimensions } from "react-native";
 import Button_style2 from "../Components/Button_style2";
 import Logo from '../Components/Logo';
@@ -17,10 +17,7 @@ export default function GuestScreen() {
 
   return (
 
-      <LinearGradient
-        colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
-        style={{ flex: 1 }}
-      >
+      <GradientBackground>
         <View style={styles.container}>
 
           <Logo/>
@@ -49,7 +46,7 @@ export default function GuestScreen() {
             </Button_style2>
 
         </View>
-        </LinearGradient>
+        </GradientBackground>
   );
 }
 

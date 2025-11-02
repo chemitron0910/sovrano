@@ -1,15 +1,23 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyText from '@/Components/typography/BodyText';
+import TitleText from '@/Components/typography/TitleText';
 import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
-  ActivityIndicator, Alert,
-  KeyboardAvoidingView, Platform,
-  ScrollView, StatusBar, StyleSheet, Text,
-  TextInput, View, useWindowDimensions
+  ActivityIndicator,
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions
 } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
-import GradientBackground from '../Components/GradientBackground';
-import Logo from '../Components/Logo';
 import { auth, db } from '../Services/firebaseConfig';
 
 export default function LoginScreen({ navigation }) {
@@ -62,9 +70,11 @@ export default function LoginScreen({ navigation }) {
           navigation.navigate('Usuario');
       }
     } catch (error) {
-      const firstKey = Object.keys(error)[0];
-      const firstEntry = { [firstKey]: error[firstKey] };
-      Alert.alert('Error', 'No se pudo iniciar sesión: ', JSON.stringify(firstEntry, null, 2));
+      console.log('Login error:', error);
+      console.log('Login error:', JSON.stringify(error, null, 2));
+      console.log('Trying login with:', email.trim(), 'Password length:', password.trim().length);
+
+      Alert.alert('Error', 'No se pudo iniciar sesión. Clave or email incorrecto');
     } finally {
       setLoading(false);
     }
@@ -92,9 +102,8 @@ export default function LoginScreen({ navigation }) {
           await sendPasswordResetEmail(auth, email.trim());
           Alert.alert('Correo enviado', 'Revisa tu bandeja de entrada para restablecer tu clave.');
         } catch (error) {
-            const firstKey = Object.keys(error)[0];
-            const firstEntry = { [firstKey]: error[firstKey] };
-            Alert.alert('Error', 'No se pudo enviar el correo de recuperación. ', JSON.stringify(firstEntry, null, 2));
+          console.error('Password reset error:', error);
+          Alert.alert('Error', 'No se pudo enviar el correo de recuperación.');
         }
         },
       },
@@ -103,32 +112,40 @@ export default function LoginScreen({ navigation }) {
 };
 
   return (
-    <GradientBackground>
+    <GradientBackground
+    colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
+    style={{ flex: 1 }}
+  >
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.loadingText}>Verificando credenciales...</Text>
         </View>
       )}
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-
+      
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <Logo/>
+
+        <View style={styles.logoContainer}>
+          <Image            
+            source={require('../assets/images/Logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+        />
+        </View>
+
+        <View style={styles.sovranoContainer}>
+        <TitleText>
+          Sovrano
+        </TitleText>
+        </View>
         <Text style={styles.welcomeText}>
-          Bienvenido a Sovrano
-        </Text>
-        <Text style={styles.welcomeText}>
-          Tu espacio de belleza y bienestar
+          Bienvenido a tu espacio de belleza con maestria, atención y exclusividad
         </Text>
           <View style={{ flexDirection: 'column', gap: 10 }}>
-            <Text>Correo electrónico</Text>
+            <BodyText>Correo electrónico</BodyText>
             <TextInput
               style={[
               styles.inputText,{ backgroundColor: '#f0f0f0' }
@@ -142,7 +159,7 @@ export default function LoginScreen({ navigation }) {
             />
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-            <Text>Clave</Text>
+            <BodyText>Clave</BodyText>
             <TextInput
               style={[
               styles.inputText,{ backgroundColor: '#f0f0f0' },
@@ -173,7 +190,6 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
       </ScrollView>
-      </KeyboardAvoidingView>
     </GradientBackground>
   );
 }
@@ -223,16 +239,35 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  logoContainer: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
+},
+
+logo: {
+  width: 100,
+  height: 100,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+},
 welcomeText: {
   fontSize: 18,
   fontWeight: '500',
   textAlign: 'center',
   marginBottom: 20,
   color: '#6a4e2e', // elegant brown-gold tone
+  fontFamily: 'Playfair-Bold',
 },
 scrollContainer: {
   paddingHorizontal: 20,
   paddingTop: 20,
   alignItems: 'stretch',
 },
+sovranoContainer:{
+  alignItems: 'center',     // centers horizontally
+}
 });
+

@@ -1,8 +1,8 @@
+import GradientBackground from '@/Components/GradientBackground';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
@@ -130,9 +130,7 @@ export default function GuestBookingScreen() {
         </View>
       )}
 
-    <LinearGradient
-    colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
-    style={{ flex: 1 }}>
+    <GradientBackground>
 
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -227,7 +225,7 @@ export default function GuestBookingScreen() {
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
-    </LinearGradient>
+    </GradientBackground>
     </SafeAreaView>
   );
 }
