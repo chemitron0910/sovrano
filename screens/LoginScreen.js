@@ -7,8 +7,6 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
-  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -18,6 +16,7 @@ import {
   useWindowDimensions
 } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
+import Logo from '../Components/Logo';
 import { auth, db } from '../Services/firebaseConfig';
 
 export default function LoginScreen({ navigation }) {
@@ -75,7 +74,7 @@ export default function LoginScreen({ navigation }) {
       console.log('Trying login with:', email.trim(), 'Password length:', password.trim().length);
 
       Alert.alert('Error', 'No se pudo iniciar sesión. Clave or email incorrecto');
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -112,10 +111,7 @@ export default function LoginScreen({ navigation }) {
 };
 
   return (
-    <GradientBackground
-    colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
-    style={{ flex: 1 }}
-  >
+    <GradientBackground>
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
@@ -125,70 +121,65 @@ export default function LoginScreen({ navigation }) {
       
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
+        keyboardShouldPersistTaps="handled">
 
-        <View style={styles.logoContainer}>
-          <Image            
-            source={require('../assets/images/Logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-        />
+        <View>
+          <Logo/>
         </View>
 
         <View style={styles.sovranoContainer}>
-        <TitleText>
-          Sovrano
-        </TitleText>
+          <TitleText>
+            Sovrano
+          </TitleText>
         </View>
-        <Text style={styles.welcomeText}>
-          Bienvenido a tu espacio de belleza con maestria, atención y exclusividad
-        </Text>
-          <View style={{ flexDirection: 'column', gap: 10 }}>
-            <BodyText>Correo electrónico</BodyText>
-            <TextInput
-              style={[
-              styles.inputText,{ backgroundColor: '#f0f0f0' }
-              ]}
-              placeholder="Entra tu correo electrónico"
-              value={email}
-              onChangeText={setEmail}
-              onFocus={() => setEmailFocused(true)}
-              onBlur={() => setEmailFocused(false)}
-              autoCapitalize="none"
-            />
+          <Text style={styles.welcomeText}>
+            Bienvenido a tu espacio de belleza con maestria, atención y exclusividad
+          </Text>
+        <View style={{ flexDirection: 'column', gap: 10 }}>
+          <BodyText>Correo electrónico</BodyText>
+          <TextInput
+            style={[
+            styles.inputText,{ backgroundColor: '#f0f0f0' }
+            ]}
+            placeholder="Entra tu correo electrónico"
+            value={email}
+            onChangeText={setEmail}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => setEmailFocused(false)}
+            autoCapitalize="none"
+          />
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-            <BodyText>Clave</BodyText>
-            <TextInput
-              style={[
-              styles.inputText,{ backgroundColor: '#f0f0f0' },
-              { borderColor: passwordFocused ? '#d46b37ff' : '#999' }
-              ]}
-              secureTextEntry
-              placeholder="Entra tu clave"
-              value={password}
-              onChangeText={setPassword}
-              onFocus={() => setPasswordFocused(true)}
-              onBlur={() => setPasswordFocused(false)}
-            />
+          <BodyText>Clave</BodyText>
+          <TextInput
+            style={[
+            styles.inputText,{ backgroundColor: '#f0f0f0' },
+            { borderColor: passwordFocused ? '#d46b37ff' : '#999' }
+            ]}
+            secureTextEntry
+            placeholder="Entra tu clave"
+            value={password}
+            onChangeText={setPassword}
+            onFocus={() => setPasswordFocused(true)}
+            onBlur={() => setPasswordFocused(false)}
+          />
             {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-            <Button_style2
-              title="Invitado"
-              onPress={() => navigation.navigate('Invitado')}
-            />
+          <Button_style2
+            title="Invitado"
+            onPress={() => navigation.navigate('Invitado')}
+          />
 
-            <Button_style2
-              title="Usuario registrado"
-              onPress={handleLogin}
-            />
+          <Button_style2
+            title="Usuario registrado"
+            onPress={handleLogin}
+          />
 
-            <Button_style2
-              title="¿Olvidaste tu clave?"
-              onPress={handleForgotPassword}
-            />
-          </View>
+          <Button_style2
+            title="¿Olvidaste tu clave?"
+            onPress={handleForgotPassword}
+          />
+        </View>
       </ScrollView>
     </GradientBackground>
   );
@@ -213,12 +204,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   inputText: {
-  height: 40,
-  borderWidth: 1,
-  paddingHorizontal: 10,
-  borderRadius: 5,
-  marginBottom: 20,
-},
+    height: 40,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    marginBottom: 20,
+  },
   errorText: {
     color: 'red',
     marginBottom: 10,
@@ -239,35 +230,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-  logoContainer: {
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
-},
-
-logo: {
-  width: 100,
-  height: 100,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.2,
-  shadowRadius: 4,
-},
-welcomeText: {
-  fontSize: 18,
-  fontWeight: '500',
-  textAlign: 'center',
-  marginBottom: 20,
-  color: '#6a4e2e', // elegant brown-gold tone
-  fontFamily: 'Playfair-Bold',
-},
-scrollContainer: {
-  paddingHorizontal: 20,
-  paddingTop: 20,
-  alignItems: 'stretch',
-},
-sovranoContainer:{
-  alignItems: 'center',     // centers horizontally
-}
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#6a4e2e', // elegant brown-gold tone
+    fontFamily: 'Playfair-Bold',
+  },
+  scrollContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    alignItems: 'stretch',
+  },
+  sovranoContainer:{
+    alignItems: 'center',     // centers horizontally
+  }
 });
 

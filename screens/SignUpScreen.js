@@ -1,5 +1,6 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -147,7 +148,7 @@ const validateForm = () => {
           <Text style={styles.loadingText}>Creando tu usuario...</Text>
       </View>
     )}
-    <LinearGradient
+    <GradientBackground
     colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
     style={{ flex: 1 }}>
     <ScrollView
@@ -155,34 +156,34 @@ const validateForm = () => {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.form}>
-        <Text>Nombre de usuario</Text>
+        <BodyBoldText>Nombre de usuario</BodyBoldText>
         <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
         placeholder='Entra tu nombre de usuario' placeholderTextColor="#888" value={username} onChangeText={setUsername}/>
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
 
-        <Text>Correo electronico</Text>
+        <BodyBoldText>Correo electronico</BodyBoldText>
         <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
         autoCapitalize="none"
         placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
-        <Text>Confirma correo electronico</Text>
+        <BodyBoldText>Confirma correo electronico</BodyBoldText>
         <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
         autoCapitalize="none"
         placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={emailConfirmation} onChangeText={setEmailConfirmation}/>
         {errors.emailConfirmation ? <Text style={styles.errorText}>{errors.emailConfirmation}</Text> : null}
 
-        <Text>Telefono</Text>
+        <BodyBoldText>Telefono</BodyBoldText>
         <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
         placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
         {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
-        <Text>Entra tu clave</Text>
+        <BodyBoldText>Entra tu clave</BodyBoldText>
         <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]} secureTextEntry
         placeholder='Entra tu clave' placeholderTextColor="#888" value={password} onChangeText={setPassword}/>
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
-        <Text>Confirma tu clave</Text>
+        <BodyBoldText>Confirma tu clave</BodyBoldText>
         <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]} secureTextEntry
         placeholder='Re-entra tu clave' placeholderTextColor="#888" value={passwordConfirmation} onChangeText={setPasswordConfirmation}/>
         {errors.passwordConfirmation ? <Text style={styles.errorText}>{errors.passwordConfirmation}</Text> : null}
@@ -198,16 +199,12 @@ const validateForm = () => {
         </View>    
       </View>
     </ScrollView>
-    </LinearGradient>
+    </GradientBackground>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: "#b00d8fff",
-  },
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -273,7 +270,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   scrollContainer: {
-  paddingTop: 20,
   alignItems: 'stretch',
 },
 });

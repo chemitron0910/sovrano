@@ -1,7 +1,10 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
+import BodyText from '@/Components/typography/BodyText';
+import SubTitleText from '@/Components/typography/SubTitleText';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Platform, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, StatusBar, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import Logo from '../Components/Logo';
 
@@ -41,17 +44,27 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
     return (
       <View style={styles.container}>
       
-      <LinearGradient
-          colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
-          style={[{ flex: 1, padding:10}]}>
-            <View style={{ paddingHorizontal: 24 }}>
+      <GradientBackground>
+            <View style={{ paddingHorizontal: 24, gap: 10 }}>
             <Logo/>
-            <Text style={styles.title}>Gracias por registrarte 🎉</Text>
-            <Text style={styles.title}>Por favor usa el enlace enviado a tu correo electronico para verificacion de tu cuenta</Text>
-            <Text style={styles.title}>Mira tu folder de correo no deseado si no lo encuentras</Text>
-            <Text style={styles.label}>Nombre: <Text style={styles.value}>{username}</Text></Text>
-            <Text style={styles.label}>Correo electronico: <Text style={styles.value}>{email}</Text></Text>
-            <Text style={styles.label}>Usuario ID: <Text style={styles.value}>{userId}</Text></Text>
+            <View style={{marginLeft: 24 }}>
+              <SubTitleText>Gracias por registrarte</SubTitleText>
+            </View>
+            <BodyBoldText>Por favor usa el enlace enviado a tu correo electronico para verificacion de tu cuenta</BodyBoldText>
+            <BodyBoldText>Mira tu folder de correo no deseado si no lo encuentras</BodyBoldText>
+
+            <View style={styles.inlineText}>
+              <BodyBoldText>Nombre: </BodyBoldText>
+              <BodyText>{username}</BodyText>
+            </View>
+            <View style={styles.inlineText}>
+              <BodyBoldText>Correo electronico: </BodyBoldText>
+              <BodyText>{email}</BodyText>
+            </View>
+            <View style={styles.inlineText}>
+              <BodyBoldText>Usuario ID: </BodyBoldText>
+              <BodyText>{userId}</BodyText>
+            </View>
 
             <View style={{ padding: 24 }}>
             <Button_style2
@@ -59,7 +72,7 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
               onPress={()=>navigation.navigate("Inicio-Invitado")}/>
             </View>
             </View>
-      </LinearGradient>
+      </GradientBackground>
     </View>
   );
 
@@ -100,5 +113,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
+  },
+  inlineText: {
+    flexDirection: 'row',
+    alignItems: 'center', // optional: aligns text vertically
   },
 });

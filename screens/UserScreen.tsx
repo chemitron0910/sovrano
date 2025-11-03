@@ -1,6 +1,6 @@
+import GradientBackground from '@/Components/GradientBackground';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Button_style2 from "../Components/Button_style2";
 import Logo from '../Components/Logo';
@@ -22,15 +22,17 @@ export default function UserScreen() {
 
   return (
     
-      <LinearGradient
-          colors={['#fffbe6', '#f5e1c0']} // cream to champagne gold
-          style={{ flex: 1 }}
-        >
-            <Logo/>
-            <View style={styles.container}>
+      <GradientBackground>
+        <Logo/>
+        <View style={styles.container}>
           <Text style={styles.welcomeText}>
-            {`${greeting}, ${username || 'invitado'} 👋 ¡Nos alegra verte en Sovrano!`}
+            {`${greeting}, ${username || 'invitado'} 👋!`}
           </Text>
+
+          <Text style={styles.welcomeText}>
+            {`¡Nos alegra verte en Sovrano!`}
+          </Text>
+          
           <View style={{ padding: 10 }}>
           <Button_style2 title="Ir a servicios" onPress={()=>navigation.navigate("Nuestros servicios.")}
           ></Button_style2>
@@ -56,8 +58,8 @@ export default function UserScreen() {
             }}>
           </Button_style2>
           </View>
-          </View>
-      </LinearGradient>
+        </View>
+      </GradientBackground>
   );
 }
 
@@ -67,7 +69,7 @@ const styles = StyleSheet.create({
       backgroundColor: 'transparent',
       alignContent: 'center', 
       padding:10,
-      paddingTop: StatusBar.currentHeight || 50,
+      paddingTop: StatusBar.currentHeight || 0,
     },
   text: {
     fontSize: 24,
@@ -75,10 +77,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   welcomeText: {
-  fontSize: 22,
-  fontWeight: '600',
-  textAlign: 'center',
-  marginBottom: 20,
-  color: '#333',
-}
+    fontFamily: 'Playfair-Regular', // ✅ Your custom font
+    fontSize: 18,
+    color: '#3e3e3e', // Optional: match Sovrano’s palette
+    textAlign: 'center',
+    marginBottom: 16,
+  },
 });

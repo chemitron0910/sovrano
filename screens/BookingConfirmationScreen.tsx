@@ -1,8 +1,12 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
+import BodyText from '@/Components/typography/BodyText';
+import SubTitleText from '@/Components/typography/SubTitleText';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Image, Platform, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
+import Logo from '../Components/Logo';
 import { RootStackParamList } from '../src/types';
 
 type BookingConfirmationScreenNavigationProp = NativeStackNavigationProp<
@@ -29,82 +33,78 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
     const { service, date, time, stylistName, bookingId } = route.params;
 
     return (
-    <SafeAreaView style={styles.safeContainer}>
-
-      <View style={styles.logoContainer}>
-          <Image            
-            source={require('../assets/images/Logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-        />
-        </View>
 
       <View style={styles.container}>
-        <View style={{
-            width: windowWidth > 500 ? "70%" : "90%",
-            flexDirection: 'column', 
-            gap: 10
-            } }>
-            <Text style={styles.title}>Gracias por agendar tu cita 🎉</Text>
-            <Text style={styles.label}>Estilista: <Text style={styles.value}>{stylistName}</Text></Text>
-            <Text style={styles.label}>Servicio: <Text style={styles.value}>{service}</Text></Text>
-            <Text style={styles.label}>Fecha: <Text style={styles.value}>{date}</Text></Text>
-            <Text style={styles.label}>Hora: <Text style={styles.value}>{time}</Text></Text>
-            <Text style={styles.label}>Cita ID: <Text style={styles.value}>{bookingId}</Text></Text>    
-
-            <Button_style2
-              title="Vuelve al inicio"
-              onPress={() => {
-              if (route.params.role === 'Usuario') {
-                navigation.navigate('Inicio-Usuario');
-              } else {
-                navigation.navigate('Inicio-Invitado');
-              }
-              }}
-            />
-
+      <GradientBackground>
+        <View>
+          <Logo/>
         </View>
+        <View style={{
+          gap: 10
+          } }>
+          <View style={{marginLeft: 24 }}>
+            <SubTitleText>Gracias por agendar tu cita</SubTitleText>
+          </View>
+          <View style={styles.inlineText}>
+            <BodyBoldText>Estilista: </BodyBoldText>
+            <BodyText>{stylistName}</BodyText>
+          </View>
+          <View style={styles.inlineText}>
+            <BodyBoldText>Servicio: </BodyBoldText>
+            <BodyText>{service}</BodyText>
+          </View>
+          <View style={styles.inlineText}>
+            <BodyBoldText>Fecha: </BodyBoldText>
+            <BodyText>{date}</BodyText>
+          </View>
+          <View style={styles.inlineText}>
+            <BodyBoldText>Hora: </BodyBoldText>
+            <BodyText>{time}</BodyText>
+          </View>
+          <View style={styles.inlineText}>
+            <BodyBoldText>Cita ID: </BodyBoldText>
+            <BodyText>{bookingId}</BodyText>
+          </View>  
+
+          <Button_style2
+            title="Vuelve al inicio"
+            onPress={() => {
+            if (route.params.role === 'usuario') {
+              navigation.navigate('Inicio-Usuario');
+            } else {
+              navigation.navigate('Inicio-Invitado');
+            }
+            }}
+          />
+        </View>
+      </GradientBackground>
     </View>
-    </SafeAreaView>
   );
 
 }
 
 const styles = StyleSheet.create({
-    safeContainer: {
-        flex: 1,
-        backgroundColor: "white",
-     },
-    container: {
-        flex: 1,
-        padding: 24,
-        backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 24,
-        textAlign: 'center',
-    },
-    label: {
-        fontSize: 18,
-        marginBottom: 12,
-    },
-    value: {
-        fontWeight: '600',
-    },
-    logoContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
-    },
-    
-    logo: {
-      width: 100,
-      height: 100,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-    },
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    alignContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  label: {
+    fontSize: 18,
+    marginBottom: 12,
+  },
+  value: {
+    fontWeight: '600',
+  },
+  inlineText: {
+    flexDirection: 'row',
+    alignItems: 'center', // optional: aligns text vertically
+    marginLeft: 24,
+  },
 });

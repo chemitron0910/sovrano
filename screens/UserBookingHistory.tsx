@@ -1,3 +1,5 @@
+import BodyBoldText from '@/Components/typography/BodyBoldText';
+import BodyText from '@/Components/typography/BodyText';
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
@@ -43,19 +45,26 @@ export default function UserBookingHistory() {
     });
 
     return (
+      
       <View style={styles.bookingItem}>
-        <Text style={styles.bookingText}>Servicio: {item.service}</Text>
-        <Text style={styles.bookingText}>Estilista: {item.stylistName}</Text>
-        <Text style={styles.bookingText}>
-          Fecha/Hora: {formattedDate} / {formattedTime} {item.status}
-        </Text>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Servicio: </BodyBoldText>
+          <BodyText>{item.service}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Estilista: </BodyBoldText>
+          <BodyText>{item.stylistName}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Fecha/Hora: </BodyBoldText>
+          <BodyText>{formattedDate} / {formattedTime}</BodyText>
+        </View>
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Historial de Citas</Text>
       <FlatList
         data={bookings}
         keyExtractor={(item) => item.id}
@@ -70,23 +79,20 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 10,
-  },
   bookingItem: {
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-  },
-  bookingText: {
-    fontSize: 16,
   },
   empty: {
     fontSize: 16,
     color: '#999',
     textAlign: 'center',
     marginTop: 40,
+  },
+  inlineText: {
+    flexDirection: 'row',
+    alignItems: 'center', // optional: aligns text vertically
+    marginLeft: 24,
   },
 });

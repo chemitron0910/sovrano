@@ -16,52 +16,50 @@ export default function GuestScreen() {
   const windowHeight = windowDimensions.height;
 
   return (
+    <GradientBackground>
+      <View style={styles.container}>
+        <Logo/>
+        <Button_style2 
+          title="Nuestros servicios" 
+          onPress={()=>navigation.navigate("Nuestros servicios")}>
+        </Button_style2>
 
-      <GradientBackground>
-        <View style={styles.container}>
+        <Button_style2 
+          title="Agenda tu cita" 
+          onPress={()=>navigation.navigate("Agenda tu cita")}>
+        </Button_style2>
 
-          <Logo/>
+        <Button_style2
+          title="Registrarse"
+          onPress={() => navigation.navigate('Registrarse')}
+        />
 
-            <Button_style2 
-                title="Nuestros servicios" 
-                onPress={()=>navigation.navigate("Nuestros servicios")}>
-            </Button_style2>
+        <Button_style2 title="Salir" onPress={async () => {
+          await logout();
+          navigation.reset({
+          index: 0,
+          routes: [{ name: 'Inicio-Sovrano' }],
+          });
+          }}>
+        </Button_style2>
 
-            <Button_style2 
-                title="Agenda tu cita" 
-                onPress={()=>navigation.navigate("Agenda tu cita")}>
-            </Button_style2>
-
-            <Button_style2
-                title="Registrarse"
-                onPress={() => navigation.navigate('Registrarse')}
-            />
-            <Button_style2 title="Salir" onPress={async () => {
-              await logout();
-              navigation.reset({
-              index: 0,
-              routes: [{ name: 'Inicio-Sovrano' }],
-              });
-              }}>
-            </Button_style2>
-
-        </View>
-        </GradientBackground>
+      </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   
   container: {
-  flex: 1,
-  backgroundColor: 'transparent',
-  paddingTop: StatusBar.currentHeight || 50,
-  justifyContent: 'flex-start',      // ✅ vertical centering
-  alignItems: 'center',          // ✅ horizontal centering
-  alignSelf: 'center',              // ✅ ensures horizontal centering
-  flexDirection: 'column',
-  gap: 16,                          // ✅ slightly more spacing between buttons
-},
+    flex: 1,
+    backgroundColor: 'transparent',
+    paddingTop: StatusBar.currentHeight || 50,
+    justifyContent: 'flex-start',      // ✅ vertical centering
+    alignItems: 'center',          // ✅ horizontal centering
+    alignSelf: 'center',              // ✅ ensures horizontal centering
+    flexDirection: 'column',
+    gap: 16,                          // ✅ slightly more spacing between buttons
+  },
   text: {
     fontSize: 24,
     fontWeight: "bold",

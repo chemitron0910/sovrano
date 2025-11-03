@@ -1,7 +1,10 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
@@ -48,6 +51,8 @@ export default function BookingScreen() {
     const profile = await fetchUserProfile(user.uid);
     if (profile?.phoneNumber) {
       setPhoneNumber(profile.phoneNumber);
+    }
+    if (profile?.role) {;
       setRole(profile.role);
     }
   };
@@ -122,62 +127,61 @@ export default function BookingScreen() {
   }
 };
 
-  return (
+return (
     
-    <SafeAreaView
-      style={styles.safeContainer}
-      edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : undefined}
-    >
-      {loading && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loadingText}>Guardando tu cita...</Text>
-        </View>
-      )}
+  <SafeAreaView
+    style={styles.safeContainer}
+    edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : undefined}
+  >
+  {loading && (
+    <View style={styles.overlay}>
+      <ActivityIndicator size="large" color="#fff" />
+        <Text style={styles.loadingText}>Guardando tu cita...</Text>
+    </View>
+  )}
 
-      {showPicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
-              onChange={(e, selectedDate) => {
-              setShowPicker(false);
-              if (selectedDate) setDate(selectedDate);
-              }}
-              {...(Platform.OS === 'ios' ? { textColor: 'black' } : {})} // ✅ only apply on iOS
-            />
-            )}
+  {showPicker && (
+    <DateTimePicker
+      value={date}
+      mode="date"
+      display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+      onChange={(e, selectedDate) => {
+      setShowPicker(false);
+      if (selectedDate) setDate(selectedDate);
+      }}
+      {...(Platform.OS === 'ios' ? { textColor: 'black' } : {})} // ✅ only apply on iOS
+    />
+    )}
 
-      {showTimePicker && (
-  <DateTimePicker
-    value={date}
-    mode="time"
-    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-    onChange={(e, selectedTime) => {
+  {showTimePicker && (
+    <DateTimePicker
+      value={date}
+      mode="time"
+      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+      onChange={(e, selectedTime) => {
       setShowTimePicker(false);
       if (selectedTime) setDate(selectedTime);
-    }}
-  />
-)}
+      }}
+    />
+  )}
 
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}>
+  <GradientBackground>
+  <KeyboardAvoidingView
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    style={{ flex: 1 }}>
+    
     <ScrollView 
       style={{ flex: 1 }}
       contentContainerStyle={styles.scrollContent}>
         <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
           <View style={styles.pickerWrapper}>
-          <Text style={styles.pickerLabel}>Select Service</Text>
+          <BodyBoldText style={styles.pickerLabel}>Select Service</BodyBoldText>
+            <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
             <Picker
               selectedValue={selectedServiceId}
               onValueChange={(value) => setSelectedServiceId(value)}
               mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-              style={[
-                styles.picker,
-                Platform.OS === 'android' && { color: '#004d40' },
-                ]}
+              style={[styles.picker, { backgroundColor: '#E9E4D4' }]}
               itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
             >
             <Picker.Item label="Selecciona..." value={null} />
@@ -189,30 +193,32 @@ export default function BookingScreen() {
               />
             ))}
             </Picker>
+            </LinearGradient>
           </View>
-          <Text style={styles.label}>Escoge fecha y hora</Text>
+          <BodyBoldText style={styles.label}>Escoge fecha y hora</BodyBoldText>
             <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
               <Text>{date.toLocaleString()}</Text>
             </TouchableOpacity>
             
 
-          <Text style={styles.label}>Tu nombre</Text>
+          <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
           <View style={styles.readOnlyField}>
             <Text>{guestName || 'No disponible'}</Text>
           </View>
 
-          <Text style={styles.label}>Correo electrónico</Text>
+          <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
           <View style={styles.readOnlyField}>
             <Text>{email || 'No disponible'}</Text>
           </View>
 
-          <Text style={styles.label}>Número telefónico</Text>
+          <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
           <View style={styles.readOnlyField}>
             <Text>{phoneNumber || 'No disponible'}</Text>
           </View>
 
-          <Text style={styles.label}>Selecciona estilista</Text>
+          <BodyBoldText style={styles.label}>Selecciona estilista</BodyBoldText>
           <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
+          <LinearGradient colors={['#DEC89C', '#D1B380']}>
           <Picker
             selectedValue={selectedStylist?.id || ''}
             onValueChange={(value) => {
@@ -220,23 +226,22 @@ export default function BookingScreen() {
             setSelectedStylist(stylist || null);
             }}
             mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-          style={[
-            styles.picker,
-            Platform.OS === 'android' && { color: '#004d40' },
-          ]}
-          itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-        >
+            style={[styles.picker]}
+            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+          >
           <Picker.Item label="Selecciona..." value="" />
             {stylists.map(stylist => (
             <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
             ))}
           </Picker>
-
+          </LinearGradient>
           </View>
 
-          <Button_style2
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
               title="Confirma tu cita"
               onPress={handleBooking}/>
+          </View>
 
           <View style={{ marginTop: 12 }}>
             <Button_style2
@@ -245,8 +250,9 @@ export default function BookingScreen() {
           </View>
         </View>
     </ScrollView>
-    </KeyboardAvoidingView>
-    </SafeAreaView>
+  </KeyboardAvoidingView>
+  </GradientBackground>
+</SafeAreaView>
   );
 }
 
@@ -316,11 +322,9 @@ picker: {
     },
     android: {
       height: 50,
-      color: '#004d40',
       justifyContent: 'center',
     },
   }),
-  backgroundColor: '#e0f7fa',
   borderRadius: 6,
   borderWidth: 1,
   borderColor: '#00796b',

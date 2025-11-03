@@ -11,7 +11,7 @@ const Stack = createNativeStackNavigator();
 export default function LoginStack() {
   return (
     <Stack.Navigator screenOptions={{
-    headerTitleAlign: 'center'}}>
+      headerTitleAlign: 'center'}}>
       <Stack.Screen name="Inicio-Sovrano" component={LoginScreen} options={{ title: '' }}/>
       <Stack.Screen name="Usuario" component={UserStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Empleado" component={StaffStack} options={{headerBackVisible: false }}/>

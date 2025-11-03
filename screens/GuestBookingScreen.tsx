@@ -1,4 +1,5 @@
 import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
@@ -21,21 +22,21 @@ import { RootStackParamList } from '../src/types';
 
 export default function GuestBookingScreen() {
 
-    const windowDimensions = useWindowDimensions();
-    const windowWidth = windowDimensions.width;
-    const windowHeight = windowDimensions.height;
-    const [service, setService] = useState('');
-    const [date, setDate] = useState(new Date());
-    const [showPicker, setShowPicker] = useState(false);
-    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const [loading, setLoading] = useState(false);
-     const [stylists, setStylists] = useState<{ id: string; name: string }[]>([]);
-    const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
-    const [guestName, setGuestName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const services = useServices();
-    const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const windowDimensions = useWindowDimensions();
+  const windowWidth = windowDimensions.width;
+  const windowHeight = windowDimensions.height;
+  const [service, setService] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [loading, setLoading] = useState(false);
+  const [stylists, setStylists] = useState<{ id: string; name: string }[]>([]);
+  const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
+  const [guestName, setGuestName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const services = useServices();
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   useEffect(() => {
   const authenticateGuest = async () => {
@@ -48,7 +49,7 @@ export default function GuestBookingScreen() {
     }
   };
   authenticateGuest();
-}, []);
+  }, []);
 
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function GuestBookingScreen() {
     }
   };
   loadStylists();
-}, []);
+  }, []);
 
   const selectedService = services.find(s => s.id === selectedServiceId);
 
@@ -115,14 +116,13 @@ export default function GuestBookingScreen() {
   } finally {
     setLoading(false); // ✅ hide spinner
   }
-};
+  };
 
   return (
     
     <SafeAreaView
       style={styles.safeContainer}
-      edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : undefined}
-    >
+      edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : undefined}>
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
@@ -131,102 +131,97 @@ export default function GuestBookingScreen() {
       )}
 
     <GradientBackground>
-
         <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}>
-            <ScrollView 
-                style={{ flex: 1 }}
-                contentContainerStyle={styles.scrollContent}>
-                <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
-                    <Text style={styles.label}>Select Service</Text>
-                    <Picker
-                        selectedValue={selectedServiceId}
-                        onValueChange={(value) => setSelectedServiceId(value)}
-                        mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-                        style={[styles.picker, { backgroundColor: '#f0f0f0' }]}
-                        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-                    >
-                    <Picker.Item label="Selecciona..." value={null} />
-                    {services.map((service) => (
-                    <Picker.Item
-                        key={service.id}
-                        label={`${service.name} (${service.duration})`}
-                        value={service.id}
-                    />
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
+          <ScrollView 
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.scrollContent}>
+            <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
+              <BodyBoldText>Select Service</BodyBoldText>
+              <Picker
+                selectedValue={selectedServiceId}
+                onValueChange={(value) => setSelectedServiceId(value)}
+                mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+                style={[styles.picker, { backgroundColor: '#f0f0f0' }]}
+                itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}>
+                <Picker.Item label="Selecciona..." value={null} />
+                  {services.map((service) => (
+                <Picker.Item
+                  key={service.id}
+                  label={`${service.name} (${service.duration})`}
+                  value={service.id}/>
+                  ))}
+              </Picker>
+
+              <BodyBoldText style={styles.label}>Escoge fecha y hora</BodyBoldText>
+              <TouchableOpacity onPress={() => setShowPicker(true)} 
+                style={[styles.input, { backgroundColor: '#f0f0f0' }]}>
+              <Text>{date.toLocaleString()}</Text>
+              </TouchableOpacity>
+                {showPicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="datetime"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(e, selectedDate) => {
+                    setShowPicker(false);
+                    if (selectedDate) setDate(selectedDate);
+                    }}
+                    textColor="black"/>
+                )}
+
+              <BodyBoldText style={styles.label}>Nombre de usuario</BodyBoldText>
+              <TextInput 
+                style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                placeholder='Entra tu nombre' placeholderTextColor="#888" value={guestName} onChangeText={setGuestName}/>
+
+              <BodyBoldText style={styles.label}>Correo electronico</BodyBoldText>
+              <TextInput 
+                style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                autoCapitalize="none"
+                placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
+
+              <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
+              <TextInput 
+                style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
+
+              <BodyBoldText style={styles.label}>Selecciona estilista</BodyBoldText>
+              <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
+                <Picker
+                  selectedValue={selectedStylist?.id || ''}
+                  onValueChange={(value) => {
+                  const stylist = stylists.find(s => s.id === value);
+                  setSelectedStylist(stylist || null);
+                  }}
+                  mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+                  style={[styles.picker, { backgroundColor: '#f0f0f0' }]}
+                  itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}>
+                  <Picker.Item label="Selecciona..." value="" />
+                    {stylists.map(stylist => (
+                  <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
                     ))}
-                    </Picker>
+                </Picker>
 
-                    <Text style={styles.label}>Escoge fecha y hora</Text>
-                    <TouchableOpacity onPress={() => setShowPicker(true)} 
-                      style={[styles.input, { backgroundColor: '#f0f0f0' }]}>
-                        <Text>{date.toLocaleString()}</Text>
-                    </TouchableOpacity>
-                        {showPicker && (
-                        <DateTimePicker
-                            value={date}
-                            mode="datetime"
-                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                            onChange={(e, selectedDate) => {
-                            setShowPicker(false);
-                            if (selectedDate) setDate(selectedDate);
-                            }}
-                            textColor="black"
-                        />
-                        )}
+              </View>
 
-                        <Text style={styles.label}>Nombre de usuario</Text>
-                        <TextInput 
-                          style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
-                          placeholder='Entra tu nombre' placeholderTextColor="#888" value={guestName} onChangeText={setGuestName}/>
+              <View style={{ marginTop: 12 }}>
+                <Button_style2
+                  title="Confirma tu cita"
+                  onPress={handleBooking}/>
+              </View>
 
-                        <Text style={styles.label}>Correo electronico</Text>
-                        <TextInput 
-                          style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
-                          autoCapitalize="none"
-                          placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
-
-                    <Text style={styles.label}>Número telefónico</Text>
-                        <TextInput 
-                          style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
-                          placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
-
-                    <Text style={styles.label}>Selecciona estilista</Text>
-                    <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
-                    <Picker
-                        selectedValue={selectedStylist?.id || ''}
-                        onValueChange={(value) => {
-                        const stylist = stylists.find(s => s.id === value);
-                        setSelectedStylist(stylist || null);
-                        }}
-                        mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-                        style={[styles.picker, { backgroundColor: '#f0f0f0' }]}
-                        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-                    >
-                    <Picker.Item label="Selecciona..." value="" />
-                        {stylists.map(stylist => (
-                    <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
-                    ))}
-                    </Picker>
-
-                    </View>
-
-                    <View style={{ marginTop: 12 }}>
-                    <Button_style2
-                      title="Confirma tu cita"
-                      onPress={handleBooking}/>
-                    </View>
-
-                    <View style={{ marginTop: 12 }}>
-                    <Button_style2
-                      title="Vuelve al inicio"
-                      onPress={() => navigation.navigate('Inicio-Invitado')}/>
-                    </View>
-                </View>
-            </ScrollView>
+              <View style={{ marginTop: 12 }}>
+                <Button_style2
+                  title="Vuelve al inicio"
+                  onPress={() => navigation.navigate('Inicio-Invitado')}/>
+              </View>
+            </View>
+          </ScrollView>
         </KeyboardAvoidingView>
     </GradientBackground>
-    </SafeAreaView>
+  </SafeAreaView>
   );
 }
 
@@ -273,13 +268,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   readOnlyField: {
-  borderWidth: 1,
-  borderColor: '#ccc',
-  borderRadius: 8,
-  padding: 12,
-  marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
   backgroundColor: '#f5f5f5',
-},
+  },
 scrollContent: {
   justifyContent: 'flex-start',
   paddingBottom: 40,

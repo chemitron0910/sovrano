@@ -20,20 +20,17 @@ export default function Index() {
   }
 
   loadFonts();
-}, []);
+  }, []);
 
 
   if (!fontsLoaded) {
-  console.log('Fonts not loaded yet — showing loading screen');
   return (
     <View style={styles.activityContainer}>
       <ActivityIndicator size="large" />
       <Text style={styles.loadingText}>Cargando tipografía elegante…</Text>
     </View>
   );
-}
-
-console.log('Fonts loaded — rendering LoginStack');
+  }
 
   return (
      <LoginStack />
@@ -48,7 +45,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-    activityContainer: {
+  activityContainer: {
     flex: 1,
     backgroundColor: 'blue',
     paddingTop: Platform.OS === 'android' ? 25 : 0,
