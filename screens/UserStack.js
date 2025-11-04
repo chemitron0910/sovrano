@@ -42,7 +42,7 @@ export default function UserStack() {
         }}
       />
       <Stack.Screen
-        name=".Historia de citas."
+        name="Historial de citas"
         component={UserBookingHistory}
         options={{
         headerBackVisible: true,

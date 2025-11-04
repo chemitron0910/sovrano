@@ -35,7 +35,7 @@ export type RootStackParamList = {
   "Calendario de citas.": undefined; //Staff
   "Historia de citas": undefined; //Admin
   "Historia de citas.": undefined; //Staff
-  ".Historia de citas.": undefined; //Usuario
+  "Historial de citas": undefined; //Usuario
   "Nuestros servicios": undefined; //Invitado
   "Nuestros servicios.": undefined; //Usuario
   "Agenda tu cita": undefined; //Invitado

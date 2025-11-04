@@ -1,3 +1,6 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
+import BodyText from '@/Components/typography/BodyText';
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
@@ -48,18 +51,26 @@ export default function StaffBookingHistory() {
 
     return (
       <View style={styles.bookingItem}>
-        <Text style={styles.bookingText}>Servicio: {item.service}</Text>
-        <Text style={styles.bookingText}>Cliente: {item.guestName}</Text>
-        <Text style={styles.bookingText}>
-          Fecha/Hora: {formattedDate} / {formattedTime} {item.status}
-        </Text>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Servicio: </BodyBoldText>
+          <BodyText>{item.service}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Cliente: </BodyBoldText>
+          <BodyText>{item.guestName}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Fecha/Hora: </BodyBoldText>
+          <BodyText>{formattedDate} / {formattedTime}</BodyText>
+        </View>
       </View>
     );
   };
 
   return (
+    <GradientBackground>
     <View style={styles.container}>
-      <Text style={styles.title}>Historial de Reservas (últimos 30 días)</Text>
+      <BodyBoldText style={styles.centered}>Ultimos 30 días</BodyBoldText>
       <FlatList
         data={bookings}
         keyExtractor={(item) => item.id}
@@ -67,6 +78,7 @@ export default function StaffBookingHistory() {
         ListEmptyComponent={<Text style={styles.empty}>No hay reservas pasadas.</Text>}
       />
     </View>
+    </GradientBackground>
   );
 }
 
@@ -74,10 +86,8 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 10,
+  centered: {
+    textAlign: 'center',    
   },
   bookingItem: {
     paddingVertical: 8,
@@ -92,5 +102,10 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     marginTop: 40,
+  },
+  inlineText: {
+    flexDirection: 'row',
+    alignItems: 'center', // optional: aligns text vertically
+    marginLeft: 24,
   },
 });

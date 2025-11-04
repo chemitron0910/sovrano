@@ -1,8 +1,9 @@
+import GradientBackground from '@/Components/GradientBackground';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
+import Logo from '../Components/Logo';
 import { logout } from '../Services/authService';
 import { auth } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
@@ -20,17 +21,18 @@ export default function AdminScreen() {
     hour < 12 ? 'Buenos días' : 'Buenas tardes';
 
   return (
-    
-    <SafeAreaView style={styles.safeContainer}>
+    <GradientBackground>
+    <Logo/>
       <View style={styles.container}>
         <View style={{
-            width: windowWidth > 500 ? "70%" : "90%", 
-            height: windowHeight > 600 ? "60%" : "90%",
             flexDirection: 'column', 
             gap: 10
             } }>
           <Text style={styles.welcomeText}>
-            {`${greeting}, ${username || 'invitado'} 👋 ¡Nos alegra verte en Sovrano!`}
+            {`${greeting}, ${username || 'invitado'} 👋`}
+          </Text>
+          <Text style={styles.welcomeText}>
+            {`¡Nos alegra verte en Sovrano!`}
           </Text>
           <Button_style2 title="Assignar responsabilidad" onPress={()=>navigation.navigate("Assignar responsabilidad")}
           ></Button_style2>
@@ -54,17 +56,12 @@ export default function AdminScreen() {
           </Button_style2>
         </View>
     </View>
-    </SafeAreaView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: "white",
-  },
   container: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -74,10 +71,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   welcomeText: {
-  fontSize: 22,
-  fontWeight: '600',
-  textAlign: 'center',
-  marginBottom: 20,
-  color: '#333',
-}
+    fontFamily: 'Playfair-Bold', // ✅ Your custom font
+    fontSize: 18,
+    color: '#3e3e3e', // Optional: match Sovrano’s palette
+    textAlign: 'center',
+    marginBottom: 16,
+  },
 });

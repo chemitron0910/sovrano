@@ -44,7 +44,7 @@ export default function UserScreen() {
           </View>
 
           <View style={{ padding: 10 }}>
-          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate(".Historia de citas.")}>
+          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historial de citas")}>
           </Button_style2>
           </View>
 

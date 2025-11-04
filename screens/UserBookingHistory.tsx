@@ -1,3 +1,4 @@
+import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import React, { useEffect, useState } from 'react';
@@ -64,6 +65,7 @@ export default function UserBookingHistory() {
   };
 
   return (
+    <GradientBackground>
     <View style={styles.container}>
       <FlatList
         data={bookings}
@@ -72,6 +74,7 @@ export default function UserBookingHistory() {
         ListEmptyComponent={<Text style={styles.empty}>No hay reservas pasadas.</Text>}
       />
     </View>
+    </GradientBackground>
   );
 }
 

@@ -1,7 +1,10 @@
-import { checkUsername } from '@/hooks/usernameValidation';
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
 import { Picker } from '@react-native-picker/picker';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
+import Button_style2 from "../Components/Button_style2";
 import { ROLES } from '../constants/roles';
 import { auth } from '../Services/firebaseConfig';
 import { fetchAllUsers, updateUserRoleByUsername } from '../Services/userService';
@@ -10,24 +13,7 @@ import { User } from '../src/types';
 export default function RoleAssignmentScreen() {
   const [username, setUsername] = useState('');
   const [selectedRole, setSelectedRole] = useState(ROLES.ADMIN);
-  const [isValidUsername, setIsValidUsername] = useState(false);
-  const [checkingUsername, setCheckingUsername] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-
-  // 🔍 Validate username whenever it changes
-  useEffect(() => {
-    const validate = async () => {
-      if (!username) {
-        setIsValidUsername(false);
-        return;
-      }
-      setCheckingUsername(true);
-      const valid = await checkUsername(username);
-      setIsValidUsername(valid);
-      setCheckingUsername(false);
-    };
-    validate();
-  }, [username]);
 
   // 📥 Load all users on mount
   useEffect(() => {
@@ -46,12 +32,12 @@ export default function RoleAssignmentScreen() {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) {
-      Alert.alert('Error', 'No authenticated user found.');
-      return;
+        Alert.alert('Error', 'No authenticated user found.');
+        return;
       }
 
-      if (!isValidUsername) {
-        Alert.alert('Error', 'Username is invalid or not unique.');
+      if (!username) {
+        Alert.alert('Error', 'Please select a username.');
         return;
       }
 
@@ -67,70 +53,94 @@ export default function RoleAssignmentScreen() {
   };
 
   return (
+    <GradientBackground>
     <View style={styles.container}>
-      <Text style={styles.label}>Assign Role</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter username"
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-      />
+      <View style={styles.pickerWrapper}>
+      <BodyBoldText style={styles.label}>Nombre de usuario</BodyBoldText>
+      <LinearGradient
+      colors={['#E9E4D4', '#E0CFA2']}
+  
+  style={{ borderRadius: 8, padding: 4, width: '100%' }}
+>
+  <Picker
+    selectedValue={username}
+    onValueChange={(value) => setUsername(value)}
+    style={[styles.picker, { width: '100%' }]} // ✅ Full width
+  >
+    <Picker.Item label="Selecciona un usuario..." value="" />
+    {users.map((user) => (
+      <Picker.Item key={user.email} label={user.username} value={user.username} />
+    ))}
+  </Picker>
+</LinearGradient>
+      </View>
 
-      <Text style={styles.label}>Select Role</Text>
+      <View style={styles.pickerWrapper}>
+      <BodyBoldText style={styles.label}>Selecciona la responsabilidad</BodyBoldText>
+      <LinearGradient
+  colors={['#E9E4D4', '#E0CFA2']}
+  style={{ borderRadius: 8, padding: 4, width: '100%' }}
+>
       <Picker
         selectedValue={selectedRole}
         onValueChange={(itemValue) => setSelectedRole(itemValue)}
-        style={styles.picker}
+        style={[styles.picker, { width: '100%' }]}
       >
         {Object.values(ROLES).map((role) => (
           <Picker.Item key={role} label={role} value={role} />
         ))}
       </Picker>
-
-      <Button title="Update Role" onPress={handleUpdate} 
-      disabled={!username || !isValidUsername || checkingUsername} />
-
-      <Text style={styles.label}>User List</Text>
-      <FlatList
-        data={users}
-        keyExtractor={(item) => item.email}
-        renderItem={({ item }) => (
-          <View style={styles.userItem}>
-            <Text style={styles.userText}>
-              {item.username} ({item.role})
-            </Text>
-          </View>
-        )}
+      </LinearGradient>
+        </View>
+      <Button_style2
+        title="Update Role"
+        onPress={handleUpdate}
       />
     </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-  },
+  flex: 1,
+  alignItems: 'center',     // horizontal centering
+  paddingHorizontal: 20,
+},
+
   label: {
     marginTop: 10,
     marginBottom: 5,
     fontWeight: 'bold',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    borderRadius: 5,
-  },
   picker: {
-    marginVertical: 10,
+    ...Platform.select({
+      ios: {
+        height: 150, // enough for scroll wheel
+        justifyContent: 'center',
+      },
+      android: {
+        height: 50,
+        justifyContent: 'center',
+      },
+    }),
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#00796b',
   },
-  userItem: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  userText: {
-    fontSize: 16,
+  pickerWrapper: {
+  width: '100%',
+  alignItems: 'center',
+  marginBottom: 20,
+},
+
+  pickerItem: {
+      fontSize: 16,
+      color: 'black',
+    },
+  pickerLabel: {
+    fontSize: 14,
+    marginBottom: 4,
+    fontWeight: '600',
   },
 });

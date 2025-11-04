@@ -1,6 +1,10 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
+import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
 
@@ -49,30 +53,36 @@ export default function StaffBookingsScreen() {
 
     return (
       <View style={styles.bookingItem}>
-        <Text style={styles.bookingText}>Servicio: {item.service}</Text>
-        <Text style={styles.bookingText}>Cliente: {item.guestName}</Text>
-        <Text style={styles.bookingText}>
-          Date/Time: {formattedDate} / {formattedTime} {item.status}
-        </Text>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Servicio: </BodyBoldText>
+          <BodyText>{item.service}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Cliente: </BodyBoldText>
+          <BodyText>{item.guestName}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Fecha/Hora: </BodyBoldText>
+          <BodyText>{formattedDate} / {formattedTime}</BodyText>
+        </View>
       </View>
     );
   };
 
   return (
+    <GradientBackground>
     <View style={styles.container}>
-      <Text style={styles.title}>Mis Reservas</Text>
+      <BodyBoldText style={styles.title}>Mis Reservas</BodyBoldText>
 
       <View style={styles.filtersContainer}>
       <View style={styles.pickerWrapper}>
-        <Text style={styles.pickerLabel}>Filtrar por fecha:</Text>
+        <BodyBoldText style={styles.pickerLabel}>Filtrar por fecha:</BodyBoldText>
+        <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
         <Picker
           selectedValue={selectedDate}
           onValueChange={(value) => setSelectedDate(value)}
           mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-          style={[
-            styles.picker,
-            Platform.OS === 'android' && { color: '#004d40' },
-          ]}
+          style={[styles.picker, { backgroundColor: '#E9E4D4' }]}
           itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
         >
           <Picker.Item label="Todas" value={null} />
@@ -87,6 +97,7 @@ export default function StaffBookingsScreen() {
             );
           })}
         </Picker>
+        </LinearGradient>
       </View>
       </View>
 
@@ -96,14 +107,13 @@ export default function StaffBookingsScreen() {
         renderItem={renderBookingItem}
       />
     </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 20,
-    backgroundColor: '#f9f9f9',
   },
   title: {
     fontWeight: 'bold',
@@ -159,5 +169,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 40,
+  },
+  inlineText: {
+    flexDirection: 'row',
+    alignItems: 'center', // optional: aligns text vertically
+    marginLeft: 24,
   },
 });
