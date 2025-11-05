@@ -1,3 +1,6 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
+import BodyText from '@/Components/typography/BodyText';
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
@@ -48,45 +51,57 @@ export default function AdminBookingHistory() {
 
     return (
       <View style={styles.bookingItem}>
-        <Text style={styles.bookingText}>Servicio: {item.service}</Text>
-        <Text style={styles.bookingText}>Cliente: {item.guestName}</Text>
-        <Text style={styles.bookingText}>Empleado: {item.stylistName}</Text>
-        <Text style={styles.bookingText}>
-          Fecha/Hora: {formattedDate} / {formattedTime} {item.status}
-        </Text>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Servicio: </BodyBoldText>
+          <BodyText>{item.service}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Cliente: </BodyBoldText>
+          <BodyText>{item.guestName}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Empleado: </BodyBoldText>
+          <BodyText>{item.stylistName}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Fecha/Hora: </BodyBoldText>
+          <BodyText>{formattedDate} / {formattedTime}</BodyText>
+        </View>
       </View>
     );
   };
 
   return (
+    <GradientBackground>
     <View style={styles.container}>
-      <Text style={styles.title}>Historial de Reservas (últimos 30 días)</Text>
+      <BodyBoldText style={styles.title}>Ultimos 30 días</BodyBoldText>
       <FlatList
         data={bookings}
         keyExtractor={(item) => item.id}
         renderItem={renderBookingItem}
         ListEmptyComponent={<Text style={styles.empty}>No hay reservas pasadas.</Text>}
+        contentContainerStyle={styles.listContent}
       />
     </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 20,
   },
   title: {
     fontWeight: 'bold',
     fontSize: 18,
     marginBottom: 10,
+    textAlign: 'center',
   },
   bookingItem: {
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-  },
-  bookingText: {
-    fontSize: 16,
   },
   empty: {
     fontSize: 16,
@@ -94,4 +109,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
   },
+  inlineText: {
+    flexDirection: 'row',
+    alignItems: 'center', // optional: aligns text vertically
+    marginLeft: 10,
+  },
+  listContent: {
+  paddingBottom: 40, // prevents last item from being cut off
+  },
+
 });

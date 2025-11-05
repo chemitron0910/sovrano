@@ -1,7 +1,6 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import { Picker } from '@react-native-picker/picker';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import Button_style2 from "../Components/Button_style2";
@@ -57,41 +56,35 @@ export default function RoleAssignmentScreen() {
     <View style={styles.container}>
       <View style={styles.pickerWrapper}>
       <BodyBoldText style={styles.label}>Nombre de usuario</BodyBoldText>
-      <LinearGradient
-      colors={['#E9E4D4', '#E0CFA2']}
-  
-  style={{ borderRadius: 8, padding: 4, width: '100%' }}
->
-  <Picker
-    selectedValue={username}
-    onValueChange={(value) => setUsername(value)}
-    style={[styles.picker, { width: '100%' }]} // ✅ Full width
-  >
-    <Picker.Item label="Selecciona un usuario..." value="" />
-    {users.map((user) => (
+      
+      <Picker
+        selectedValue={username}
+        onValueChange={(value) => setUsername(value)}
+        style={[styles.picker, { width: '100%' }]} // ✅ Full width
+        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+      >
+      <Picker.Item label="Selecciona un usuario..." value="" />
+        {users.map((user) => (
       <Picker.Item key={user.email} label={user.username} value={user.username} />
-    ))}
-  </Picker>
-</LinearGradient>
+        ))}
+      </Picker>
       </View>
 
       <View style={styles.pickerWrapper}>
       <BodyBoldText style={styles.label}>Selecciona la responsabilidad</BodyBoldText>
-      <LinearGradient
-  colors={['#E9E4D4', '#E0CFA2']}
-  style={{ borderRadius: 8, padding: 4, width: '100%' }}
->
+      
       <Picker
         selectedValue={selectedRole}
         onValueChange={(itemValue) => setSelectedRole(itemValue)}
         style={[styles.picker, { width: '100%' }]}
+        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
       >
         {Object.values(ROLES).map((role) => (
           <Picker.Item key={role} label={role} value={role} />
         ))}
       </Picker>
-      </LinearGradient>
-        </View>
+      </View>
+
       <Button_style2
         title="Update Role"
         onPress={handleUpdate}

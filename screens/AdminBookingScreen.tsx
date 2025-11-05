@@ -1,8 +1,12 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
+import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { RootStackParamList } from '../src/types';
 
@@ -17,9 +21,13 @@ export default function AdminBookingsScreen() {
   
   const filteredBookings = bookings.filter(b => {
   const bookingDay = new Date(b.date).toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+
   const matchesDate = selectedDate ? bookingDay === selectedDate : true;
   const matchesStylist = selectedStylist ? b.stylistName === selectedStylist : true;
-  return matchesDate && matchesStylist;
+  const isFuture = bookingDay >= today;
+
+  return matchesDate && matchesStylist && isFuture;
 });
 
   useEffect(() => {
@@ -49,37 +57,40 @@ export default function AdminBookingsScreen() {
 
     return (
       <View style={styles.bookingItem}>
-        <Text style={styles.bookingText}>
-          Servicio: {item.service}
-        </Text>
-        <Text style={styles.bookingText}>
-          Cliente: {item.guestName}
-        </Text>
-        <Text style={styles.bookingText}>
-          Date/Time: {formattedDate} / {formattedTime} {item.status}
-        </Text>
-        <Text style={styles.bookingText}>
-          Estilista: {item.stylistName}
-        </Text>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Servicio: </BodyBoldText>
+          <BodyText>{item.service}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Cliente: </BodyBoldText>
+          <BodyText>{item.guestName}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Date/Time: </BodyBoldText>
+          <BodyText>{formattedDate} / {formattedTime}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Estilista: </BodyBoldText>
+          <BodyText>{item.stylistName}</BodyText>
+        </View>
       </View>
     );
   };
 
   return (
+  <GradientBackground>
   <View style={styles.container}>
-    <Text style={styles.title}>Reservas</Text>
+    <BodyBoldText style={styles.title}>Reservas</BodyBoldText>
 
     <View style={styles.filtersContainer}>
       <View style={styles.pickerWrapper}>
-        <Text style={styles.pickerLabel}>Estilista:</Text>
+        <BodyBoldText style={styles.pickerLabel}>Estilista:</BodyBoldText>
+        <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
         <Picker
           selectedValue={selectedStylist}
           onValueChange={(value) => setSelectedStylist(value)}
           mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-          style={[
-            styles.picker,
-            Platform.OS === 'android' && { color: '#004d40' },
-          ]}
+          style={[styles.picker]}
           itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
         >
           <Picker.Item label="Todos" value={null} />
@@ -87,47 +98,46 @@ export default function AdminBookingsScreen() {
             <Picker.Item key={name} label={name} value={name} />
           ))}
         </Picker>
+        </LinearGradient>
       </View>
 
       <View style={styles.pickerWrapper}>
-        <Text style={styles.pickerLabel}>Fecha:</Text>
-        <Picker
-          selectedValue={selectedDate}
-          onValueChange={(value) => setSelectedDate(value)}
-          mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-          style={[
-            styles.picker,
-            Platform.OS === 'android' && { color: '#004d40' },
-          ]}
-          itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-        >
-        <Picker.Item label="Todas" value={null} />
-        {Array.from(
-          new Set(
-            bookings
-              .filter(b => {
-                const bookingDate = new Date(b.date);
-                const now = new Date();
-                return (
-                  bookingDate > now &&
-                  (!selectedStylist || b.stylistName === selectedStylist)
-                );
-              })
-              .map(b => {
-          const d = new Date(b.date);
-          return d.toISOString().split('T')[0]; // ✅ YYYY-MM-DD only
-        })
+  <BodyBoldText style={styles.pickerLabel}>Fecha:</BodyBoldText>
+  <Picker
+    selectedValue={selectedDate}
+    onValueChange={(value) => setSelectedDate(value)}
+    mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+    style={styles.picker}
+    itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+  >
+    <Picker.Item label="Todas" value={null} />
+
+    {Array.from(
+      new Set(
+        bookings
+          .filter(b => {
+            const bookingDate = new Date(b.date).toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
+            return (
+              bookingDate >= today &&
+              (!selectedStylist || b.stylistName === selectedStylist)
+            );
+          })
+          .map(b => new Date(b.date).toISOString().split('T')[0])
+      )
     )
-  ).map(date => {
-          const formatted = new Date(date).toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          });
-          return <Picker.Item key={date} label={formatted} value={date} />;
-        })}
-      </Picker>
-    </View>
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      .map(date => {
+        const formatted = new Date(date).toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
+        return <Picker.Item key={date} label={formatted} value={date} />;
+      })}
+  </Picker>
+</View>
+
 
     </View>
 
@@ -138,6 +148,7 @@ export default function AdminBookingsScreen() {
       contentContainerStyle={styles.listContent}
     />
   </View>
+  </GradientBackground>
 );
 }
 
@@ -145,7 +156,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f9f9f9',
   },
   title: {
     fontWeight: 'bold',
@@ -176,11 +186,9 @@ const styles = StyleSheet.create({
     },
     android: {
       height: 50,
-      color: '#004d40',
       justifyContent: 'center',
     },
   }),
-  backgroundColor: '#e0f7fa',
   borderRadius: 6,
   borderWidth: 1,
   borderColor: '#00796b',
@@ -196,10 +204,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
-  bookingText: {
-    fontSize: 16,
-  },
   listContent: {
     paddingBottom: 40,
+  },
+  inlineText: {
+    flexDirection: 'row',
+    alignItems: 'center', // optional: aligns text vertically
+    marginLeft: 10,
   },
 });

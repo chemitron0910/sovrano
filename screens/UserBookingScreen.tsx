@@ -9,7 +9,8 @@ import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet, Text,
   TouchableOpacity, View, useWindowDimensions
@@ -20,6 +21,7 @@ import { auth, db } from '../Services/firebaseConfig';
 import { fetchUserProfile } from '../Services/userService';
 import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
+
 
 export default function BookingScreen() {
 
@@ -140,31 +142,6 @@ return (
     </View>
   )}
 
-  {showPicker && (
-    <DateTimePicker
-      value={date}
-      mode="date"
-      display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
-      onChange={(e, selectedDate) => {
-      setShowPicker(false);
-      if (selectedDate) setDate(selectedDate);
-      }}
-      {...(Platform.OS === 'ios' ? { textColor: 'black' } : {})} // ✅ only apply on iOS
-    />
-    )}
-
-  {showTimePicker && (
-    <DateTimePicker
-      value={date}
-      mode="time"
-      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-      onChange={(e, selectedTime) => {
-      setShowTimePicker(false);
-      if (selectedTime) setDate(selectedTime);
-      }}
-    />
-  )}
-
   <GradientBackground>
   <KeyboardAvoidingView
     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -185,12 +162,14 @@ return (
               itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
             >
             <Picker.Item label="Selecciona..." value={null} />
-            {services.map((service) => (
-              <Picker.Item
-                key={service.id}
-                label={`${service.name} (${service.duration} min)`}
-                value={service.id}
-              />
+            {services
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((service) => (
+            <Picker.Item
+              key={service.id}
+              label={`${service.name} (${service.duration} min)`}
+              value={service.id}
+            />
             ))}
             </Picker>
             </LinearGradient>
@@ -199,7 +178,17 @@ return (
             <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
               <Text>{date.toLocaleString()}</Text>
             </TouchableOpacity>
-            
+            {showPicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="datetime"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(e, selectedDate) => {
+                    setShowPicker(false);
+                    if (selectedDate) setDate(selectedDate);
+                    }}
+                    textColor="black"/>
+                )}
 
           <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
           <View style={styles.readOnlyField}>
@@ -230,9 +219,11 @@ return (
             itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
           >
           <Picker.Item label="Selecciona..." value="" />
-            {stylists.map(stylist => (
-            <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
-            ))}
+            {stylists
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(stylist => (
+          <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
+          ))}
           </Picker>
           </LinearGradient>
           </View>
@@ -341,5 +332,26 @@ pickerItem: {
     fontSize: 14,
     marginBottom: 4,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)', // dims background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    width: '80%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    elevation: 5, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

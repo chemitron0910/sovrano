@@ -38,9 +38,45 @@ export default function AdminStack() {
         },
         }}
       />
-      <Stack.Screen name="Manejar servicios" component={AdminServicesScreen} options={{headerBackVisible: true }}/>
-      <Stack.Screen name="Calendario de citas" component={AdminBookingScreen} options={{headerBackVisible: true }}/>
-      <Stack.Screen name="Historia de citas" component={AdminBookingHistory} options={{headerBackVisible: true }}/>
+      <Stack.Screen
+        name="Manejar servicios"
+        component={AdminServicesScreen}
+        options={{
+        headerBackVisible: true,
+        headerTitleStyle: {
+        fontFamily: 'Playfair-Bold', // ✅ Your custom font
+        fontSize: 22,
+        fontWeight: '400',
+        color: '#3e3e3e', // Optional: match Sovrano’s palette
+        },
+        }}
+      />
+      <Stack.Screen
+        name="Calendario de citas"
+        component={AdminBookingScreen}
+        options={{
+        headerBackVisible: true,
+        headerTitleStyle: {
+        fontFamily: 'Playfair-Bold', // ✅ Your custom font
+        fontSize: 22,
+        fontWeight: '400',
+        color: '#3e3e3e', // Optional: match Sovrano’s palette
+        },
+        }}
+      />
+      <Stack.Screen
+        name="Historia de citas"
+        component={AdminBookingHistory}
+        options={{
+        headerBackVisible: true,
+        headerTitleStyle: {
+        fontFamily: 'Playfair-Bold', // ✅ Your custom font
+        fontSize: 22,
+        fontWeight: '400',
+        color: '#3e3e3e', // Optional: match Sovrano’s palette
+        },
+        }}
+      />
       <Stack.Screen name="Inicio-Sovrano" component={LoginScreen}/>
     </Stack.Navigator>
   );

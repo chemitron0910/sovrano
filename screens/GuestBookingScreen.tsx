@@ -4,6 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
@@ -139,24 +140,28 @@ export default function GuestBookingScreen() {
             contentContainerStyle={styles.scrollContent}>
             <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
               <BodyBoldText>Select Service</BodyBoldText>
+              <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
               <Picker
                 selectedValue={selectedServiceId}
                 onValueChange={(value) => setSelectedServiceId(value)}
                 mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-                style={[styles.picker, { backgroundColor: '#f0f0f0' }]}
+                style={[styles.picker]}
                 itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}>
                 <Picker.Item label="Selecciona..." value={null} />
-                  {services.map((service) => (
+                  {services
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((service) => (
                 <Picker.Item
                   key={service.id}
-                  label={`${service.name} (${service.duration})`}
-                  value={service.id}/>
-                  ))}
+                  label={`${service.name} (${service.duration} min)`}
+                  value={service.id}
+                />
+                ))}
               </Picker>
-
+              </LinearGradient>
               <BodyBoldText style={styles.label}>Escoge fecha y hora</BodyBoldText>
               <TouchableOpacity onPress={() => setShowPicker(true)} 
-                style={[styles.input, { backgroundColor: '#f0f0f0' }]}>
+                style={[styles.input, { backgroundColor: '#d8d2c4' }]}>
               <Text>{date.toLocaleString()}</Text>
               </TouchableOpacity>
                 {showPicker && (
@@ -173,22 +178,23 @@ export default function GuestBookingScreen() {
 
               <BodyBoldText style={styles.label}>Nombre de usuario</BodyBoldText>
               <TextInput 
-                style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
                 placeholder='Entra tu nombre' placeholderTextColor="#888" value={guestName} onChangeText={setGuestName}/>
 
               <BodyBoldText style={styles.label}>Correo electronico</BodyBoldText>
               <TextInput 
-                style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
                 autoCapitalize="none"
                 placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
 
               <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
               <TextInput 
-                style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+                style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
                 placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
 
               <BodyBoldText style={styles.label}>Selecciona estilista</BodyBoldText>
               <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
+                <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
                 <Picker
                   selectedValue={selectedStylist?.id || ''}
                   onValueChange={(value) => {
@@ -196,14 +202,16 @@ export default function GuestBookingScreen() {
                   setSelectedStylist(stylist || null);
                   }}
                   mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-                  style={[styles.picker, { backgroundColor: '#f0f0f0' }]}
+                  style={[styles.picker]}
                   itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}>
                   <Picker.Item label="Selecciona..." value="" />
-                    {stylists.map(stylist => (
+                    {stylists
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map(stylist => (
                   <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
-                    ))}
+                  ))}
                 </Picker>
-
+                </LinearGradient>
               </View>
 
               <View style={{ marginTop: 12 }}>
@@ -291,11 +299,9 @@ picker: {
     },
     android: {
       height: 50,
-      color: '#004d40',
       justifyContent: 'center',
     },
   }),
-  backgroundColor: '#e0f7fa',
   borderRadius: 6,
   borderWidth: 1,
   borderColor: '#00796b',

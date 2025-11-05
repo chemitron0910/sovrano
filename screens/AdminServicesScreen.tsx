@@ -1,14 +1,17 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyBoldText from '@/Components/typography/BodyBoldText';
+import BodyText from '@/Components/typography/BodyText';
 import { doc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import Button_style2 from "../Components/Button_style2";
 import { db } from '../Services/firebaseConfig';
 import {
   addService,
@@ -28,7 +31,8 @@ export default function AdminServiceScreen() {
 
   const loadServices = async () => {
     const data = await fetchServices();
-    setServices(data);
+    const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+    setServices(sortedData);
   };
 
   useEffect(() => {
@@ -79,64 +83,64 @@ export default function AdminServiceScreen() {
     ]);
   };
 
-  const renderItem = ({ item }: { item: Service }) => (
+  const renderItem = ({ item }: { item: Service }) => {
+
+    return (
     <View style={styles.serviceItem}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.serviceName}>{item.name}</Text>
-        <Text style={styles.serviceMeta}>
+        <BodyBoldText style={styles.serviceName}>{item.name}</BodyBoldText>
+        <BodyText style={styles.serviceTime}>
           {item.duration}
-        </Text>
-        {item.description ? <Text>{item.description}</Text> : null}
+        </BodyText>
+        {item.description ? <BodyText>{item.description}</BodyText> : null}
       </View>
       <View style={styles.actions}>
         <TouchableOpacity onPress={() => handleEdit(item)}>
-          <Text style={styles.edit}>Editar</Text>
+          <BodyText style={styles.edit}>Editar</BodyText>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDelete(item.id!)}>
-          <Text style={styles.delete}>Eliminar</Text>
+          <BodyText style={styles.delete}>Eliminar</BodyText>
         </TouchableOpacity>
       </View>
     </View>
   );
+  };
 
   return (
+    <GradientBackground>
     <View style={styles.container}>
-      <Text style={styles.title}>
+      <BodyBoldText style={styles.title}>
         {editingId ? 'Editar Servicio' : 'Agregar Servicio'}
-      </Text>
+      </BodyBoldText>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre del servicio"
-        value={form.name}
-        onChangeText={(text) => setForm({ ...form, name: text })}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Duración"
-        value={form.duration}
-        onChangeText={(text) => setForm({ ...form, duration: text })}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Descripción"
-        value={form.description}
-        onChangeText={(text) => setForm({ ...form, description: text })}
+      <BodyBoldText>Nombre del servicio</BodyBoldText>
+        <TextInput style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+        placeholder='Nombre del servicio' placeholderTextColor="#888" 
+        value={form.name} onChangeText={(text) => setForm({ ...form, name: text })}/>
+
+      <BodyBoldText>Duración</BodyBoldText>
+        <TextInput style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+        placeholder='Duración' placeholderTextColor="#888" 
+        value={form.duration} onChangeText={(text) => setForm({ ...form, duration: text })}/>
+
+      <BodyBoldText>Descripción</BodyBoldText>
+        <TextInput style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+        placeholder='Descripción' placeholderTextColor="#888" 
+        value={form.description} onChangeText={(text) => setForm({ ...form, description: text })}/>
+
+      <Button_style2
+        title={editingId ? 'Actualizar' : 'Agregar'}
+        onPress={handleSubmit}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>
-          {editingId ? 'Actualizar' : 'Agregar'}
-        </Text>
-      </TouchableOpacity>
-
-      <Text style={styles.subtitle}>Servicios existentes</Text>
+      <BodyBoldText style={styles.subtitle}>Servicios existentes</BodyBoldText>
       <FlatList
         data={services}
         keyExtractor={(item) => item.id!}
         renderItem={renderItem}
       />
     </View>
+    </GradientBackground>
   );
 }
 
@@ -183,7 +187,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  serviceMeta: {
+  serviceTime: {
     color: '#555',
   },
   actions: {
