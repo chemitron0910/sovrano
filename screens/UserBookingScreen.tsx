@@ -191,17 +191,17 @@ return (
                 )}
 
           <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
-          <View style={styles.readOnlyField}>
+          <View style={[styles.readOnlyField, ,{ backgroundColor: '#d8d2c4' }]}>
             <Text>{guestName || 'No disponible'}</Text>
           </View>
 
           <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
-          <View style={styles.readOnlyField}>
+          <View style={[styles.readOnlyField, ,{ backgroundColor: '#d8d2c4' }]}>
             <Text>{email || 'No disponible'}</Text>
           </View>
 
           <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
-          <View style={styles.readOnlyField}>
+          <View style={[styles.readOnlyField, ,{ backgroundColor: '#d8d2c4' }]}>
             <Text>{phoneNumber || 'No disponible'}</Text>
           </View>
 

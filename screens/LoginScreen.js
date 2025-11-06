@@ -139,9 +139,10 @@ export default function LoginScreen({ navigation }) {
           <BodyText>Correo electrónico</BodyText>
           <TextInput
             style={[
-            styles.inputText,{ backgroundColor: '#f0f0f0' }
+            styles.inputText,{ backgroundColor: '#d8d2c4' }
             ]}
             placeholder="Entra tu correo electrónico"
+            placeholderTextColor="#888"
             value={email}
             onChangeText={setEmail}
             onFocus={() => setEmailFocused(true)}
@@ -153,11 +154,12 @@ export default function LoginScreen({ navigation }) {
           <BodyText>Clave</BodyText>
           <TextInput
             style={[
-            styles.inputText,{ backgroundColor: '#f0f0f0' },
+            styles.inputText,{ backgroundColor: '#d8d2c4' },
             { borderColor: passwordFocused ? '#d46b37ff' : '#999' }
             ]}
             secureTextEntry
             placeholder="Entra tu clave"
+            placeholderTextColor="#888"
             value={password}
             onChangeText={setPassword}
             onFocus={() => setPasswordFocused(true)}

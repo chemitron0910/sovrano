@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   welcomeText: {
-    fontFamily: 'Playfair-Regular', // ✅ Your custom font
+    fontFamily: 'Playfair-Bold', // ✅ Your custom font
     fontSize: 18,
     color: '#3e3e3e', // Optional: match Sovrano’s palette
     textAlign: 'center',

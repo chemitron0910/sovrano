@@ -18,14 +18,16 @@ export default function AdminBookingHistory() {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(now.getDate() - 30);
 
-        const filtered = data.filter(b => {
+        const filtered = data
+          .filter(b => {
           const bookingDate = new Date(b.date);
           return (
-            b.stylistId === stylistId &&
-            bookingDate < now &&
-            bookingDate >= thirtyDaysAgo
+          b.stylistId === stylistId &&
+          bookingDate < now &&
+          bookingDate >= thirtyDaysAgo
           );
-        });
+          })
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // newest to oldest
 
         setBookings(filtered);
       } catch (err) {

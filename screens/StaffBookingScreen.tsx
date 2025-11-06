@@ -8,6 +8,11 @@ import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
 
+function getLocalDateString(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
+}
+
 export default function StaffBookingsScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -31,11 +36,12 @@ export default function StaffBookingsScreen() {
   }, [stylistId]);
 
   const filteredBookings = bookings.filter(b => {
-    return selectedDate ? b.date === selectedDate : true;
+  const bookingDate = getLocalDateString(b.date);
+  return selectedDate ? bookingDate === selectedDate : true;
   });
 
   const uniqueDates = Array.from(
-    new Set(bookings.map(b => b.date))
+  new Set(bookings.map(b => getLocalDateString(b.date)))
   ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
   const renderBookingItem = ({ item }: { item: Booking }) => {
@@ -45,7 +51,6 @@ export default function StaffBookingsScreen() {
       month: '2-digit',
       year: 'numeric',
     });
-
     const formattedTime = dateObj.toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
@@ -70,6 +75,7 @@ export default function StaffBookingsScreen() {
   };
 
   return (
+    
     <GradientBackground>
     <View style={styles.container}>
       <BodyBoldText style={styles.title}>Mis Reservas</BodyBoldText>
@@ -80,22 +86,26 @@ export default function StaffBookingsScreen() {
         <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
         <Picker
           selectedValue={selectedDate}
-          onValueChange={(value) => setSelectedDate(value)}
+          onValueChange={(value) => {setSelectedDate(value);
+          }}
           mode={Platform.OS === 'android' ? 'dropdown' : undefined}
           style={[styles.picker, { backgroundColor: '#E9E4D4' }]}
           itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
         >
           <Picker.Item label="Todas" value={null} />
           {uniqueDates.map(date => {
-            const formatted = new Date(date).toLocaleDateString('es-ES', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            });
-            return (
-              <Picker.Item key={date} label={formatted} value={date} />
-            );
+          const [year, month, day] = date.split('-');
+          const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+          const formatted = localDate.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          });
+          return (
+          <Picker.Item key={date} label={formatted} value={date} />
+          );
           })}
+
         </Picker>
         </LinearGradient>
       </View>

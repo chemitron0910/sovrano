@@ -10,6 +10,10 @@ import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { RootStackParamList } from '../src/types';
 
+function getLocalDateString(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
+}
 
 export default function AdminBookingsScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -19,16 +23,15 @@ export default function AdminBookingsScreen() {
 
   const stylistOptions = Array.from(new Set(bookings.map(b => b.stylistName)));
   
+  const today = getLocalDateString(new Date().toISOString());
+
   const filteredBookings = bookings.filter(b => {
-  const bookingDay = new Date(b.date).toISOString().split('T')[0];
-  const today = new Date().toISOString().split('T')[0];
-
-  const matchesDate = selectedDate ? bookingDay === selectedDate : true;
-  const matchesStylist = selectedStylist ? b.stylistName === selectedStylist : true;
-  const isFuture = bookingDay >= today;
-
-  return matchesDate && matchesStylist && isFuture;
-});
+    const bookingDay = getLocalDateString(b.date);
+    const matchesDate = selectedDate ? bookingDay === selectedDate : true;
+    const matchesStylist = selectedStylist ? b.stylistName === selectedStylist : true;
+    const isFuture = bookingDay >= today;
+    return matchesDate && matchesStylist && isFuture;
+  });
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -113,28 +116,30 @@ export default function AdminBookingsScreen() {
     <Picker.Item label="Todas" value={null} />
 
     {Array.from(
-      new Set(
-        bookings
-          .filter(b => {
-            const bookingDate = new Date(b.date).toISOString().split('T')[0];
-            const today = new Date().toISOString().split('T')[0];
-            return (
-              bookingDate >= today &&
-              (!selectedStylist || b.stylistName === selectedStylist)
-            );
-          })
-          .map(b => new Date(b.date).toISOString().split('T')[0])
-      )
+    new Set(
+      bookings
+      .filter(b => {
+        const bookingDate = getLocalDateString(b.date);
+        return (
+          bookingDate >= today &&
+          (!selectedStylist || b.stylistName === selectedStylist)
+        );
+      })
+      .map(b => getLocalDateString(b.date))
     )
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
-      .map(date => {
-        const formatted = new Date(date).toLocaleDateString('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        });
-        return <Picker.Item key={date} label={formatted} value={date} />;
-      })}
+  )
+  .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+  .map(date => {
+    const [year, month, day] = date.split('-');
+    const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+    const formatted = localDate.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    return <Picker.Item key={date} label={formatted} value={date} />;
+  })}
+
   </Picker>
 </View>
 

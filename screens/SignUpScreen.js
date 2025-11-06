@@ -157,34 +157,34 @@ const validateForm = () => {
     >
       <View style={styles.form}>
         <BodyBoldText>Nombre de usuario</BodyBoldText>
-        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+        <TextInput style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
         placeholder='Entra tu nombre de usuario' placeholderTextColor="#888" value={username} onChangeText={setUsername}/>
         {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
 
         <BodyBoldText>Correo electronico</BodyBoldText>
-        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+        <TextInput style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
         autoCapitalize="none"
         placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={email} onChangeText={setEmail}/>
         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
         <BodyBoldText>Confirma correo electronico</BodyBoldText>
-        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+        <TextInput style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
         autoCapitalize="none"
         placeholder='Entra tu corrreo electronico' placeholderTextColor="#888" value={emailConfirmation} onChangeText={setEmailConfirmation}/>
         {errors.emailConfirmation ? <Text style={styles.errorText}>{errors.emailConfirmation}</Text> : null}
 
         <BodyBoldText>Telefono</BodyBoldText>
-        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]}
+        <TextInput style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
         placeholder='Entra tu numero telefonico' placeholderTextColor="#888" value={phoneNumber} onChangeText={setPhoneNumber}/>
         {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
         <BodyBoldText>Entra tu clave</BodyBoldText>
-        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]} secureTextEntry
+        <TextInput style={[styles.inputText, { backgroundColor: '#d8d2c4' }]} secureTextEntry
         placeholder='Entra tu clave' placeholderTextColor="#888" value={password} onChangeText={setPassword}/>
         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
         <BodyBoldText>Confirma tu clave</BodyBoldText>
-        <TextInput style={[styles.inputText, { backgroundColor: '#f0f0f0' }]} secureTextEntry
+        <TextInput style={[styles.inputText, { backgroundColor: '#d8d2c4' }]} secureTextEntry
         placeholder='Re-entra tu clave' placeholderTextColor="#888" value={passwordConfirmation} onChangeText={setPasswordConfirmation}/>
         {errors.passwordConfirmation ? <Text style={styles.errorText}>{errors.passwordConfirmation}</Text> : null}
 
