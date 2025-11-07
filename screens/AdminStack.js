@@ -7,7 +7,7 @@ import AdminTabNav from './AdminTabNav';
 import RoleAssignmentScreen from "./RoleAssignmentScreen";
 import StaffBookingHistory from './StaffBookingHistory';
 import StaffBookingScreen from './StaffBookingScreen';
-import StaffTabNav from './StaffTabNav';
+import StaffScreen from "./StaffScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -82,7 +82,7 @@ export default function AdminStack() {
       />
       <Stack.Screen
         name="Inicio-Empleado"
-        component={StaffTabNav}
+        component={StaffScreen}
         options={{
         headerBackVisible: false,
         headerTitleStyle: {

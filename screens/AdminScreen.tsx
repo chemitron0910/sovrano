@@ -46,6 +46,9 @@ export default function AdminScreen() {
           <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historia de citas")}>
           </Button_style2>
 
+          <Button_style2 title="Inicio empleado" onPress={()=>navigation.navigate("Inicio-Empleado")}>
+          </Button_style2>
+
           <Button_style2 title="Salir" onPress={async () => {
             await logout();
             navigation.reset({

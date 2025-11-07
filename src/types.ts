@@ -25,7 +25,7 @@ export type RootStackParamList = {
     role: string;
   }; //Usuario
   "Inicio-Sovrano": undefined;
-  "Inicio-Admin": undefined;
+  "Inicio-Admin": { userId: string; role: string };
   "Inicio-Empleado": undefined;
   "Inicio-Usuario": undefined;
   "Inicio-Invitado": undefined;
