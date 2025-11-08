@@ -41,7 +41,6 @@ export default function RoleAssignmentScreen() {
       }
 
       const token = await currentUser.getIdTokenResult();
-      console.log('Current role:', token.claims.role);
       const uid = await updateUserRoleByUsername(username, selectedRole);
       await auth.currentUser?.getIdToken(true); // 🔄 Refresh token
       Alert.alert('Success', `Role updated to "${selectedRole}" for ${username}`);

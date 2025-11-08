@@ -1,9 +1,23 @@
+import { getIdTokenResult } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../Services/firebaseConfig';
 
 const dayMap = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
 
 export const assignWeeklyAvailability = async (uid: string  | undefined, weeks: number = 4) => {
+  try {
+  const tokenResult = await getIdTokenResult(auth.currentUser!);
+
+  if ('role' in tokenResult.claims) {
+  } else {
+    console.warn('No role claim found in token:', tokenResult.claims);
+  }
+} catch (tokenError) {
+  console.error('Failed to get ID token result:', tokenError);
+}
+
+
+
   try {
     // 🔐 Guard against null auth.currentUser
     const currentUser = auth.currentUser;
@@ -27,6 +41,12 @@ export const assignWeeklyAvailability = async (uid: string  | undefined, weeks: 
       return;
     }
 
+    try {
+      const tokenResult = await getIdTokenResult(auth.currentUser!);
+    } catch (tokenError) {
+    console.error('Failed to get ID token result:', tokenError);
+    }
+
     const template = templateSnap.data();
 
     const today = new Date();
@@ -39,13 +59,15 @@ export const assignWeeklyAvailability = async (uid: string  | undefined, weeks: 
       const slots = template[dayOfWeek] || [];
 
       const availabilityRef = doc(db, 'users', uidString, 'availability', isoDate);
-      await setDoc(availabilityRef, {
+      try {
+        await setDoc(availabilityRef, {
         timeSlots: slots,
         isDayOff: slots.length === 0,
-      });
+        });
+      } catch (writeError) {
+        console.error('Write failed:', writeError);
+      }
     }
-
-    console.log(`Assigned weekly availability to user ${uid}`);
   } catch (error) {
     console.error('Error assigning weekly availability:', error);
   }

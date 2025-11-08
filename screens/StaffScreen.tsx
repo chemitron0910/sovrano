@@ -21,7 +21,7 @@ export default function StaffScreen() {
   const [uid, setUid] = useState<string | null>(null);
   const [buttonTitle, setButtonTitle] = useState('Salir');
   const [showExtendWarning, setShowExtendWarning] = useState(false);
-
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Buenos días' : 'Buenas tardes';
   const username = auth.currentUser?.displayName;
@@ -65,6 +65,14 @@ export default function StaffScreen() {
 
   return (
     <GradientBackground>
+      {loadingAvailability && (
+        <View style={styles.overlay}>
+          <View style={styles.overlayContent}>
+            <Text style={styles.overlayText}>Configurando disponibilidad...</Text>
+          </View>
+        </View>
+      )}
+
       <Logo />
       <View style={styles.container}>
         <View
@@ -92,17 +100,21 @@ export default function StaffScreen() {
                   marginBottom: 8,
                 }}
               >
-                Tu disponibilidad termina pronto o no está configurada. ¿Deseas extenderla?
+                Tu disponibilidad termina en 5 dias o no está configurada. ¿Deseas extenderla?
               </BodyText>
               <Button_style2
                 title="Extender disponibilidad"
                 onPress={async () => {
+                  if (!uid) return;
                   try {
+                    setLoadingAvailability(true); // 🔄 Show overlay
                     await assignWeeklyAvailability(uid, 4);
                     setShowExtendWarning(false);
                     Alert.alert('Éxito', 'Disponibilidad extendida por 4 semanas.');
                   } catch (error) {
                     Alert.alert('Error', 'No se pudo extender la disponibilidad.');
+                  } finally {
+                    setLoadingAvailability(false); // ✅ Hide overlay
                   }
                 }}
               />
@@ -174,4 +186,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
   },
+  overlay: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 999,
+},
+overlayContent: {
+  backgroundColor: '#fff',
+  padding: 20,
+  borderRadius: 10,
+},
+overlayText: {
+  fontSize: 16,
+  color: '#333',
+  textAlign: 'center',
+},
+
 });
