@@ -69,10 +69,6 @@ export default function LoginScreen({ navigation }) {
           navigation.navigate('Usuario');
       }
     } catch (error) {
-      console.log('Login error:', error);
-      console.log('Login error:', JSON.stringify(error, null, 2));
-      console.log('Trying login with:', email.trim(), 'Password length:', password.trim().length);
-
       Alert.alert('Error', 'No se pudo iniciar sesión. Clave or email incorrecto');
       } finally {
       setLoading(false);

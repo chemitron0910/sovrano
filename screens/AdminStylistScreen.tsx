@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import Button_style2 from "../Components/Button_style2";
 import { auth, db } from '../Services/firebaseConfig';
+import { assignWeeklyAvailability } from '../utils/assignWeeklyAvailability';
 
 export default function AdminStylistScreen() {
   const [name, setName] = useState('');
@@ -30,8 +31,9 @@ export default function AdminStylistScreen() {
         email,
         role: 'empleado',
         hireDate: serverTimestamp(),
-        services: [], // optional: initialize empty
       });
+
+      await assignWeeklyAvailability(stylistId, 4); // assigns 4 weeks of availability
 
       Alert.alert('Success', 'Stylist hired and added to Firestore.');
       setName('');
