@@ -1,0 +1,483 @@
+//new undo1
+import GradientBackground from '@/Components/GradientBackground';
+import BodyText from '@/Components/typography/BodyText';
+import SubTitleText from '@/Components/typography/SubTitleText';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from 'date-fns';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator, Alert, FlatList, Modal,
+  Platform,
+  ScrollView, StyleSheet, Switch, Text,
+  TouchableOpacity, View
+} from 'react-native';
+import Button_style2 from '../Components/Button_style2';
+import { auth, db } from '../Services/firebaseConfig';
+
+export default function StaffCalendarScreen() {
+    const availableTimes = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [isDayOff, setIsDayOff] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [bulkModalVisible, setBulkModalVisible] = useState(false);
+    const [bulkSlots, setBulkSlots] = useState<string[]>([]);
+    const [bulkIsDayOff, setBulkIsDayOff] = useState(false);
+    const [weekDates, setWeekDates] = useState<Date[]>([]);
+    const [weeklyAvailability, setWeeklyAvailability] = useState<{
+        [date: string]: { timeSlots: string[]; isDayOff: boolean };
+        }>({});
+    const [weekStartDate, setWeekStartDate] = useState(new Date());
+    const [showWeekPicker, setShowWeekPicker] = useState(false);
+
+  const uid = auth.currentUser?.uid;
+  const isoDate = format(selectedDate, 'yyyy-MM-dd');
+
+  const loadAvailability = async () => {
+    if (!uid) return;
+    setLoading(true);
+    try {
+      const ref = doc(db, 'users', uid, 'availability', isoDate);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        setSelectedSlots(data.timeSlots || []);
+        setIsDayOff(data.isDayOff || false);
+      } else {
+        setSelectedSlots([]);
+        setIsDayOff(false);
+      }
+    } catch (error) {
+      console.error('Error loading availability:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveAvailability = async () => {
+    if (!uid) return;
+    setLoading(true);
+    try {
+      const ref = doc(db, 'users', uid, 'availability', isoDate);
+    const newData = {
+      timeSlots: selectedSlots,
+      isDayOff,
+    };
+    await setDoc(ref, newData);
+      // ✅ Update weeklyAvailability state
+    setWeeklyAvailability(prev => ({
+      ...prev,
+      [isoDate]: newData,
+    }));
+      Alert.alert('Guardado', `Disponibilidad actualizada para ${isoDate}`);
+    } catch (error) {
+      console.error('Error saving availability:', error);
+      Alert.alert('Error', 'No se pudo guardar la disponibilidad.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyBulkAvailability = async () => {
+  if (!uid) return;
+  setLoading(true);
+  try {
+    const start = new Date(weekStartDate); // use weekStartDate if separated
+    const newAvailability: typeof weeklyAvailability = {};
+
+    const updates = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      const iso = format(date, 'yyyy-MM-dd');
+
+      const data = {
+        timeSlots: bulkSlots,
+        isDayOff: bulkIsDayOff,
+      };
+
+      newAvailability[iso] = data;
+
+      const ref = doc(db, 'users', uid, 'availability', iso);
+      return setDoc(ref, data);
+    });
+
+    await Promise.all(updates);
+
+    // ✅ Update local state
+    setWeeklyAvailability(prev => ({
+      ...prev,
+      ...newAvailability,
+    }));
+
+    // ✅ Sync daily view if selectedDate is part of the updated week
+const selectedIso = format(selectedDate, 'yyyy-MM-dd');
+if (newAvailability[selectedIso]) {
+  setSelectedSlots(newAvailability[selectedIso].timeSlots);
+  setIsDayOff(newAvailability[selectedIso].isDayOff);
+}
+
+    Alert.alert('Éxito', 'Disponibilidad semanal actualizada.');
+    setBulkModalVisible(false);
+  } catch (error) {
+    console.error('Error applying bulk availability:', error);
+    Alert.alert('Error', 'No se pudo aplicar la disponibilidad.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  const iso = format(selectedDate, 'yyyy-MM-dd');
+  const weeklyData = weeklyAvailability[iso];
+
+  if (weeklyData) {
+    setIsDayOff(weeklyData.isDayOff ?? false);
+    setSelectedSlots(weeklyData.timeSlots ?? []);
+  } else {
+    setIsDayOff(false);
+    setSelectedSlots([]);
+  }
+}, [selectedDate, weeklyAvailability]);
+
+  useEffect(() => {
+    loadAvailability();
+  }, [weekStartDate]);
+
+  const toggleSlot = (time: string) => {
+    setSelectedSlots(prev =>
+      prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
+    );
+  };
+
+  useEffect(() => {
+  const start = new Date(weekStartDate);
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+  setWeekDates(week);
+}, [weekStartDate]);
+
+useEffect(() => {
+  const fetchWeek = async () => {
+    if (!uid || weekDates.length === 0) return;
+    setLoading(true);
+    const results: typeof weeklyAvailability = {};
+
+    try {
+      const fetches = weekDates.map(async date => {
+        const iso = format(date, 'yyyy-MM-dd');
+        const ref = doc(db, 'users', uid, 'availability', iso);
+        const snap = await getDoc(ref);
+        results[iso] = snap.exists()
+          ? {
+              timeSlots: snap.data().timeSlots || [],
+              isDayOff: snap.data().isDayOff || false,
+            }
+          : { timeSlots: [], isDayOff: false };
+      });
+
+      await Promise.all(fetches);
+      setWeeklyAvailability(results);
+    } catch (error) {
+      console.error('Error loading weekly availability:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchWeek();
+}, [weekDates]);
+
+useEffect(() => {
+  const start = new Date(weekStartDate);
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+  setWeekDates(week);
+}, [weekStartDate]);
+
+
+  return (
+    <GradientBackground>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
+        {loading && (
+  <View style={styles.savingOverlay}>
+    <View style={styles.savingBox}>
+      <ActivityIndicator size="large" color="#fff" />
+      <Text style={styles.savingText}>Guardando disponibilidad...</Text>
+    </View>
+  </View>
+)}
+
+    {/* SINGLE DAY / TIME EDITION */}
+    <View style={{ marginTop: 24, alignItems:'center' }}>
+  <SubTitleText>Disponibilidad diaria:</SubTitleText>
+  <TouchableOpacity
+    onPress={() => setShowDatePicker(true)}
+    style={[styles.dateButton, { backgroundColor: '#d8d2c4' }]}
+  >
+    <BodyText>Seleccionar fecha (día único): {isoDate}</BodyText>
+  </TouchableOpacity>
+</View>
+
+
+{showDatePicker && (
+  <DateTimePicker
+    value={selectedDate}
+    mode="date"
+    display="default"
+    onChange={(_, date) => {
+      setShowDatePicker(false);
+      if (date) setSelectedDate(date);
+    }}
+  />
+)}
+
+<View style={styles.switchRow}>
+  <BodyText>¿Día libre (día único)?</BodyText>
+  <Switch value={isDayOff} onValueChange={setIsDayOff} />
+</View>
+
+{!isDayOff && (
+  <Button_style2 title="Editar horarios" onPress={() => setModalVisible(true)} />
+)}
+
+{!isDayOff && (
+<View style={{ marginVertical: 16 }}>
+  <BodyText>
+    Horarios seleccionados:{' '}
+    {selectedSlots.length > 0
+      ? [...selectedSlots].sort().join(', ')
+      : 'Ninguno'}
+  </BodyText>
+</View>
+)}
+
+<Button_style2 title="Guardar disponibilidad" onPress={saveAvailability} />
+
+{/* Daily Slot Modal */}
+<Modal visible={modalVisible} animationType="slide" transparent>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Selecciona horarios</Text>
+      <FlatList
+        data={availableTimes}
+        keyExtractor={item => item}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.slotButton,
+              selectedSlots.includes(item) && styles.slotSelected,
+            ]}
+            onPress={() => toggleSlot(item)}
+          >
+            <Text style={styles.slotText}>{item}</Text>
+          </TouchableOpacity>
+        )}
+      />
+      <Button_style2 title="Cerrar" onPress={() => setModalVisible(false)} />
+    </View>
+  </View>
+</Modal>
+{/* WEEKLY EDITION */}
+<View style={{ marginTop: 24, width: '100%' }}>
+  {/* Centered Subtitle */}
+  <View style={{ alignItems: 'center', marginBottom: 12 }}>
+    <SubTitleText>Disponibilidad semanal:</SubTitleText>
+  </View>
+
+  {/* Left-aligned date selector */}
+  <View style={{ marginLeft: 26, alignItems: 'flex-start' }}>
+    <TouchableOpacity
+      onPress={() => setShowWeekPicker(true)}
+      style={[styles.dateButton, { backgroundColor: '#d8d2c4' }]}
+    >
+      <BodyText>Seleccionar inicio de semana: {format(weekStartDate, 'yyyy-MM-dd')}</BodyText>
+    </TouchableOpacity>
+  </View>
+</View>
+
+{showWeekPicker && (
+  <DateTimePicker
+    value={weekStartDate}
+    mode="date"
+    display={Platform.OS === 'android' ? 'calendar' : 'default'}
+    onChange={(_, date) => {
+      setShowWeekPicker(false);
+      if (date) setWeekStartDate(date);
+    }}
+  />
+)}
+
+{weekDates.map(date => {
+  const iso = format(date, 'yyyy-MM-dd');
+  const dayLabel = format(date, 'EEE dd/MM');
+  const data = weeklyAvailability[iso];
+  const slots = data?.timeSlots || [];
+  const isOff = data?.isDayOff;
+
+  return (
+    <View key={iso} style={styles.weekDayBlock}>
+      <Text style={styles.weekDay}>
+        {dayLabel} {isOff ? '— Día libre' : ''}
+      </Text>
+      {!isOff && (
+        <Text style={styles.weekSlots}>
+          {slots.length > 0 ? [...slots].sort().join(', ') : 'Sin horarios'}
+        </Text>
+      )}
+    </View>
+  );
+})}
+
+<View style={styles.marginTop}>
+<Button_style2 title="Editar semana completa" onPress={() => setBulkModalVisible(true)} />
+</View>
+{/* Weekly Bulk Modal */}
+<Modal visible={bulkModalVisible} animationType="slide" transparent>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Editar semana completa</Text>
+      <View style={styles.switchRow}>
+        <BodyText>¿Día libre (toda la semana)?</BodyText>
+        <Switch value={bulkIsDayOff} onValueChange={setBulkIsDayOff} />
+      </View>
+      {!bulkIsDayOff && (
+        <FlatList
+          data={availableTimes}
+          keyExtractor={item => item}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.slotButton,
+                bulkSlots.includes(item) && styles.slotSelected,
+              ]}
+              onPress={() =>
+                setBulkSlots(prev =>
+                  prev.includes(item)
+                    ? prev.filter(t => t !== item)
+                    : [...prev, item]
+                )
+              }
+            >
+              <Text style={styles.slotText}>{item}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+        <Button_style2 title="Aplicar a la semana" onPress={applyBulkAvailability} />
+        <View style={{ marginTop: 12 }}>
+            <Button_style2 title="Cancelar" onPress={() => setBulkModalVisible(false)} />
+        </View>
+    </View>
+  </View>
+</Modal>
+
+    </ScrollView>
+    </GradientBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  header: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
+  dateButton: { padding: 12, backgroundColor: '#eee', borderRadius: 8 },
+  dateText: { fontSize: 16 },
+  switchRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12, // ✅ adds space between text and switch
+},
+  switchLabel: { fontSize: 16, marginRight: 10 },
+  selectedText: { marginTop: 10, fontSize: 16 },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    margin: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  slotButton: {
+    padding: 10,
+    marginVertical: 5,
+    backgroundColor: '#eee',
+    borderRadius: 6,
+  },
+  slotSelected: { backgroundColor: '#cce5ff' },
+  slotText: { fontSize: 16 },
+  overlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  overlayText: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 16,
+  },
+  weekHeader: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginTop: 20,
+  marginBottom: 10,
+},
+weekDayBlock: {
+  marginTop: 10,
+  alignItems: 'flex-start', // ✅ aligns text to the left
+  width: '100%',            // ✅ ensures full-width layout
+  marginLeft: 26, // ✅ adds left spacing per day block
+},
+weekDay: {
+  fontSize: 16,
+  fontWeight: '600',
+},
+weekSlots: {
+  fontSize: 14,
+  color: '#555',
+  marginLeft: 10,
+},
+scrollContent: {
+  justifyContent: 'flex-start',
+  paddingBottom: 40,
+  alignItems: 'center',
+},
+savingOverlay: {
+  position: 'absolute',
+  top: 0, left: 0, right: 0, bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.6)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 999,
+},
+savingBox: {
+  backgroundColor: '#333',
+  padding: 20,
+  borderRadius: 10,
+  alignItems: 'center',
+},
+savingText: {
+  marginTop: 10,
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: '500',
+},
+marginTop:{
+  marginTop: 10,
+}
+});

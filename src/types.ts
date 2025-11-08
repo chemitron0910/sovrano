@@ -41,4 +41,6 @@ export type RootStackParamList = {
   "Agenda tu cita": undefined; //Invitado
   "Agenda tu cita.": undefined; //Usuario
   "Registrarse": undefined;
+  "Calendario-Empleado": undefined;
+  "Perfil-Empleado.": undefined;
 };

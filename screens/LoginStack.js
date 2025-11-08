@@ -14,7 +14,19 @@ export default function LoginStack() {
       headerTitleAlign: 'center'}}>
       <Stack.Screen name="Inicio-Sovrano" component={LoginScreen} options={{ title: '' }}/>
       <Stack.Screen name="Usuario" component={UserStack} options={{headerBackVisible: false }}/>
-      <Stack.Screen name="Empleado" component={StaffStack} options={{headerBackVisible: false }}/>
+      <Stack.Screen
+        name="Empleado"
+        component={StaffStack}
+        options={{
+        headerBackVisible: false,
+        headerTitleStyle: {
+        fontFamily: 'Playfair-Bold', // ✅ Your custom font
+        fontSize: 22,
+        fontWeight: '400',
+        color: '#3e3e3e', // Optional: match Sovrano’s palette
+        },
+        }}
+      />
       <Stack.Screen name="Administrador" component={AdminStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Invitado" component={GuestStack} options={{headerBackVisible: false, title: '' }}/>
       <Stack.Screen name="Re-enviar correo electronico" component={ResendEmailScreen}/>

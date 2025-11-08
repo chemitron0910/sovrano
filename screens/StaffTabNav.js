@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
-import ProfileScreen from "../screens/ProfileScreen";
+import StaffProfileStack from './StaffProfileStack';
 import StaffScreen from "./StaffScreen";
 
 const Tab = createBottomTabNavigator();
@@ -18,7 +18,7 @@ export default function StaffTabNav() {
           <Tab.Screen name="Inicio" 
             component={StaffScreen}
             options={{headerShown:false}} />
-          <Tab.Screen name="Perfil" component={ProfileScreen} 
+          <Tab.Screen name="Perfil" component={StaffProfileStack} 
               options={{
               tabBarLabel: "Mi perfil",
               tabBarIcon: ({ color }) => (
