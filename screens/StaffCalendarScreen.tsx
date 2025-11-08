@@ -1,15 +1,21 @@
-//new undo2
+//new undo1
+import GradientBackground from '@/Components/GradientBackground';
 import BodyText from '@/Components/typography/BodyText';
 import SubTitleText from '@/Components/typography/SubTitleText';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Modal, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator, Alert, FlatList, Modal,
+  Platform,
+  ScrollView, StyleSheet, Switch, Text,
+  TouchableOpacity, View
+} from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 
-export default function StaffProfile() {
+export default function StaffCalendarScreen() {
     const availableTimes = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -123,6 +129,19 @@ if (newAvailability[selectedIso]) {
   }
 };
 
+useEffect(() => {
+  const iso = format(selectedDate, 'yyyy-MM-dd');
+  const weeklyData = weeklyAvailability[iso];
+
+  if (weeklyData) {
+    setIsDayOff(weeklyData.isDayOff ?? false);
+    setSelectedSlots(weeklyData.timeSlots ?? []);
+  } else {
+    setIsDayOff(false);
+    setSelectedSlots([]);
+  }
+}, [selectedDate, weeklyAvailability]);
+
   useEffect(() => {
     loadAvailability();
   }, [weekStartDate]);
@@ -186,7 +205,7 @@ useEffect(() => {
 
 
   return (
-
+    <GradientBackground>
     <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
         {loading && (
   <View style={styles.savingOverlay}>
@@ -198,10 +217,16 @@ useEffect(() => {
 )}
 
     {/* SINGLE DAY / TIME EDITION */}
-    <SubTitleText>Disponibilidad diaria:</SubTitleText>
-    <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
-  <BodyText>Seleccionar fecha (día único): {isoDate}</BodyText>
-</TouchableOpacity>
+    <View style={{ marginTop: 24, alignItems:'center' }}>
+  <SubTitleText>Disponibilidad diaria:</SubTitleText>
+  <TouchableOpacity
+    onPress={() => setShowDatePicker(true)}
+    style={[styles.dateButton, { backgroundColor: '#d8d2c4' }]}
+  >
+    <BodyText>Seleccionar fecha (día único): {isoDate}</BodyText>
+  </TouchableOpacity>
+</View>
+
 
 {showDatePicker && (
   <DateTimePicker
@@ -224,6 +249,7 @@ useEffect(() => {
   <Button_style2 title="Editar horarios" onPress={() => setModalVisible(true)} />
 )}
 
+{!isDayOff && (
 <View style={{ marginVertical: 16 }}>
   <BodyText>
     Horarios seleccionados:{' '}
@@ -232,7 +258,7 @@ useEffect(() => {
       : 'Ninguno'}
   </BodyText>
 </View>
-
+)}
 
 <Button_style2 title="Guardar disponibilidad" onPress={saveAvailability} />
 
@@ -261,18 +287,28 @@ useEffect(() => {
   </View>
 </Modal>
 {/* WEEKLY EDITION */}
-<View style={{ marginVertical: 16, alignItems: 'center' }}>
-<SubTitleText>Disponibilidad semanal:</SubTitleText>
-<TouchableOpacity onPress={() => setShowWeekPicker(true)} style={styles.dateButton}>
-  <BodyText>Seleccionar inicio de semana: {format(weekStartDate, 'yyyy-MM-dd')}</BodyText>
-</TouchableOpacity>
+<View style={{ marginTop: 24, width: '100%' }}>
+  {/* Centered Subtitle */}
+  <View style={{ alignItems: 'center', marginBottom: 12 }}>
+    <SubTitleText>Disponibilidad semanal:</SubTitleText>
+  </View>
+
+  {/* Left-aligned date selector */}
+  <View style={{ marginLeft: 26, alignItems: 'flex-start' }}>
+    <TouchableOpacity
+      onPress={() => setShowWeekPicker(true)}
+      style={[styles.dateButton, { backgroundColor: '#d8d2c4' }]}
+    >
+      <BodyText>Seleccionar inicio de semana: {format(weekStartDate, 'yyyy-MM-dd')}</BodyText>
+    </TouchableOpacity>
+  </View>
 </View>
 
 {showWeekPicker && (
   <DateTimePicker
     value={weekStartDate}
     mode="date"
-    display="default"
+    display={Platform.OS === 'android' ? 'calendar' : 'default'}
     onChange={(_, date) => {
       setShowWeekPicker(false);
       if (date) setWeekStartDate(date);
@@ -301,8 +337,9 @@ useEffect(() => {
   );
 })}
 
+<View style={styles.marginTop}>
 <Button_style2 title="Editar semana completa" onPress={() => setBulkModalVisible(true)} />
-
+</View>
 {/* Weekly Bulk Modal */}
 <Modal visible={bulkModalVisible} animationType="slide" transparent>
   <View style={styles.modalContainer}>
@@ -344,6 +381,7 @@ useEffect(() => {
 </Modal>
 
     </ScrollView>
+    </GradientBackground>
   );
 }
 
@@ -352,7 +390,11 @@ const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
   dateButton: { padding: 12, backgroundColor: '#eee', borderRadius: 8 },
   dateText: { fontSize: 16 },
-  switchRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+  switchRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12, // ✅ adds space between text and switch
+},
   switchLabel: { fontSize: 16, marginRight: 10 },
   selectedText: { marginTop: 10, fontSize: 16 },
   modalContainer: {
@@ -396,7 +438,10 @@ const styles = StyleSheet.create({
   marginBottom: 10,
 },
 weekDayBlock: {
-  marginBottom: 10,
+  marginTop: 10,
+  alignItems: 'flex-start', // ✅ aligns text to the left
+  width: '100%',            // ✅ ensures full-width layout
+  marginLeft: 26, // ✅ adds left spacing per day block
 },
 weekDay: {
   fontSize: 16,
@@ -432,5 +477,7 @@ savingText: {
   fontSize: 16,
   fontWeight: '500',
 },
-
+marginTop:{
+  marginTop: 10,
+}
 });
