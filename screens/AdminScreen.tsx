@@ -34,6 +34,7 @@ export default function AdminScreen() {
           <Text style={styles.welcomeText}>
             {`¡Nos alegra verte en Sovrano!`}
           </Text>
+
           <Button_style2 title="Assignar responsabilidad" onPress={()=>navigation.navigate("Assignar responsabilidad")}
           ></Button_style2>
 

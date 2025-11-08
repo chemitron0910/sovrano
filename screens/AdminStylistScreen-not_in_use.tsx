@@ -1,10 +1,13 @@
+import GradientBackground from '@/Components/GradientBackground';
+import BodyText from '@/Components/typography/BodyText';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, TextInput, View } from 'react-native';
 import Button_style2 from "../Components/Button_style2";
 import { auth, db } from '../Services/firebaseConfig';
+import { assignWeeklyAvailability } from '../utils/assignWeeklyAvailability';
 
 export default function AdminStylistScreen() {
   const [name, setName] = useState('');
@@ -30,8 +33,9 @@ export default function AdminStylistScreen() {
         email,
         role: 'empleado',
         hireDate: serverTimestamp(),
-        services: [], // optional: initialize empty
       });
+
+      await assignWeeklyAvailability(stylistId, 4); // assigns 4 weeks of availability
 
       Alert.alert('Success', 'Stylist hired and added to Firestore.');
       setName('');
@@ -45,28 +49,31 @@ export default function AdminStylistScreen() {
   };
 
   return (
+    <GradientBackground>
     <View style={styles.container}>
-      <Text style={styles.title}>Hire a New Stylist</Text>
 
+      <BodyText>Nombre completo</BodyText>
       <TextInput
-        style={styles.input}
-        placeholder="Full Name"
+        style={[styles.inputText,{ backgroundColor: '#d8d2c4' }]}
+        placeholder="Nombre completo" placeholderTextColor="#888"
         value={name}
         onChangeText={setName}
       />
 
+      <BodyText>Correo electrónico</BodyText>
       <TextInput
-        style={styles.input}
-        placeholder="Email Address"
+        style={[styles.inputText,{ backgroundColor: '#d8d2c4' }]}
+        placeholder="Correo electronico" placeholderTextColor="#888"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
 
+      <BodyText>Clave temporal</BodyText>
       <TextInput
-        style={styles.input}
-        placeholder="Temporary Password"
+        style={[styles.inputText,{ backgroundColor: '#d8d2c4' }]}
+        placeholder="Clave temporal" placeholderTextColor="#888"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -75,6 +82,7 @@ export default function AdminStylistScreen() {
       <Button_style2 title="Adicionar empleado" onPress={handleHireStylist}>
       </Button_style2>
     </View>
+    </GradientBackground>
   );
 }
 
@@ -82,8 +90,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
   },
   title: {
     fontSize: 22,
@@ -91,12 +97,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  input: {
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    marginBottom: 15,
-    paddingVertical: 8,
+  inputText: {
+    height: 40,
+    borderWidth: 1,
     paddingHorizontal: 10,
-    fontSize: 16,
+    borderRadius: 5,
+    marginBottom: 20,
   },
 });

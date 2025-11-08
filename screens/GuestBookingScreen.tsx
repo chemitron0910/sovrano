@@ -101,7 +101,6 @@ export default function GuestBookingScreen() {
 
   try {
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
-    //console.log('Booking saved with ID:', docRef.id);
     // ✅ Navigate to confirmation screen with required params
     navigation.navigate('Cita confirmada', {
       service: bookingData.service,

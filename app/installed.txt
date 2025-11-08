@@ -13,3 +13,4 @@ firebase deploy --only functions
 npm install -g firebase-tools
 npm install --save-dev expo-module-scripts
 expo install expo-font
+firebase init emulators
