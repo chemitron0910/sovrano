@@ -43,4 +43,5 @@ export type RootStackParamList = {
   "Registrarse": undefined;
   "Calendario-Empleado": undefined;
   "Perfil-Empleado.": undefined;
+  "Mi informacion": undefined;
 };

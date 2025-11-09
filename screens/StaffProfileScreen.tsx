@@ -14,6 +14,7 @@ return (
       <View style={styles.container}>
 
         <Button_style2 title="Manejo de horario" onPress={() => navigation.navigate('Calendario-Empleado')} />
+        <Button_style2 title="Mi informacion" onPress={() => navigation.navigate('Mi informacion')} />
 
       </View>
     </GradientBackground>
