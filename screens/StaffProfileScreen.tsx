@@ -13,7 +13,9 @@ return (
   <GradientBackground>
       <View style={styles.container}>
 
-        <Button_style2 title="Manejo de horario" onPress={() => navigation.navigate('Calendario-Empleado')} />
+        <View style={styles.button}>
+          <Button_style2 title="Manejo de horario" onPress={() => navigation.navigate('Calendario-Empleado')} />
+        </View>
         <Button_style2 title="Mi informacion" onPress={() => navigation.navigate('Mi informacion')} />
 
       </View>
@@ -32,4 +34,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
   },
+  button: {
+  gap: 10,
+  marginBottom: 15,
+},
 });

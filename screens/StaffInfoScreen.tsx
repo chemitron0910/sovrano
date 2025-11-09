@@ -1,17 +1,20 @@
+//undo
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import SubTitleText from '@/Components/typography/SubTitleText';
+import { Picker } from '@react-native-picker/picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { getAuth } from 'firebase/auth';
-import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, getFirestore, setDoc } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
 import React, { useEffect, useState } from 'react';
 import {
-    Image,
-    KeyboardAvoidingView, Platform,
-    ScrollView, StyleSheet, TextInput, TouchableOpacity, View
+  Alert,
+  Image,
+  KeyboardAvoidingView, Platform,
+  ScrollView, StyleSheet, TextInput, TouchableOpacity, View
 } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 
@@ -26,6 +29,10 @@ import Button_style2 from '../Components/Button_style2';
   const [generalInfo, setGeneralInfo] = useState('');
   const [services, setServices] = useState([{ name: '', duration: '' }]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [availableServices, setAvailableServices] = useState<
+  { name: string; duration: string; description?: string }[]
+    >([]);
+    const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -42,6 +49,19 @@ import Button_style2 from '../Components/Button_style2';
     };
     loadProfile();
   }, [uid]);
+
+  useEffect(() => {
+  const loadAvailableServices = async () => {
+    const snapshot = await getDocs(collection(firestore, 'services'));
+    const list = snapshot.docs
+      .map(doc => doc.data())
+      .filter((s): s is { name: string; duration: string; description?: string } =>
+        typeof s.name === 'string' && typeof s.duration === 'string'
+      );
+    setAvailableServices(list);
+  };
+  loadAvailableServices();
+}, []);
 
   const handleEdit = (index: number) => setEditingIndex(index);
 
@@ -61,7 +81,6 @@ const handleDelete = async (index: number) => {
       generalInfo,
       services: updated,
     }, { merge: true }); // ✅ merge ensures other fields stay intact
-    console.log('Service deleted and profile updated in Firestore');
   } catch (err) {
     console.error('Error deleting service from Firestore:', err);
   }
@@ -69,19 +88,16 @@ const handleDelete = async (index: number) => {
 
   const pickImage = async () => {
   try {
-    console.log('Opening image picker...');
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.7,
     });
 
     if (result.canceled || result.assets.length === 0  || !uid) {
-      console.log('Image selection canceled or no assets returned.');
       return;
     }
 
     const asset = result.assets[0];
-    console.log('Selected asset:', asset);
 
     // ✅ Convert to JPEG
     const manipulated = await ImageManipulator.manipulateAsync(
@@ -90,15 +106,11 @@ const handleDelete = async (index: number) => {
       { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
     );
 
-    console.log('Manipulated image:', manipulated);
-
     const response = await fetch(manipulated.uri);
     const blob = await response.blob();
-    console.log('Blob created:', blob);
 
     const storage = getStorage();
     const storageRef = ref(storage, `users/${uid}/profile/profilePic.jpg`);
-    console.log('Uploading to path:', storageRef.fullPath);
 
     const uploadTask = uploadBytesResumable(storageRef, blob);
 
@@ -110,7 +122,6 @@ const handleDelete = async (index: number) => {
       },
       async () => {
         const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-        console.log('Upload complete. Download URL:', downloadUrl);
         setProfilePic(downloadUrl);
       }
     );
@@ -132,9 +143,10 @@ const handleDelete = async (index: number) => {
   setServices(updated);
 };
 
-
   const saveProfile = async () => {
-    if (!uid) return;
+  if (!uid) return;
+  setSaving(true);
+  try {
     const ref = doc(firestore, `users/${uid}/profile/info`);
     await setDoc(ref, {
       profilePic,
@@ -142,10 +154,24 @@ const handleDelete = async (index: number) => {
       generalInfo,
       services,
     });
-  };
+    Alert.alert('Perfil guardado', 'Los cambios se han guardado correctamente.');
+  } catch (err) {
+    console.error('Error al guardar el perfil:', err);
+    Alert.alert('Error', 'No se pudo guardar el perfil. Intenta de nuevo.');
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
+    
     <GradientBackground>
+        {saving && (
+  <View style={styles.overlay}>
+    <BodyText style={{ color: '#fff', fontSize: 18 }}>Guardando...</BodyText>
+  </View>
+)}
+
         <KeyboardAvoidingView
   behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
   style={{ flex: 1 }}
@@ -172,42 +198,32 @@ const handleDelete = async (index: number) => {
         style={[styles.inputText, { height: 100 }]}
       />
 
-      <SubTitleText>Redes sociales</SubTitleText>
-      <TextInput 
-      placeholder="Instagram" 
-      placeholderTextColor="#888" 
-      value={socialLinks.instagram} onChangeText={text => setSocialLinks({ ...socialLinks, instagram: text })} 
-      style={styles.inputText} />
-      <TextInput 
-      placeholder="Facebook" value={socialLinks.facebook} 
-      placeholderTextColor="#888" 
-      onChangeText={text => setSocialLinks({ ...socialLinks, facebook: text })} 
-      style={styles.inputText} />
-      <TextInput 
-      placeholder="Sitio web" 
-      placeholderTextColor="#888" 
-      value={socialLinks.website} onChangeText={text => setSocialLinks({ ...socialLinks, website: text })} 
-      style={styles.inputText} />
-
       <SubTitleText>Servicios ofrecidos</SubTitleText>
       {services.map((service, index) => (
   <View key={index} style={styles.serviceItem}>
     {editingIndex === index ? (
       <>
-        <TextInput
-          placeholder="Nombre del servicio"
-          placeholderTextColor="#888"
-          value={service.name}
-          onChangeText={text => updateService(index, 'name', text)}
-          style={styles.inputText}
-        />
-        <TextInput
-          placeholder="Duración (ej. 30min)"
-          placeholderTextColor="#888"
-          value={service.duration}
-          onChangeText={text => updateService(index, 'duration', text)}
-          style={styles.inputText}
-        />
+      <View style={styles.pickerWrapper}>
+        <Picker
+  selectedValue={service.name}
+  onValueChange={(selectedName) => {
+    const selected = availableServices.find(s => s.name === selectedName);
+    if (selected) {
+      updateService(index, 'name', selected.name);
+      updateService(index, 'duration', selected.duration);
+    }
+  }}
+  mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+      style={styles.picker}
+      itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+>
+  <Picker.Item label="Selecciona un servicio" value="" />
+  {availableServices.map((s, i) => (
+    <Picker.Item key={i} label={`${s.name} (${s.duration})`} value={s.name} />
+  ))}
+</Picker>
+</View>
+
             <TouchableOpacity onPress={() => setEditingIndex(null)} >
                   <BodyText style={styles.edit}>Guardar</BodyText>
                 </TouchableOpacity>
@@ -231,12 +247,11 @@ const handleDelete = async (index: number) => {
     )}
   </View>
 ))}
+    <View style={styles.buttonRow}>
+  <Button_style2 title="Agregar servicio" onPress={addService} style={styles.button} />
+  <Button_style2 title="Guardar perfil" onPress={saveProfile} style={styles.button} />
+</View>
 
-      <Button_style2 title="Agregar servicio" onPress={addService} />
-
-      <View style={{ marginTop: 24, marginBottom: 30 }}>
-        <Button_style2 title="Guardar perfil" onPress={saveProfile} />
-      </View>
     </ScrollView>
     </KeyboardAvoidingView>
     </GradientBackground>
@@ -298,5 +313,49 @@ edit: {
   },
   centerText:{
     alignItems:'center'
-  }
+  },
+  pickerWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  picker: {
+  ...Platform.select({
+    ios: {
+      height: 150, // enough for scroll wheel
+      justifyContent: 'center',
+    },
+    android: {
+      height: 50,
+      justifyContent: 'center',
+    },
+  }),
+  borderRadius: 6,
+  borderWidth: 1,
+  borderColor: '#00796b',
+},
+  pickerItem: {
+    fontSize: 16,
+    color: 'black',
+  },
+  overlay: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 999,
+},
+buttonRow: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  gap: 12, // if supported, or use marginRight
+},
+button: {
+  alignSelf: 'flex-start', // ✅ prevents full-width stretching
+  paddingHorizontal: 12,   // ✅ optional: tighter padding
+  marginBottom: 50,
+},
 });

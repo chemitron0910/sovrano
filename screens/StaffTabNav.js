@@ -2,7 +2,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Platform, StyleSheet } from "react-native";
-import AboutScreen from "../screens/AboutScreen";
 import StaffProfileStack from './StaffProfileStack';
 import StaffScreen from "./StaffScreen";
 
@@ -24,12 +23,8 @@ export default function StaffTabNav() {
               tabBarIcon: ({ color }) => (
                 <Ionicons name="person" size={20} color={color} />
               ),
-              tabBarBadge:3,
               headerShown:false
           }}/>
-          <Tab.Screen name="Acerca de Sovrano" 
-            component={AboutScreen}
-            options={{headerShown:false}} />
         </Tab.Navigator>
   );
 }
