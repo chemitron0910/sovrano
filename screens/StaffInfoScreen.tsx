@@ -144,8 +144,6 @@ const handleDelete = async (index: number) => {
     });
   };
 
-
-
   return (
     <GradientBackground>
         <KeyboardAvoidingView
@@ -154,7 +152,7 @@ const handleDelete = async (index: number) => {
   keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // adjust as needed
 >
     <ScrollView style={{ flex: 1, padding: 16 }}>
-      <SubTitleText>Foto de perfil</SubTitleText>
+        <View style ={styles.centerText}>
       <TouchableOpacity onPress={pickImage}>
         {profilePic ? (
           <Image source={{ uri: profilePic }} style={{ width: 120, height: 120, borderRadius: 60 }} />
@@ -162,6 +160,17 @@ const handleDelete = async (index: number) => {
           <View style={styles.placeholderPic}><BodyText style={{ textAlign: 'center' }}>Seleccionar imagen</BodyText></View>
         )}
       </TouchableOpacity>
+      </View>
+
+      <SubTitleText>Hoja de vida abreviada</SubTitleText>
+      <TextInput
+        placeholder="Sobre mí, experiencia, etc."
+        placeholderTextColor="#888" 
+        value={generalInfo}
+        onChangeText={setGeneralInfo}
+        multiline
+        style={[styles.inputText, { height: 100 }]}
+      />
 
       <SubTitleText>Redes sociales</SubTitleText>
       <TextInput 
@@ -179,16 +188,6 @@ const handleDelete = async (index: number) => {
       placeholderTextColor="#888" 
       value={socialLinks.website} onChangeText={text => setSocialLinks({ ...socialLinks, website: text })} 
       style={styles.inputText} />
-
-      <SubTitleText>Información general</SubTitleText>
-      <TextInput
-        placeholder="Sobre mí, experiencia, etc."
-        placeholderTextColor="#888" 
-        value={generalInfo}
-        onChangeText={setGeneralInfo}
-        multiline
-        style={[styles.inputText, { height: 100 }]}
-      />
 
       <SubTitleText>Servicios ofrecidos</SubTitleText>
       {services.map((service, index) => (
@@ -297,4 +296,7 @@ edit: {
   delete: {
     color: 'red',
   },
+  centerText:{
+    alignItems:'center'
+  }
 });
