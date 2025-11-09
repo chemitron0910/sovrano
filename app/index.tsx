@@ -1,10 +1,30 @@
 import * as Font from 'expo-font';
+import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 import LoginStack from '../screens/LoginStack';
 
 export default function Index() {
+
+  Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
   const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+  const subscription = Notifications.addNotificationReceivedListener(notification => {
+    console.log("📲 Notification received:", notification);
+  });
+
+  return () => subscription.remove();
+}, []);
 
   useEffect(() => {
   async function loadFonts() {
@@ -22,6 +42,28 @@ export default function Index() {
   loadFonts();
   }, []);
 
+  useEffect(() => {
+  const subscription = Notifications.addNotificationReceivedListener(notification => {
+    console.log('Notification received:', notification);
+    // Optionally show an alert or update UI
+  });
+
+  return () => subscription.remove();
+}, []);
+
+useEffect(() => {
+  Notifications.getExpoPushTokenAsync().then(token => {
+    console.log("Expo Push Token:", token.data);
+  });
+}, []);
+
+useEffect(() => {
+  const subscription = Notifications.addNotificationReceivedListener(notification => {
+    console.log("Notification received:", notification);
+  });
+
+  return () => subscription.remove();
+}, []);
 
   if (!fontsLoaded) {
   return (

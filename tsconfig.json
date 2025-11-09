@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "screens/AdminTabNav.js"  ]
+, "screens/AdminTabNav.js", "screens/LoginScreen.js", "screens/LoginScreen.js"  ]
 }

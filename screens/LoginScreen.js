@@ -1,8 +1,9 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyText from '@/Components/typography/BodyText';
 import TitleText from '@/Components/typography/TitleText';
+import * as Notifications from 'expo-notifications';
 import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -29,7 +30,7 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-
+  const firestore = getFirestore();
 
   const validateForm = () => {
     let errors = {};
@@ -57,6 +58,28 @@ export default function LoginScreen({ navigation }) {
 
       setEmail('');
       setPassword('');
+
+      async function registerPushToken(uid) {
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      console.warn('Notification permissions not granted');
+      return;
+    }
+
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    console.log("Expo Push Token object:", tokenData); // ✅ See full structure
+
+    const token = tokenData.data;
+    console.log(`Expo push token from login for ${uid}: ${token}`);
+
+    await setDoc(doc(firestore, `users/${uid}`), { expoPushToken: token }, { merge: true });
+  } catch (error) {
+    console.error("Error registering push token:", error);
+  }
+}
+
+await registerPushToken(user.uid); // ✅ Await to ensure it completes before navigating
 
       switch (userData?.role) {
         case 'admin':

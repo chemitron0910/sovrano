@@ -28,6 +28,7 @@
     "expo-image-picker": "~17.0.8",
     "expo-linear-gradient": "~15.0.7",
     "expo-linking": "~8.0.8",
+    "expo-notifications": "~0.32.12",
     "expo-router": "~6.0.11",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
@@ -35,6 +36,8 @@
     "expo-system-ui": "~6.0.7",
     "expo-web-browser": "~15.0.8",
     "firebase": "^12.4.0",
+    "firebase-functions": "^3.24.1",
+    "node-fetch": "^2.7.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.4",
@@ -48,6 +51,7 @@
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
+    "@types/node-fetch": "^2.6.13",
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
