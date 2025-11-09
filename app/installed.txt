@@ -16,3 +16,8 @@ expo install expo-font
 firebase init emulators
 npx expo install expo-image-picker
 npx expo install expo-image-manipulator
+npx expo install expo-notifications
+npm install --save-dev @types/node-fetch
+npm install firebase-functions@^3.23.0
+npm install node-fetch@2
+npm install --save-dev @types/node-fetch
