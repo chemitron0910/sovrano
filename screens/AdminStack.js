@@ -7,6 +7,8 @@ import AdminTabNav from './AdminTabNav';
 import RoleAssignmentScreen from "./RoleAssignmentScreen";
 import StaffBookingHistory from './StaffBookingHistory';
 import StaffBookingScreen from './StaffBookingScreen';
+import StaffCalendarScreen from './StaffCalendarScreen';
+import StaffInfoScreen from './StaffInfoScreen';
 import StaffScreen from "./StaffScreen";
 
 const Stack = createNativeStackNavigator();
@@ -109,6 +111,32 @@ export default function AdminStack() {
       <Stack.Screen
         name="Historia de citas."
         component={StaffBookingHistory}
+        options={{
+        headerBackVisible: true,
+        headerTitleStyle: {
+        fontFamily: 'Playfair-Bold', // ✅ Your custom font
+        fontSize: 22,
+        fontWeight: '400',
+        color: '#3e3e3e', // Optional: match Sovrano’s palette
+        },
+        }}
+      />
+      <Stack.Screen
+        name="Calendario-Empleado"
+        component={StaffCalendarScreen}
+        options={{
+        headerBackVisible: true,
+        headerTitleStyle: {
+        fontFamily: 'Playfair-Bold', // ✅ Your custom font
+        fontSize: 22,
+        fontWeight: '400',
+        color: '#3e3e3e', // Optional: match Sovrano’s palette
+        },
+        }}
+        />
+      <Stack.Screen
+        name="Mi informacion"
+        component={StaffInfoScreen}
         options={{
         headerBackVisible: true,
         headerTitleStyle: {
