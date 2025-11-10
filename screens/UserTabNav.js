@@ -24,7 +24,6 @@ export default function UserTabNav() {
               tabBarIcon: ({ color }) => (
                 <Ionicons name="person" size={20} color={color} />
               ),
-              tabBarBadge:3,
               headerShown:false
           }}/>
           <Tab.Screen name="Acerca de Sovrano" 

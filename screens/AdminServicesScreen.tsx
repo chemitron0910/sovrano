@@ -113,6 +113,18 @@ export default function AdminServiceScreen() {
         {editingId ? 'Editar Servicio' : 'Agregar Servicio'}
       </BodyBoldText>
 
+      {editingId && (
+  <>
+    <BodyBoldText>ID del servicio</BodyBoldText>
+    <TextInput
+      style={[styles.input, { backgroundColor: '#e0e0e0' }]}
+      value={editingId}
+      editable={false}
+      selectTextOnFocus={false}
+    />
+  </>
+)}
+
       <BodyBoldText>Nombre del servicio</BodyBoldText>
         <TextInput style={[styles.input, { backgroundColor: '#f0f0f0' }]}
         placeholder='Nombre del servicio' placeholderTextColor="#888" 

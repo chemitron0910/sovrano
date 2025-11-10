@@ -1,7 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import BookingConfirmationScreen from "../screens/BookingConfirmationScreen";
-import LoginScreen from "../screens/LoginScreen";
-import ServicesScreen from "../screens/ServicesScreen";
+import ServicesScreen from '../screens/ServicesScreen';
 import UserBookingHistory from '../screens/UserBookingHistory';
 import UserTabNav from '../screens/UserTabNav';
 import UserBookingScreen from "./UserBookingScreen";
@@ -26,8 +25,19 @@ export default function UserStack() {
         },
         }}
       />
-      <Stack.Screen name="Credenciales" component={LoginScreen}/>
-      <Stack.Screen name="Nuestros servicios." component={ServicesScreen}/>
+      <Stack.Screen
+        name="Nuestros servicios."
+        component={ServicesScreen}
+        options={{
+        headerBackVisible: true,
+        headerTitleStyle: {
+        fontFamily: 'Playfair-Bold', // ✅ Your custom font
+        fontSize: 22,
+        fontWeight: '400',
+        color: '#3e3e3e', // Optional: match Sovrano’s palette
+        },
+        }}
+      />
       <Stack.Screen
         name="Agenda tu cita."
         component={UserBookingScreen}

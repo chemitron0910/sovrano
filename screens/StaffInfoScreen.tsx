@@ -1,4 +1,3 @@
-//undo
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
@@ -27,11 +26,12 @@ import Button_style2 from '../Components/Button_style2';
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', website: '' });
   const [generalInfo, setGeneralInfo] = useState('');
-  const [services, setServices] = useState([{ name: '', duration: '' }]);
+  const [services, setServices] = useState<{ id: string; name: string; duration: string }[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [availableServices, setAvailableServices] = useState<
-  { name: string; duration: string; description?: string }[]
-    >([]);
+  { id: string; name: string; duration: string; description?: string }[]
+>([]);
+
     const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -53,15 +53,20 @@ import Button_style2 from '../Components/Button_style2';
   useEffect(() => {
   const loadAvailableServices = async () => {
     const snapshot = await getDocs(collection(firestore, 'services'));
-    const list = snapshot.docs
-      .map(doc => doc.data())
-      .filter((s): s is { name: string; duration: string; description?: string } =>
-        typeof s.name === 'string' && typeof s.duration === 'string'
-      );
+    const list = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name,
+        duration: data.duration,
+        description: data.description,
+      };
+    });
     setAvailableServices(list);
   };
   loadAvailableServices();
 }, []);
+
 
   const handleEdit = (index: number) => setEditingIndex(index);
 
@@ -130,13 +135,8 @@ const handleDelete = async (index: number) => {
   }
 };
 
-  const updateService = (index: number, field: 'name' | 'duration', value: string) => {
-    const updated = [...services];
-    updated[index][field] = value;
-    setServices(updated);
-  };
+  const addService = () => setServices([...services, { id: '', name: '', duration: '' }]);
 
-  const addService = () => setServices([...services, { name: '', duration: '' }]);
   
   const removeService = (index: number) => {
   const updated = services.filter((_, i) => i !== index);
@@ -209,9 +209,15 @@ const handleDelete = async (index: number) => {
   onValueChange={(selectedName) => {
     const selected = availableServices.find(s => s.name === selectedName);
     if (selected) {
-      updateService(index, 'name', selected.name);
-      updateService(index, 'duration', selected.duration);
-    }
+  const updated = [...services];
+  updated[index] = {
+    id: selected.id,
+    name: selected.name,
+    duration: selected.duration,
+  };
+  setServices(updated);
+}
+
   }}
   mode={Platform.OS === 'android' ? 'dropdown' : undefined}
       style={styles.picker}

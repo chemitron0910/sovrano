@@ -2,7 +2,7 @@ import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
@@ -22,8 +22,10 @@ import { fetchUserProfile } from '../Services/userService';
 import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
 
-
-export default function BookingScreen() {
+export default function UserBookingScreen() {
+  type BookingScreenRouteProp = RouteProp<RootStackParamList, 'UserBookingScreen'>;
+const route = useRoute<BookingScreenRouteProp>();
+const { serviceFromUser, stylist } = route.params || {};
 
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
@@ -44,6 +46,12 @@ export default function BookingScreen() {
   const user = auth.currentUser;
   const guestName = user?.displayName || '';
   const email = user?.email || '';
+
+  useEffect(() => {
+  if (serviceFromUser?.id) setSelectedServiceId(serviceFromUser.id);
+  if (stylist?.id) setSelectedStylist(stylist);
+}, [service, stylist]);
+
 
   useEffect(() => {
   const loadUserProfile = async () => {
@@ -252,11 +260,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
-  },
   label: { fontSize: 16, fontWeight: '600', marginTop: 20 },
   input: {
     borderWidth: 1,
@@ -265,14 +268,6 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 8,
   },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 14,
-    borderRadius: 30,
-    marginTop: 30,
-    alignItems: 'center',
-  },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
   overlay: {
     position: 'absolute',
     top: 0,
@@ -332,26 +327,5 @@ pickerItem: {
     fontSize: 14,
     marginBottom: 4,
     fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)', // dims background
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBox: {
-    width: '80%',
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    elevation: 5, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  modalText: {
-    fontSize: 16,
-    textAlign: 'center',
   },
 });

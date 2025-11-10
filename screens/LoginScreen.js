@@ -68,14 +68,14 @@ export default function LoginScreen({ navigation }) {
     }
 
     const tokenData = await Notifications.getExpoPushTokenAsync();
-    console.log("Expo Push Token object:", tokenData); // ✅ See full structure
+    //console.log("Expo Push Token object:", tokenData); // ✅ See full structure
 
     const token = tokenData.data;
-    console.log(`Expo push token from login for ${uid}: ${token}`);
+    //console.log(`Expo push token from login for ${uid}: ${token}`);
 
     await setDoc(doc(firestore, `users/${uid}`), { expoPushToken: token }, { merge: true });
   } catch (error) {
-    console.error("Error registering push token:", error);
+    //console.error("Error registering push token:", error);
   }
 }
 

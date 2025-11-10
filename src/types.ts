@@ -5,7 +5,19 @@ export type User = {
 };
 
 export type RootStackParamList = {
-  BookingScreen: undefined;
+  UserBookingScreen: {
+    serviceFromUser: {
+      id: string;
+      name: string;
+      description: string;
+      duration: string;
+    };
+    stylist: {
+      id: string;
+      name: string;
+    };
+  };
+
   'Cita confirmada': {
     service: string;
     date: string;
