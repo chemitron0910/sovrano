@@ -20,7 +20,6 @@ export default function Index() {
 
   useEffect(() => {
   const subscription = Notifications.addNotificationReceivedListener(notification => {
-    console.log("📲 Notification received:", notification);
   });
 
   return () => subscription.remove();
@@ -44,7 +43,6 @@ export default function Index() {
 
   useEffect(() => {
   const subscription = Notifications.addNotificationReceivedListener(notification => {
-    console.log('Notification received:', notification);
     // Optionally show an alert or update UI
   });
 
@@ -59,7 +57,6 @@ useEffect(() => {
 
 useEffect(() => {
   const subscription = Notifications.addNotificationReceivedListener(notification => {
-    console.log("Notification received:", notification);
   });
 
   return () => subscription.remove();

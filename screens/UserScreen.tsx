@@ -39,7 +39,7 @@ export default function UserScreen() {
           </View>
 
           <View style={{ padding: 10 }}>
-          <Button_style2 title="Agenda tu cita" onPress={()=>navigation.navigate("Agenda tu cita.")}>
+          <Button_style2 title="Agenda tu cita" onPress={()=>navigation.navigate("Agenda una cita")}>
           </Button_style2>
           </View>
 
