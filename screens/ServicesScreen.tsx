@@ -110,8 +110,9 @@ export default function ServicesScreen() {
   };
 
   return (
+    <GradientBackground>
     <View style={styles.container}>
-      <GradientBackground>
+      
         
       <ScrollView style={{ padding: 20 }}>
         
@@ -128,7 +129,6 @@ export default function ServicesScreen() {
           </View>
         ))}
       </ScrollView>
-      </GradientBackground>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
@@ -156,16 +156,17 @@ export default function ServicesScreen() {
         </View>
       </Modal>
     </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-        flex: 1,
-        backgroundColor: 'transparent',
-        alignContent: 'center', 
-        padding:10,
-        paddingTop: StatusBar.currentHeight || 0,
+    flex: 1,
+    backgroundColor: 'transparent',
+    alignContent: 'center', 
+    padding:10,
+    paddingTop: StatusBar.currentHeight || 0,
       },
   modalOverlay: {
     flex: 1,

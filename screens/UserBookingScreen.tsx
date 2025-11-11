@@ -23,7 +23,7 @@ import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
 
 export default function UserBookingScreen() {
-  type BookingScreenRouteProp = RouteProp<RootStackParamList, 'UserBookingScreen'>;
+  type BookingScreenRouteProp = RouteProp<RootStackParamList, 'Agenda tu cita.'>;
 const route = useRoute<BookingScreenRouteProp>();
 const { serviceFromUser, stylist } = route.params || {};
 

@@ -52,19 +52,6 @@ export default function UserStack() {
         }}
       />
       <Stack.Screen
-        name="Agenda una cita"
-        component={UserBookingScreen}
-        options={{
-        headerBackVisible: false,
-        headerTitleStyle: {
-        fontFamily: 'Playfair-Bold', // ✅ Your custom font
-        fontSize: 22,
-        fontWeight: '400',
-        color: '#3e3e3e', // Optional: match Sovrano’s palette
-        },
-        }}
-      />
-      <Stack.Screen
         name="Historial de citas"
         component={UserBookingHistory}
         options={{

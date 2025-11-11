@@ -5,7 +5,6 @@ export type User = {
 };
 
 export type RootStackParamList = {
-  'Agenda una cita': undefined; //usuario
   'Cita confirmada': {
     service: string;
     date: string;
@@ -39,14 +38,14 @@ export type RootStackParamList = {
   "Nuestros servicios": undefined; //Invitado
   "Nuestros servicios.": undefined; //Usuario
   "Agenda tu cita": undefined; //Invitado
-  "Agenda tu cita.": { //usuario from services screen
-    serviceFromUser: {
+  "Agenda tu cita."?: { //usuario
+    serviceFromUser?: {
       id: string;
       name: string;
       description: string;
       duration: string;
     };
-    stylist: {
+    stylist?: {
       id: string;
       name: string;
     };
