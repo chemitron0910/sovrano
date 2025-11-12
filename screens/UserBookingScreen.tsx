@@ -182,6 +182,30 @@ return (
             </Picker>
             </LinearGradient>
           </View>
+
+          <BodyBoldText style={styles.label}>Selecciona estilista</BodyBoldText>
+          <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
+          <LinearGradient colors={['#DEC89C', '#D1B380']}>
+          <Picker
+            selectedValue={selectedStylist?.id || ''}
+            onValueChange={(value) => {
+            const stylist = stylists.find(s => s.id === value);
+            setSelectedStylist(stylist || null);
+            }}
+            mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+            style={[styles.picker]}
+            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+          >
+          <Picker.Item label="Selecciona..." value="" />
+            {stylists
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(stylist => (
+          <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
+          ))}
+          </Picker>
+          </LinearGradient>
+          </View>
+          
           <BodyBoldText style={styles.label}>Escoge fecha y hora</BodyBoldText>
             <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
               <Text>{date.toLocaleString()}</Text>
@@ -211,29 +235,6 @@ return (
           <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
           <View style={[styles.readOnlyField, ,{ backgroundColor: '#d8d2c4' }]}>
             <Text>{phoneNumber || 'No disponible'}</Text>
-          </View>
-
-          <BodyBoldText style={styles.label}>Selecciona estilista</BodyBoldText>
-          <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
-          <LinearGradient colors={['#DEC89C', '#D1B380']}>
-          <Picker
-            selectedValue={selectedStylist?.id || ''}
-            onValueChange={(value) => {
-            const stylist = stylists.find(s => s.id === value);
-            setSelectedStylist(stylist || null);
-            }}
-            mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-            style={[styles.picker]}
-            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-          >
-          <Picker.Item label="Selecciona..." value="" />
-            {stylists
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map(stylist => (
-          <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
-          ))}
-          </Picker>
-          </LinearGradient>
           </View>
 
           <View style={{ marginTop: 12 }}>
