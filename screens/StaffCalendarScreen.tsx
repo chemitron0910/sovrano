@@ -1,4 +1,3 @@
-//new undo1
 import GradientBackground from '@/Components/GradientBackground';
 import BodyText from '@/Components/typography/BodyText';
 import SubTitleText from '@/Components/typography/SubTitleText';
@@ -19,17 +18,20 @@ export default function StaffCalendarScreen() {
     const availableTimes = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [isDayOff, setIsDayOff] = useState(false);
     const [loading, setLoading] = useState(false);
     const [bulkModalVisible, setBulkModalVisible] = useState(false);
-    const [bulkSlots, setBulkSlots] = useState<string[]>([]);
     const [bulkIsDayOff, setBulkIsDayOff] = useState(false);
+    const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
+    const [bulkSlots, setBulkSlots] = useState<TimeSlot[]>([]);
     const [weekDates, setWeekDates] = useState<Date[]>([]);
-    const [weeklyAvailability, setWeeklyAvailability] = useState<{
-        [date: string]: { timeSlots: string[]; isDayOff: boolean };
-        }>({});
+    type TimeSlot = { time: string; booked: boolean };
+    type AvailabilityDay = {
+      timeSlots: TimeSlot[];
+      isDayOff: boolean;
+    };
+    const [weeklyAvailability, setWeeklyAvailability] = useState<Record<string, AvailabilityDay>>({});
     const [weekStartDate, setWeekStartDate] = useState(new Date());
     const [showWeekPicker, setShowWeekPicker] = useState(false);
 
@@ -147,10 +149,13 @@ useEffect(() => {
   }, [weekStartDate]);
 
   const toggleSlot = (time: string) => {
-    setSelectedSlots(prev =>
-      prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
-    );
-  };
+  setSelectedSlots(prev => {
+    const exists = prev.find(s => s.time === time);
+    return exists
+      ? prev.filter(s => s.time !== time)
+      : [...prev, { time, booked: false }];
+  });
+};
 
   useEffect(() => {
   const start = new Date(weekStartDate);
@@ -249,15 +254,37 @@ useEffect(() => {
   <Button_style2 title="Editar horarios" onPress={() => setModalVisible(true)} />
 )}
 
-{!isDayOff && (
-<View style={{ marginVertical: 16 }}>
-  <BodyText>
-    Horarios seleccionados:{' '}
-    {selectedSlots.length > 0
-      ? [...selectedSlots].sort().join(', ')
-      : 'Ninguno'}
-  </BodyText>
-</View>
+{!isDayOff && selectedSlots.length > 0 && (
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 16 }}>
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      {selectedSlots
+        .sort((a, b) => a.time.localeCompare(b.time))
+        .map((slot, index) => (
+          <View
+            key={index}
+            style={[
+              styles.gridItem,
+              {
+                backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
+                borderColor: slot.booked ? '#aaa' : '#ccc',
+                borderWidth: 1,
+                opacity: slot.booked ? 0.6 : 1,
+              },
+            ]}
+          >
+            <Text style={{ color: slot.booked ? '#888' : 'black' }}>
+              {slot.booked ? '🔒' : '✅'} {slot.time}
+            </Text>
+          </View>
+        ))}
+    </View>
+  </ScrollView>
+)}
+
+{!isDayOff && selectedSlots.length === 0 && (
+  <View style={{ marginVertical: 16 }}>
+    <BodyText>Horarios seleccionados: Ninguno</BodyText>
+  </View>
 )}
 
 <Button_style2 title="Guardar disponibilidad" onPress={saveAvailability} />
@@ -274,7 +301,7 @@ useEffect(() => {
           <TouchableOpacity
             style={[
               styles.slotButton,
-              selectedSlots.includes(item) && styles.slotSelected,
+              selectedSlots.some(slot => slot.time === item) && styles.slotSelected,
             ]}
             onPress={() => toggleSlot(item)}
           >
@@ -325,15 +352,42 @@ useEffect(() => {
 
   return (
     <View key={iso} style={styles.weekDayBlock}>
-      <Text style={styles.weekDay}>
-        {dayLabel} {isOff ? '— Día libre' : ''}
-      </Text>
-      {!isOff && (
-        <Text style={styles.weekSlots}>
-          {slots.length > 0 ? [...slots].sort().join(', ') : 'Sin horarios'}
-        </Text>
-      )}
-    </View>
+  <Text style={styles.weekDay}>
+    {dayLabel} {isOff ? '— Día libre' : ''}
+  </Text>
+
+  {!isOff && slots.length > 0 && (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {slots
+          .sort((a, b) => a.time.localeCompare(b.time))
+          .map((slot, index) => (
+            <View
+              key={index}
+              style={[
+                styles.gridItem,
+                {
+                  backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
+                  borderColor: slot.booked ? '#aaa' : '#ccc',
+                  borderWidth: 1,
+                  opacity: slot.booked ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text style={{ color: slot.booked ? '#888' : 'black' }}>
+                {slot.booked ? '🔒' : '✅'} {slot.time}
+              </Text>
+            </View>
+          ))}
+      </View>
+    </ScrollView>
+  )}
+
+  {!isOff && slots.length === 0 && (
+    <Text style={styles.weekSlots}>Sin horarios</Text>
+  )}
+</View>
+
   );
 })}
 
@@ -357,13 +411,14 @@ useEffect(() => {
             <TouchableOpacity
               style={[
                 styles.slotButton,
-                bulkSlots.includes(item) && styles.slotSelected,
+                bulkSlots.some(slot => slot.time === item)
+               && styles.slotSelected,
               ]}
               onPress={() =>
                 setBulkSlots(prev =>
-                  prev.includes(item)
-                    ? prev.filter(t => t !== item)
-                    : [...prev, item]
+                  prev.some(slot => slot.time === item)
+                    ? prev.filter(slot => slot.time !== item)
+                    : [...prev, { time: item, booked: false }]
                 )
               }
             >
@@ -479,5 +534,13 @@ savingText: {
 },
 marginTop:{
   marginTop: 10,
-}
+},
+gridItem: {
+  paddingVertical: 10,
+  paddingHorizontal: 14,
+  borderRadius: 6,
+  minWidth: 80,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
 });

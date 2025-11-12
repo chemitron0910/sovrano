@@ -1,6 +1,6 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,6 +22,16 @@ import { fetchUserProfile } from '../Services/userService';
 import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
 
+function formatDateWithWeekday(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('default', {
+    weekday: 'short', // e.g., "Mon"
+    year: 'numeric',
+    month: 'short',   // e.g., "Nov"
+    day: 'numeric',
+  });
+}
+
 export default function UserBookingScreen() {
   type BookingScreenRouteProp = RouteProp<RootStackParamList, 'Agenda tu cita.'>;
 const route = useRoute<BookingScreenRouteProp>();
@@ -42,7 +52,11 @@ const { serviceFromUser, stylist } = route.params || {};
   const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
   const services = useServices();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
-
+  const [weeklyAvailability, setWeeklyAvailability] = useState<
+  { date: string; timeSlots: string[]; isDayOff: boolean }[]
+>([]);
+  const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
   const user = auth.currentUser;
   const guestName = user?.displayName || '';
   const email = user?.email || '';
@@ -86,6 +100,56 @@ const { serviceFromUser, stylist } = route.params || {};
   };
   loadStylists();
 }, []);
+
+    useEffect(() => { //clear the selection when the stylist changes
+  setSelectedSlot(null);
+}, [selectedStylist]);
+
+useEffect(() => {
+  const fetchWeeklyAvailability = async () => {
+    if (!selectedStylist?.id) return;
+
+    setLoadingAvailability(true); // ✅ show overlay
+
+    try {
+      const startDate = new Date();
+      const dates: string[] = [];
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
+        dates.push(d.toISOString().split('T')[0]);
+      }
+
+      const availabilityRef = collection(db, `users/${selectedStylist.id}/availability`);
+      const snapshot = await getDocs(availabilityRef);
+
+      const results: { date: string; timeSlots: string[]; isDayOff: boolean }[] = [];
+
+      for (const date of dates) {
+        const match = snapshot.docs.find(doc => doc.id === date);
+        if (match) {
+          const data = match.data();
+          results.push({
+            date,
+            timeSlots: data.timeSlots || [],
+            isDayOff: data.isDayOff || false,
+          });
+        } else {
+          results.push({ date, timeSlots: [], isDayOff: true });
+        }
+      }
+
+      setWeeklyAvailability(results);
+    } catch (error) {
+      console.error('Error fetching availability:', error);
+    } finally {
+      setLoadingAvailability(false); // ✅ hide overlay
+    }
+  };
+
+  fetchWeeklyAvailability();
+}, [selectedStylist]);
 
   const selectedService = services.find(s => s.id === selectedServiceId);
 
@@ -150,6 +214,13 @@ return (
     </View>
   )}
 
+  {loadingAvailability && (
+  <View style={styles.overlay}>
+    <ActivityIndicator size="large" color="#fff" />
+    <Text style={styles.loadingText}>Cargando disponibilidad...</Text>
+  </View>
+)}
+
   <GradientBackground>
   <KeyboardAvoidingView
     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -206,21 +277,52 @@ return (
           </LinearGradient>
           </View>
           
-          <BodyBoldText style={styles.label}>Escoge fecha y hora</BodyBoldText>
-            <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
-              <Text>{date.toLocaleString()}</Text>
-            </TouchableOpacity>
-            {showPicker && (
-                  <DateTimePicker
-                    value={date}
-                    mode="datetime"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={(e, selectedDate) => {
-                    setShowPicker(false);
-                    if (selectedDate) setDate(selectedDate);
-                    }}
-                    textColor="black"/>
-                )}
+          {selectedStylist && (
+  <View style={{ marginTop: 20 }}>
+    <BodyBoldText style={styles.label}>Disponibilidad semanal</BodyBoldText>
+    {weeklyAvailability.map(({ date, timeSlots, isDayOff }) => (
+  <View key={date} style={{ marginBottom: 12 }}>
+    <BodyText style={{ fontWeight: 'bold' }}>{formatDateWithWeekday(date)}</BodyText>
+    {isDayOff ? (
+      <BodyText style={{ color: 'gray' }}>Día libre</BodyText>
+    ) : timeSlots.length > 0 ? (
+  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+  <View style={{ flexDirection: 'row', gap: 8 }}>
+  {timeSlots.map((slot, index) => {
+    const isSelected = selectedSlot?.date === date && selectedSlot?.time === slot;
+    return (
+      <TouchableOpacity
+        key={index}
+        style={[
+          styles.gridItem,
+          {
+            backgroundColor: isSelected ? '#C2A878' : '#f0f0f0',
+            borderColor: isSelected ? '#8B6E4B' : '#ccc',
+            borderWidth: isSelected ? 2 : 1,
+          },
+        ]}
+        onPress={() => {
+          const [hour, minute] = slot.split(':');
+          const selectedDate = new Date(date);
+          selectedDate.setHours(Number(hour), Number(minute));
+          setDate(selectedDate);
+          setSelectedSlot({ date, time: slot });
+        }}
+      >
+        <Text style={{ color: isSelected ? 'white' : 'black' }}>{slot}</Text>
+      </TouchableOpacity>
+    );
+  })}
+</View>
+</ScrollView>
+
+    ) : (
+      <Text>No hay disponibilidad</Text>
+    )}
+  </View>
+))}
+  </View>
+)}
 
           <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
           <View style={[styles.readOnlyField, ,{ backgroundColor: '#d8d2c4' }]}>
@@ -329,4 +431,14 @@ pickerItem: {
     marginBottom: 4,
     fontWeight: '600',
   },
+gridItem: {
+  paddingVertical: 10,
+  paddingHorizontal: 14,
+  borderRadius: 6,
+  marginBottom: 8,
+  marginRight: 8,
+  minWidth: 80,
+  alignItems: 'center',
+},
+
 });
