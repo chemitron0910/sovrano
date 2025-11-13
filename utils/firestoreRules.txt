@@ -10,7 +10,7 @@ service cloud.firestore {
 		}
     
     match /users/{userId}/availability/{date} {
-  		allow read: if isAdmin() || isEmpleado();
+  		allow read: if request.auth != null && isStylist(userId);
   		allow write: if isAdmin() || (isEmpleado() && request.auth.uid == userId);
 		}
 
@@ -19,9 +19,22 @@ service cloud.firestore {
     }
     
     match /services/{servicesId} {
-  		allow read: if request.auth != null || isAdmin() || isEmpleado() || isUsuario();
+  		allow read: if request.auth != null;
   		allow write: if isAdmin();
 		}
+    
+    match /weeklyTemplates/{templateId} {
+  		allow read: if request.auth != null;
+		}
+
+    match /users/{userId}/profile/info {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+    
+    match /users/{userId}/profile/{fileName} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
     
     function isAdmin() {
       return request.auth.token.role == 'admin';
@@ -34,5 +47,9 @@ service cloud.firestore {
     function isUsuario() {
       return request.auth.token.role == 'usuario';
     }
+    
+    function isStylist(targetId) {
+  		return get(/databases/$(database)/documents/users/$(targetId)).data.role in ['empleado', 'admin'];
+		}
   }
 }
