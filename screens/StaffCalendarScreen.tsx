@@ -14,6 +14,19 @@ import {
 import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 
+// StaffCalendarScreen.tsx
+
+type TimeSlot = {
+  time: string;
+  booked: boolean;
+};
+
+type Availability = {
+  isDayOff: boolean;
+  timeSlots: TimeSlot[];
+};
+
+
 export default function StaffCalendarScreen() {
     const availableTimes = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -60,28 +73,32 @@ export default function StaffCalendarScreen() {
   };
 
   const saveAvailability = async () => {
-    if (!uid) return;
-    setLoading(true);
-    try {
-      const ref = doc(db, 'users', uid, 'availability', isoDate);
-    const newData = {
-      timeSlots: selectedSlots,
+  if (!uid) return;
+  setLoading(true);
+  try {
+    const ref = doc(db, 'users', uid, 'availability', isoDate);
+
+    const newData: Availability = {
+      timeSlots: selectedSlots, // ✅ already normalized
       isDayOff,
     };
+
     await setDoc(ref, newData);
-      // ✅ Update weeklyAvailability state
+
+    // Update weeklyAvailability state so UI refreshes
     setWeeklyAvailability(prev => ({
       ...prev,
       [isoDate]: newData,
     }));
-      Alert.alert('Guardado', `Disponibilidad actualizada para ${isoDate}`);
-    } catch (error) {
-      console.error('Error saving availability:', error);
-      Alert.alert('Error', 'No se pudo guardar la disponibilidad.');
-    } finally {
-      setLoading(false);
-    }
-  };
+
+    Alert.alert('Guardado', `Disponibilidad actualizada para ${isoDate}`);
+  } catch (error) {
+    console.error('Error saving availability:', error);
+    Alert.alert('Error', 'No se pudo guardar la disponibilidad.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const applyBulkAvailability = async () => {
   if (!uid) return;
@@ -150,22 +167,16 @@ useEffect(() => {
 
   const toggleSlot = (time: string) => {
   setSelectedSlots(prev => {
-    const exists = prev.find(s => s.time === time);
-    return exists
-      ? prev.filter(s => s.time !== time)
-      : [...prev, { time, booked: false }];
+    const exists = prev.find(slot => slot.time === time);
+    if (exists) {
+      // remove slot
+      return prev.filter(slot => slot.time !== time);
+    } else {
+      // add slot with booked default
+      return [...prev, { time, booked: false }];
+    }
   });
 };
-
-  useEffect(() => {
-  const start = new Date(weekStartDate);
-  const week = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    return d;
-  });
-  setWeekDates(week);
-}, [weekStartDate]);
 
 useEffect(() => {
   const fetchWeek = async () => {
@@ -198,7 +209,7 @@ useEffect(() => {
   fetchWeek();
 }, [weekDates]);
 
-useEffect(() => {
+  useEffect(() => {
   const start = new Date(weekStartDate);
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start);
@@ -207,7 +218,6 @@ useEffect(() => {
   });
   setWeekDates(week);
 }, [weekStartDate]);
-
 
   return (
     <GradientBackground>
@@ -232,16 +242,18 @@ useEffect(() => {
   </TouchableOpacity>
 </View>
 
-
 {showDatePicker && (
   <DateTimePicker
     value={selectedDate}
     mode="date"
-    display="default"
+    display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
     onChange={(_, date) => {
       setShowDatePicker(false);
-      if (date) setSelectedDate(date);
+      if (date) {
+        setSelectedDate(date); // ✅ This must update the state
+      }
     }}
+    textColor="black"
   />
 )}
 
@@ -335,17 +347,23 @@ useEffect(() => {
   <DateTimePicker
     value={weekStartDate}
     mode="date"
-    display={Platform.OS === 'android' ? 'calendar' : 'default'}
+    display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
     onChange={(_, date) => {
       setShowWeekPicker(false);
       if (date) setWeekStartDate(date);
     }}
+    textColor="black"
   />
 )}
 
 {weekDates.map(date => {
   const iso = format(date, 'yyyy-MM-dd');
-  const dayLabel = format(date, 'EEE dd/MM');
+  const dayLabel = new Intl.DateTimeFormat(undefined, {
+  weekday: 'short',
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+}).format(date);
   const data = weeklyAvailability[iso];
   const slots = data?.timeSlots || [];
   const isOff = data?.isDayOff;
