@@ -5,7 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { addDoc, collection, doc, getDoc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
@@ -23,9 +23,12 @@ import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
 
 function formatDateWithWeekday(dateString: string) {
-  const date = new Date(dateString);
+  // Parse safely in local time
+  const [year, month, day] = dateString.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+
   return date.toLocaleDateString('default', {
-    weekday: 'short', // e.g., "Mon"
+    weekday: 'short', // e.g., "Thu"
     year: 'numeric',
     month: 'short',   // e.g., "Nov"
     day: 'numeric',
@@ -118,22 +121,25 @@ useEffect(() => {
   const fetchWeeklyAvailability = async () => {
     if (!selectedStylist?.id) return;
 
-    setLoadingAvailability(true); // ✅ show overlay
+    setLoadingAvailability(true);
 
     try {
       const startDate = new Date();
       const dates: string[] = [];
 
+      // Generate 7 days forward in LOCAL time
       for (let i = 0; i < 7; i++) {
         const d = new Date(startDate);
-        d.setDate(d.getDate() + i);
-        dates.push(d.toISOString().split('T')[0]);
+        d.setDate(startDate.getDate() + i);
+
+        const pushedDate = formatLocalYMD(d);
+
+        dates.push(pushedDate);
       }
 
       const availabilityRef = collection(db, `users/${selectedStylist.id}/availability`);
       const snapshot = await getDocs(availabilityRef);
 
-      // ✅ Update type to use TimeSlot[]
       const results: { date: string; timeSlots: TimeSlot[]; isDayOff: boolean }[] = [];
 
       for (const date of dates) {
@@ -141,9 +147,9 @@ useEffect(() => {
         if (match) {
           const data = match.data();
 
-          // Normalize slots: ensure each has {time, booked}
+          // Normalize slots: strip quotes immediately
           const slots: TimeSlot[] = (data.timeSlots || []).map((slot: any) => ({
-            time: slot.time ?? slot,          // handle legacy string slots
+            time: (slot.time ?? slot).replace(/['"]+/g, '').trim(),
             booked: slot.booked ?? false,
           }));
 
@@ -161,7 +167,7 @@ useEffect(() => {
     } catch (error) {
       console.error('Error fetching availability:', error);
     } finally {
-      setLoadingAvailability(false); // ✅ hide overlay
+      setLoadingAvailability(false);
     }
   };
 
@@ -169,6 +175,14 @@ useEffect(() => {
 }, [selectedStylist]);
 
   const selectedService = services.find(s => s.id === selectedServiceId);
+
+  const formatLocalYMD = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 
 const handleBooking = async () => {
   if (!auth.currentUser) {
@@ -183,52 +197,73 @@ const handleBooking = async () => {
 
   setLoading(true);
 
-  const isoDate = selectedSlot.date; // already YYYY-MM-DD
-  const selectedTime = selectedSlot.time; // e.g. "14:00"
+  const isoDate = selectedSlot.date; // "YYYY-MM-DD"
+let selectedTime = selectedSlot.time; // e.g. "14:00"
 
-  // Construct full UTC timestamp from slot
-  const fullDate = new Date(`${isoDate}T${selectedTime}`);
-  const bookingData = {
-    service: selectedService?.name || '',
-    date: fullDate.toISOString(), // full UTC timestamp
-    time: selectedTime,
-    guestName: auth.currentUser.displayName || '',
-    userId: auth.currentUser.uid,
-    email: auth.currentUser.email || '',
-    phoneNumber: phoneNumber || '',
-    stylistId: selectedStylist.id,
-    stylistName: selectedStylist.name,
-    createdAt: new Date().toISOString(),
-    role,
-  };
+// 🔧 Clean up legacy slot strings (remove stray quotes/whitespace)
+selectedTime = selectedTime.replace(/['"]+/g, '').trim();
+
+// 🔧 Guard against invalid values
+if (!isoDate || !selectedTime) {
+  Alert.alert('Error', 'Fecha u hora inválida');
+  setLoading(false);
+  return;
+}
+const [year, month, day] = isoDate.split('-').map(Number);
+const [hour, minute] = selectedTime.split(':').map(Number);
+if ([year, month, day, hour, minute].some(isNaN)) {
+  Alert.alert('Error', `Formato inválido: ${isoDate} ${selectedTime}`);
+  setLoading(false);
+  return;
+}
+
+// ✅ Safe construction of Date object
+const fullDate = new Date(year, month - 1, day, hour, minute);
+const bookingData = {
+  service: selectedService?.name || '',
+  date: fullDate.toISOString(), // full UTC timestamp
+  time: selectedTime,
+  guestName: auth.currentUser.displayName || '',
+  userId: auth.currentUser.uid,
+  email: auth.currentUser.email || '',
+  phoneNumber: phoneNumber || '',
+  stylistId: selectedStylist.id,
+  stylistName: selectedStylist.name,
+  createdAt: new Date().toISOString(),
+  role,
+};
 
   try {
     // 1️⃣ Check stylist availability first
     const availabilityRef = doc(db, 'users', selectedStylist.id, 'availability', isoDate);
     const availabilitySnap = await getDoc(availabilityRef);
 
-    if (availabilitySnap.exists()) {
-      const availabilityData = availabilitySnap.data();
+    const availabilityData = availabilitySnap.exists()
+  ? availabilitySnap.data()
+  : { timeSlots: [], isDayOff: false };
 
-      // Find the slot
-      const existingSlot = (availabilityData.timeSlots || []).find(
-        (slot: any) => slot.time === selectedTime
-      );
+let slots: any[] = availabilityData.timeSlots || [];
 
-      // 2️⃣ Prevent double booking
-      if (existingSlot?.booked) {
-        Alert.alert('Error', 'Este horario ya está reservado');
-        setLoading(false);
-        return;
-      }
+// Check if slot exists
+const slotIndex = slots.findIndex((slot: any) => slot.time === selectedTime);
 
-      // 3️⃣ Mark slot as booked
-      const updatedSlots = (availabilityData.timeSlots || []).map((slot: any) =>
-        slot.time === selectedTime ? { ...slot, booked: true } : slot
-      );
+if (slotIndex >= 0 && slots[slotIndex].booked) {
+  Alert.alert('Error', 'Este horario ya está reservado');
+  setLoading(false);
+  return;
+}
 
-      await updateDoc(availabilityRef, { timeSlots: updatedSlots });
-    }
+// Mark slot as booked (create if missing)
+if (slotIndex >= 0) {
+  slots[slotIndex].booked = true;
+} else {
+  slots.push({ time: selectedTime, booked: true });
+}
+
+await setDoc(availabilityRef, {
+  ...availabilityData,
+  timeSlots: slots,
+});
 
     // 4️⃣ Save booking in global bookings collection
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
@@ -330,53 +365,80 @@ return (
           {selectedStylist && (
   <View style={{ marginTop: 20 }}>
     <BodyBoldText style={styles.label}>Disponibilidad semanal</BodyBoldText>
-    {weeklyAvailability.map(({ date, timeSlots, isDayOff }) => (
-  <View key={date} style={{ marginBottom: 12 }}>
-    <BodyText style={{ fontWeight: 'bold' }}>{formatDateWithWeekday(date)}</BodyText>
-    {isDayOff ? (
-      <BodyText style={{ color: 'gray' }}>Día libre</BodyText>
-    ) : timeSlots.length > 0 ? (
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-  <View style={{ flexDirection: 'row', gap: 8 }}>
-  {timeSlots.map((slot, index) => {
-  const isSelected = selectedSlot?.date === date && selectedSlot?.time === slot.time;
+    {weeklyAvailability.map(({ date, timeSlots, isDayOff }) => {
 
   return (
-    <TouchableOpacity
-      key={index}
-      style={[
-        styles.gridItem,
-        {
-          backgroundColor: isSelected ? '#C2A878' : slot.booked ? '#ddd' : '#f0f0f0',
-          borderColor: isSelected ? '#8B6E4B' : slot.booked ? '#aaa' : '#ccc',
-          borderWidth: isSelected ? 2 : 1,
-          opacity: slot.booked ? 0.6 : 1,
-        },
-      ]}
-      disabled={slot.booked} // ✅ prevent booking if already booked
-      onPress={() => {
-        const [hour, minute] = slot.time.split(':');
-        const selectedDateObj = new Date(date);
-        selectedDateObj.setHours(Number(hour), Number(minute));
-        setDate(selectedDateObj);
-        setSelectedSlot({ date, time: slot.time });
-      }}
-    >
-      <Text style={{ color: isSelected ? 'white' : slot.booked ? '#888' : 'black' }}>
-        {slot.booked ? '🔒' : '✅'} {slot.time}
-      </Text>
-    </TouchableOpacity>
+    <View key={date} style={{ marginBottom: 12 }}>
+      {/* Show weekday + date */}
+      <BodyText style={{ fontWeight: 'bold' }}>
+        {formatDateWithWeekday(date)}
+      </BodyText>
+
+      {/* Show availability */}
+      {isDayOff ? (
+        <BodyText style={{ color: 'gray' }}>Día libre</BodyText>
+      ) : timeSlots.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {timeSlots.map((slot, index) => {
+              const isSelected =
+                selectedSlot?.date === date && selectedSlot?.time === slot.time;
+
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.gridItem,
+                    {
+                      backgroundColor: isSelected
+                        ? '#C2A878'
+                        : slot.booked
+                        ? '#ddd'
+                        : '#f0f0f0',
+                      borderColor: isSelected
+                        ? '#8B6E4B'
+                        : slot.booked
+                        ? '#aaa'
+                        : '#ccc',
+                      borderWidth: isSelected ? 2 : 1,
+                      opacity: slot.booked ? 0.6 : 1,
+                    },
+                  ]}
+                  disabled={slot.booked} // ✅ prevent booking if already booked
+                  onPress={() => {
+  const [hour, minute] = slot.time.split(':').map(Number);
+
+  // Parse the YYYY-MM-DD string safely in local time
+  const [year, month, day] = date.split('-').map(Number);
+  const selectedDateObj = new Date(year, month - 1, day, hour, minute);
+
+  setDate(selectedDateObj);
+  setSelectedSlot({ date, time: slot.time });
+}}
+                >
+                  <Text
+                    style={{
+                      color: isSelected
+                        ? 'white'
+                        : slot.booked
+                        ? '#888'
+                        : 'black',
+                    }}
+                  >
+                    {slot.booked ? '🔒' : '✅'} {slot.time}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+      ) : (
+        <Text>No hay disponibilidad</Text>
+      )}
+    </View>
   );
 })}
 
-</View>
-</ScrollView>
-
-    ) : (
-      <Text>No hay disponibilidad</Text>
-    )}
-  </View>
-))}
   </View>
 )}
 

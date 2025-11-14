@@ -4,6 +4,13 @@ import { auth, db } from '../Services/firebaseConfig';
 
 const dayMap = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
 
+const formatLocalYMD = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const assignWeeklyAvailability = async (uid: string | undefined, weeks: number = 4) => {
   try {
     const tokenResult = await getIdTokenResult(auth.currentUser!);
@@ -38,7 +45,7 @@ export const assignWeeklyAvailability = async (uid: string | undefined, weeks: n
       const date = new Date(today);
       date.setDate(today.getDate() + i);
 
-      const isoDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const isoDate = formatLocalYMD(date); // local day string
       const dayOfWeek = dayMap[date.getDay()];
       const rawSlots: string[] = template[dayOfWeek] || [];
 
@@ -49,10 +56,29 @@ export const assignWeeklyAvailability = async (uid: string | undefined, weeks: n
 
       const availabilityRef = doc(db, 'users', uidString, 'availability', isoDate);
       try {
-        await setDoc(availabilityRef, {
-          timeSlots,
-          isDayOff: timeSlots.length === 0,
-        });
+        const existingSnap = await getDoc(availabilityRef);
+let existingSlots: any[] = [];
+
+if (existingSnap.exists()) {
+  const existingData = existingSnap.data();
+  existingSlots = existingData.timeSlots || [];
+}
+
+// Create a map of existing bookings
+const bookedMap = new Map(
+  existingSlots.filter(s => s.booked).map(s => [s.time, true])
+);
+
+// Merge template with existing bookings
+const mergedSlots = rawSlots.map(time => ({
+  time,
+  booked: bookedMap.get(time) || false,
+}));
+
+await setDoc(availabilityRef, {
+  timeSlots: mergedSlots,
+  isDayOff: mergedSlots.length === 0,
+});
       } catch (writeError) {
         console.error('Write failed:', writeError);
       }
