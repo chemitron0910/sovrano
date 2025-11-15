@@ -2,7 +2,7 @@ import GradientBackground from '@/Components/GradientBackground';
 import BodyText from '@/Components/typography/BodyText';
 import TitleText from '@/Components/typography/TitleText';
 import * as Notifications from 'expo-notifications';
-import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
@@ -31,6 +31,24 @@ export default function LoginScreen({ navigation }) {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const firestore = getFirestore();
+
+  const handleGuestLogin = async () => {
+  try {
+    const result = await signInAnonymously(auth);
+    const user = result.user;
+
+    // Create a Firestore doc for the guest if needed
+    await setDoc(doc(db, "users", user.uid), {
+      role: "guest",
+      createdAt: new Date().toISOString(),
+    }, { merge: true });
+
+    navigation.navigate("Invitado");
+  } catch (error) {
+    console.error("Guest login error:", error);
+    Alert.alert("Error", "No se pudo iniciar sesión como invitado");
+  }
+};
 
   const validateForm = () => {
     let errors = {};
@@ -185,7 +203,7 @@ await registerPushToken(user.uid); // ✅ Await to ensure it completes before na
 
           <Button_style2
             title="Invitado"
-            onPress={() => navigation.navigate('Invitado')}
+            onPress={handleGuestLogin}
           />
 
           <Button_style2

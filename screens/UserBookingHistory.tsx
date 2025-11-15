@@ -1,7 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
@@ -30,60 +30,29 @@ export default function UserBookingHistory() {
   }, [userId]);
 
   const cancelBooking = async (booking: Booking) => {
-    try {
-      const bookingDate = new Date(booking.date);
-      const isoDate = bookingDate.toISOString().split('T')[0];
-      const selectedTime = booking.time;
+  try {
+    // 1️⃣ Mark booking as cancelled (history preserved)
+    await updateDoc(doc(db, "bookings", booking.id), {
+      status: "cancelled",
+      cancelledAt: new Date().toISOString(),
+    });
 
-      // 1️⃣ Update booking status instead of deleting
-      await updateDoc(doc(db, 'bookings', booking.id), {
-        status: 'cancelled',
-        cancelledAt: new Date().toISOString(),
-      });
+    // 2️⃣ Update local state so UI reflects cancellation
+    setBookings(prev =>
+      prev.map(b => (b.id === booking.id ? { ...b, status: "cancelled" } : b))
+    );
 
-      // 2️⃣ Update stylist availability
-      const availabilityRef = doc(db, 'users', booking.stylistId, 'availability', isoDate);
-      const availabilitySnap = await getDoc(availabilityRef);
+    // 3️⃣ Show success message
+    Alert.alert("Cancelación exitosa", "Tu cita ha sido cancelada.");
 
-      if (availabilitySnap.exists()) {
-        const availabilityData = availabilitySnap.data();
-        const updatedSlots = (availabilityData.timeSlots || []).map((slot: any) =>
-          slot.time === selectedTime ? { ...slot, booked: false } : slot
-        );
-        await updateDoc(availabilityRef, { timeSlots: updatedSlots });
-      }
-
-      // 3️⃣ Send notification to stylist
-      const stylistRef = doc(db, 'users', booking.stylistId);
-      const stylistSnap = await getDoc(stylistRef);
-      if (stylistSnap.exists()) {
-        const stylistData = stylistSnap.data();
-        if (stylistData.expoPushToken) {
-          await fetch('https://exp.host/--/api/v2/push/send', {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              to: stylistData.expoPushToken,
-              sound: 'default',
-              title: 'Cita cancelada',
-              body: `${auth.currentUser?.displayName || 'Un cliente'} canceló la cita del ${isoDate} a las ${selectedTime}`,
-            }),
-          });
-        }
-      }
-
-      Alert.alert('Cancelación exitosa', 'Tu cita ha sido cancelada.');
-      setBookings(prev =>
-        prev.map(b => (b.id === booking.id ? { ...b, status: 'cancelled' } : b))
-      );
-    } catch (error) {
-      console.error('Error cancelando cita:', error);
-      Alert.alert('Error', 'No se pudo cancelar la cita.');
-    }
-  };
+    // ⛔️ No availability update here
+    // ⛔️ No push notification here
+    // Backend Cloud Function (onBookingUpdated) will handle those
+  } catch (error) {
+    console.error("Error cancelando cita:", error);
+    Alert.alert("Error", "No se pudo cancelar la cita.");
+  }
+};
 
   const renderBookingItem = ({ item }: { item: Booking }) => {
     const dateObj = new Date(item.date);
