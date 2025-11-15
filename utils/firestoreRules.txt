@@ -10,12 +10,13 @@ service cloud.firestore {
 		}
     
     match /users/{userId}/availability/{date} {
-  		allow read: if request.auth != null && isStylist(userId);
-  		allow write: if isAdmin() || (isEmpleado() && request.auth.uid == userId);
+  		allow read, write: if isAdmin() || (isEmpleado() && request.auth.uid == userId);
+      
+  		allow read, write: if isUsuario();
 		}
 
     match /bookings/{bookingId} {
-      allow read, write: if request.auth != null || isAdmin() || isEmpleado() || isUsuario();
+      allow read, write: if request.auth != null || isAdmin() || isEmpleado() || isUsuario() || isUsuario();
     }
     
     match /services/{servicesId} {
