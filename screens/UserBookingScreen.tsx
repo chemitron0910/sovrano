@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet, Text,
@@ -48,9 +49,8 @@ type AvailabilityDay = {
 
 export default function UserBookingScreen() {
   type BookingScreenRouteProp = RouteProp<RootStackParamList, 'Agenda tu cita.'>;
-const route = useRoute<BookingScreenRouteProp>();
-const { serviceFromUser, stylist } = route.params || {};
-
+  const route = useRoute<BookingScreenRouteProp>();
+  const { serviceFromUser, stylist } = route.params || {};
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
@@ -72,6 +72,41 @@ const { serviceFromUser, stylist } = route.params || {};
   const user = auth.currentUser;
   const guestName = user?.displayName || '';
   const email = user?.email || '';
+  const [serviceProviders, setServiceProviders] = useState<Record<string, string[]>>({});
+  const [modalVisible, setModalVisible] = useState(false);
+
+useEffect(() => {
+  const buildServiceProviders = async () => {
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("role", "in", ["empleado", "admin"]));
+      const snapshot = await getDocs(q);
+
+      const providersMap: Record<string, string[]> = {};
+
+      for (const docSnap of snapshot.docs) {
+        const stylistId = docSnap.id;
+        const infoDoc = await getDoc(doc(db, `users/${stylistId}/profile/info`));
+        if (!infoDoc.exists()) continue;
+
+        const info = infoDoc.data();
+        const providedServices = info?.services || [];
+        for (const svc of providedServices) {
+          if (!svc.id) continue;
+          if (!providersMap[svc.id]) providersMap[svc.id] = [];
+          providersMap[svc.id].push(stylistId);
+        }
+      }
+
+      setServiceProviders(providersMap);
+    } catch (err) {
+      console.error("Error building serviceProviders:", err);
+    }
+  };
+
+  buildServiceProviders();
+}, []);
+
 
   useEffect(() => {
   if (serviceFromUser?.id) setSelectedServiceId(serviceFromUser.id);
@@ -229,7 +264,7 @@ const bookingData = {
   phoneNumber: phoneNumber || '',
   stylistId: selectedStylist.id,
   stylistName: selectedStylist.name,
-  createdAt: new Date().toISOString(),
+  createdAt: new Date().toLocaleString('sv-SE'),
   role,
 };
 
@@ -316,52 +351,67 @@ return (
       contentContainerStyle={styles.scrollContent}>
         <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
           <View style={styles.pickerWrapper}>
-          <BodyBoldText style={styles.pickerLabel}>Select Service</BodyBoldText>
-            <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
-            <Picker
-              selectedValue={selectedServiceId}
-              onValueChange={(value) => setSelectedServiceId(value)}
-              mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-              style={[styles.picker, { backgroundColor: '#E9E4D4' }]}
-              itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-            >
-            <Picker.Item label="Selecciona..." value={null} />
-            {services
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((service) => (
-            <Picker.Item
-              key={service.id}
-              label={`${service.name} (${service.duration} min)`}
-              value={service.id}
-            />
-            ))}
-            </Picker>
-            </LinearGradient>
+
+<BodyBoldText style={styles.pickerLabel}>Selecciona servicio</BodyBoldText>
+<View style={[styles.input, { height: 150, justifyContent: "center" }]}>
+  <LinearGradient colors={["#E9E4D4", "#E0CFA2"]}>
+    <Picker
+      selectedValue={selectedServiceId}
+      onValueChange={(value) => {
+        setSelectedServiceId(value);
+        if (value) setModalVisible(true); // open stylist modal
+      }}
+      mode={Platform.OS === "android" ? "dropdown" : undefined}
+      style={[styles.picker]}
+      itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
+    >
+      <Picker.Item label="Selecciona..." value={null} />
+      {services.map((service) => (
+        <Picker.Item
+          key={service.id}
+          label={`${service.name} (${service.duration})`}
+          value={service.id}
+        />
+      ))}
+    </Picker>
+  </LinearGradient>
+</View>
+
           </View>
 
-          <BodyBoldText style={styles.label}>Selecciona estilista</BodyBoldText>
-          <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
-          <LinearGradient colors={['#DEC89C', '#D1B380']}>
-          <Picker
-            selectedValue={selectedStylist?.id || ''}
-            onValueChange={(value) => {
-            const stylist = stylists.find(s => s.id === value);
-            setSelectedStylist(stylist || null);
+         <Modal visible={modalVisible} animationType="slide" transparent={true}>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+        Elige un estilista
+      </Text>
+      {(selectedServiceId && serviceProviders[selectedServiceId] || []).map((stylistId, idx) => {
+        const stylist = stylists.find(s => s.id === stylistId);
+        if (!stylist) return null;
+        return (
+          <TouchableOpacity
+            key={idx}
+            style={styles.stylistButton}
+            onPress={() => {
+              setSelectedStylist(stylist);
+              setModalVisible(false);
             }}
-            mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-            style={[styles.picker]}
-            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
           >
-          <Picker.Item label="Selecciona..." value="" />
-            {stylists
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map(stylist => (
-          <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
-          ))}
-          </Picker>
-          </LinearGradient>
-          </View>
-          
+            <Text style={{ color: "white" }}>{stylist.name}</Text>
+          </TouchableOpacity>
+        );
+      })}
+      <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
+        <Text style={{ color: "#333" }}>Cancelar</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
+          <BodyBoldText style={styles.label}>Estilista seleccionado</BodyBoldText>
+<View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+  <Text>{selectedStylist?.name || 'No seleccionado'}</Text>
+</View>
           {selectedStylist && (
   <View style={{ marginTop: 20 }}>
     <BodyBoldText style={styles.label}>Disponibilidad semanal</BodyBoldText>
@@ -558,5 +608,27 @@ gridItem: {
   minWidth: 80,
   alignItems: 'center',
 },
-
+modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    maxHeight: "70%",
+  },
+  stylistButton: {
+    backgroundColor: "#D1B380",
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  cancelButton: {
+    marginTop: 10,
+    alignSelf: "center",
+  },
 });
