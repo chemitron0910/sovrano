@@ -51,7 +51,6 @@ export default function Index() {
 
 useEffect(() => {
   Notifications.getExpoPushTokenAsync().then(token => {
-    //console.log("Expo Push Token:", token.data);
   });
 }, []);
 

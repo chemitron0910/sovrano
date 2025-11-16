@@ -43,6 +43,8 @@ export default function LoginScreen({ navigation }) {
       createdAt: new Date().toISOString(),
     }, { merge: true });
 
+    await user.getIdToken(true);
+
     navigation.navigate("Invitado");
   } catch (error) {
     console.error("Guest login error:", error);

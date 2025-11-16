@@ -5,7 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
@@ -22,6 +22,7 @@ import { auth, db } from '../Services/firebaseConfig';
 import { fetchUserProfile } from '../Services/userService';
 import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
+import { handleBooking } from '../utils/handleBooking';
 
 function formatDateWithWeekday(dateString: string) {
   // Parse safely in local time
@@ -218,107 +219,53 @@ useEffect(() => {
   return `${year}-${month}-${day}`;
 };
 
+const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
 
-const handleBooking = async () => {
-  if (!auth.currentUser) {
-    Alert.alert('Error', 'No se pudo autenticar el usuario');
-    return;
-  }
-
-  if (!selectedSlot || !selectedStylist) {
-    Alert.alert('Error', 'Debes seleccionar un horario');
-    return;
-  }
-
-  setLoading(true);
-
-  const isoDate = selectedSlot.date; // "YYYY-MM-DD"
-let selectedTime = selectedSlot.time; // e.g. "14:00"
-
-// 🔧 Clean up legacy slot strings (remove stray quotes/whitespace)
-selectedTime = selectedTime.replace(/['"]+/g, '').trim();
-
-// 🔧 Guard against invalid values
-if (!isoDate || !selectedTime) {
-  Alert.alert('Error', 'Fecha u hora inválida');
-  setLoading(false);
-  return;
-}
-const [year, month, day] = isoDate.split('-').map(Number);
-const [hour, minute] = selectedTime.split(':').map(Number);
-if ([year, month, day, hour, minute].some(isNaN)) {
-  Alert.alert('Error', `Formato inválido: ${isoDate} ${selectedTime}`);
-  setLoading(false);
-  return;
-}
-
-// ✅ Safe construction of Date object
-const fullDate = new Date(year, month - 1, day, hour, minute);
-const bookingData = {
-  service: selectedService?.name || '',
-  date: fullDate.toISOString(), // full UTC timestamp
-  time: selectedTime,
-  guestName: auth.currentUser.displayName || '',
-  userId: auth.currentUser.uid,
-  email: auth.currentUser.email || '',
-  phoneNumber: phoneNumber || '',
-  stylistId: selectedStylist.id,
-  stylistName: selectedStylist.name,
-  createdAt: new Date().toLocaleString('sv-SE'),
-  role,
-};
-
-  try {
-    // 1️⃣ Check stylist availability first
-    const availabilityRef = doc(db, 'users', selectedStylist.id, 'availability', isoDate);
+// 🔎 Suggest next available block across multiple days
+const findNextAvailableSuggestion = async (
+  stylistId: string,
+  startDate: Date,
+  durationHours: number
+): Promise<{ date: string; time: string } | null> => {
+  // Look ahead up to 14 days
+  for (let offset = 0; offset < 14; offset++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + offset);
+    const isoDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const availabilityRef = doc(db, 'users', stylistId, 'availability', isoDate);
     const availabilitySnap = await getDoc(availabilityRef);
 
-    const availabilityData = availabilitySnap.exists()
-  ? availabilitySnap.data()
-  : { timeSlots: [], isDayOff: false };
-
-let slots: any[] = availabilityData.timeSlots || [];
-
-// Check if slot exists
-const slotIndex = slots.findIndex((slot: any) => slot.time === selectedTime);
-
-if (slotIndex >= 0 && slots[slotIndex].booked) {
-  Alert.alert('Error', 'Este horario ya está reservado');
-  setLoading(false);
-  return;
-}
-
-// Mark slot as booked (create if missing)
-if (slotIndex >= 0) {
-  slots[slotIndex].booked = true;
-} else {
-  slots.push({ time: selectedTime, booked: true });
-}
-
-await setDoc(availabilityRef, {
-  ...availabilityData,
-  timeSlots: slots,
-});
-
-    // 4️⃣ Save booking in global bookings collection
-    const docRef = await addDoc(collection(db, 'bookings'), bookingData);
-
-    // 5️⃣ Navigate to confirmation
-    navigation.navigate('Cita confirmada.', {
-      service: bookingData.service,
-      date: isoDate,
-      time: selectedTime,
-      guestName: bookingData.guestName,
-      stylistName: bookingData.stylistName,
-      bookingId: docRef.id,
-      role: bookingData.role,
+    if (!availabilitySnap.exists()) {
+      continue;
+    }
+    const availabilityData = availabilitySnap.data();
+    const slots: any[] = availabilityData.timeSlots || [];
+    // Sort slots by time
+    const sortedSlots = [...slots].sort((a, b) => {
+      const [ah] = a.time.split(':').map(Number);
+      const [bh] = b.time.split(':').map(Number);
+      return ah - bh;
     });
-  } catch (error) {
-    console.error('Error saving booking:', error);
-    Alert.alert('Error', 'No se pudo crear tu cita');
-  } finally {
-    setLoading(false);
+
+    // Scan for a valid block
+    for (let i = 0; i < sortedSlots.length; i++) {
+      const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
+      const [h, m] = cleanTime(sortedSlots[i].time).split(':').map(Number);
+      const candidateTimes: string[] = [];
+      for (let j = 0; j < durationHours; j++) {
+        candidateTimes.push(`${String(h + j).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      }
+
+      const fits = candidateTimes.every(t => {
+        const slot = slots.find((s: any) => cleanTime(s.time) === t);
+        return slot && !slot.booked;
+      });
+      if (fits) {
+        return { date: isoDate, time: candidateTimes[0] };
+      }
+    }
   }
+  return null;
 };
 
 return (
@@ -352,7 +299,7 @@ return (
         <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
           <View style={styles.pickerWrapper}>
 
-<BodyBoldText style={styles.pickerLabel}>Selecciona servicio</BodyBoldText>
+<BodyBoldText style={styles.pickerLabel}>Selecciona un servicio</BodyBoldText>
 <View style={[styles.input, { height: 150, justifyContent: "center" }]}>
   <LinearGradient colors={["#E9E4D4", "#E0CFA2"]}>
     <Picker
@@ -366,10 +313,12 @@ return (
       itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
     >
       <Picker.Item label="Selecciona..." value={null} />
-      {services.map((service) => (
+      {services
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((service) => (
         <Picker.Item
           key={service.id}
-          label={`${service.name} (${service.duration})`}
+          label={`${service.name} (${service.duration} ${Number(service.duration) === 1 ? 'hora' : 'horas'})`}
           value={service.id}
         />
       ))}
@@ -510,7 +459,28 @@ return (
           <View style={{ marginTop: 12 }}>
             <Button_style2
               title="Confirma tu cita"
-              onPress={handleBooking}/>
+              onPress={() => {
+    if (!selectedSlot) {
+      Alert.alert('Error', 'Debes seleccionar un horario');
+      return;
+    }
+    if (!selectedStylist) {
+      Alert.alert('Error', 'Debes seleccionar un estilista');
+      return;
+    }
+    if (!selectedService) {
+      Alert.alert('Error', 'Debes seleccionar un servicio');
+      return;
+    }
+    handleBooking({
+      selectedSlot,
+      selectedStylist,
+      selectedService,
+      role: 'usuario',
+      navigation,
+    });
+  }}
+  />
           </View>
 
           <View style={{ marginTop: 12 }}>

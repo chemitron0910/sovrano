@@ -5,11 +5,13 @@ import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   ScrollView,
   StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions
 } from "react-native";
@@ -19,6 +21,7 @@ import { signInAsGuest } from '../Services/authService';
 import { auth, db } from '../Services/firebaseConfig';
 import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
+import { handleBooking } from '../utils/handleBooking';
 
 type TimeSlot = {
   time: string;
@@ -61,6 +64,40 @@ export default function GuestBookingScreen() {
   const windowHeight = windowDimensions.height;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const services = useServices();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [serviceProviders, setServiceProviders] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    const buildServiceProviders = async () => {
+      try {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("role", "in", ["empleado", "admin"]));
+        const snapshot = await getDocs(q);
+  
+        const providersMap: Record<string, string[]> = {};
+  
+        for (const docSnap of snapshot.docs) {
+          const stylistId = docSnap.id;
+          const infoDoc = await getDoc(doc(db, `users/${stylistId}/profile/info`));
+          if (!infoDoc.exists()) continue;
+  
+          const info = infoDoc.data();
+          const providedServices = info?.services || [];
+          for (const svc of providedServices) {
+            if (!svc.id) continue;
+            if (!providersMap[svc.id]) providersMap[svc.id] = [];
+            providersMap[svc.id].push(stylistId);
+          }
+        }
+  
+        setServiceProviders(providersMap);
+      } catch (err) {
+        console.error("Error building serviceProviders:", err);
+      }
+    };
+  
+    buildServiceProviders();
+  }, []);
 
   // ✅ Authenticate guest
   useEffect(() => {
@@ -105,7 +142,7 @@ export default function GuestBookingScreen() {
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-};
+  };
 
   // ✅ Fetch weekly availability when stylist selected
   useEffect(() => {
@@ -155,86 +192,9 @@ export default function GuestBookingScreen() {
 
   const selectedService = services.find(s => s.id === selectedServiceId);
 
-  // ✅ Handle booking
-  const handleBooking = async () => {
-    if (!auth.currentUser) {
-      Alert.alert('Error', 'No se pudo autenticar el usuario');
-      return;
-    }
-    if (!selectedSlot || !selectedStylist) {
-      Alert.alert('Error', 'Debes seleccionar un horario');
-      return;
-    }
-
-    setLoading(true);
-
-    const isoDate = selectedSlot.date;
-    let selectedTime = selectedSlot.time.replace(/['"]+/g, '').trim();
-
-    const [year, month, day] = isoDate.split('-').map(Number);
-    const [hour, minute] = selectedTime.split(':').map(Number);
-    const fullDate = new Date(year, month - 1, day, hour, minute);
-
-    const bookingData = {
-      service: selectedService?.name || '',
-      date: fullDate.toISOString(),
-      time: selectedTime,
-      guestName,
-      email,
-      phoneNumber,
-      stylistId: selectedStylist.id,
-      stylistName: selectedStylist.name,
-      createdAt: new Date().toISOString(),
-      role: 'guest',
-    };
-
-    try {
-      // ✅ Update stylist availability
-      const availabilityRef = doc(db, 'users', selectedStylist.id, 'availability', isoDate);
-      const availabilitySnap = await getDoc(availabilityRef);
-      const availabilityData = availabilitySnap.exists()
-        ? availabilitySnap.data()
-        : { timeSlots: [], isDayOff: false };
-
-      let slots: any[] = availabilityData.timeSlots || [];
-      const slotIndex = slots.findIndex((slot: any) => slot.time === selectedTime);
-
-      if (slotIndex >= 0 && slots[slotIndex].booked) {
-        Alert.alert('Error', 'Este horario ya está reservado');
-        setLoading(false);
-        return;
-      }
-
-      if (slotIndex >= 0) {
-        slots[slotIndex].booked = true;
-      } else {
-        slots.push({ time: selectedTime, booked: true });
-      }
-
-      await setDoc(availabilityRef, { ...availabilityData, timeSlots: slots });
-
-      // ✅ Save booking
-      const docRef = await addDoc(collection(db, 'bookings'), bookingData);
-
-      navigation.navigate('Cita confirmada.', {
-        service: bookingData.service,
-        date: isoDate,
-        time: selectedTime,
-        guestName: bookingData.guestName,
-        stylistName: bookingData.stylistName,
-        bookingId: docRef.id,
-        role: bookingData.role,
-      });
-    } catch (error) {
-      console.error('Error saving booking:', error);
-      Alert.alert('Error', 'No se pudo crear tu cita');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // ✅ Render availability like UserBookingScreen
   return (
+    <GradientBackground>
     <SafeAreaView style={styles.safeContainer}>
       {loading && (
         <View style={styles.overlay}>
@@ -249,145 +209,154 @@ export default function GuestBookingScreen() {
         </View>
       )}
 
-      <GradientBackground>
         <KeyboardAvoidingView
-                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                  style={{ flex: 1 }}>
-        <ScrollView 
-              style={{ flex: 1 }}
-              contentContainerStyle={styles.scrollContent}>
-                <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
-          <View style={styles.pickerWrapper}>
-          <BodyBoldText style={styles.pickerLabel}>Select Service</BodyBoldText>
-            <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
-            <Picker
-              selectedValue={selectedServiceId}
-              onValueChange={(value) => setSelectedServiceId(value)}
-              mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-              style={[styles.picker, { backgroundColor: '#E9E4D4' }]}
-              itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-            >
-            <Picker.Item label="Selecciona..." value={null} />
-            {services
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((service) => (
-            <Picker.Item
-              key={service.id}
-              label={`${service.name} (${service.duration} min)`}
-              value={service.id}
-            />
-            ))}
-            </Picker>
-            </LinearGradient>
-          </View>
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
+          <ScrollView 
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.scrollContent}>
+            <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
+              <View style={styles.pickerWrapper}>
+                <BodyBoldText style={styles.pickerLabel}>Selecciona un servicio</BodyBoldText>
+                  <View style={[styles.input, { height: 150, justifyContent: "center" }]}>
+                    <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
+                      <Picker
+                        selectedValue={selectedServiceId}
+                        onValueChange={(value) => {
+                          setSelectedServiceId(value);
+                          if (value) setModalVisible(true); // open stylist modal
+                        }}
+                        mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+                        style={[styles.picker, { backgroundColor: '#E9E4D4' }]}
+                        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+                        >
+                        <Picker.Item label="Selecciona..." value={null} />
+                        {services
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((service) => (
+                        <Picker.Item
+                        key={service.id}
+                        label={`${service.name} (${service.duration} ${Number(service.duration) === 1 ? 'hora' : 'horas'})`}
+                        value={service.id}
+                        />
+                        ))}
+                      </Picker>
+                    </LinearGradient>
+                  </View>
+              </View>
+              <Modal visible={modalVisible} animationType="slide" transparent={true}>
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+                      Elige un estilista
+                    </Text>
+                    {(selectedServiceId && serviceProviders[selectedServiceId] || []).map((stylistId, idx) => {
+                      const stylist = stylists.find(s => s.id === stylistId);
+                      if (!stylist) return null;
+                      return (
+                        <TouchableOpacity
+                          key={idx}
+                          style={styles.stylistButton}
+                          onPress={() => {
+                            setSelectedStylist(stylist);
+                            setModalVisible(false);
+                          }}
+                        >
+                          <Text style={{ color: "white" }}>{stylist.name}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
+                      <Text style={{ color: "#333" }}>Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+                <BodyBoldText style={styles.label}>Estilista seleccionado</BodyBoldText>
+                  <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+                    <Text>{selectedStylist?.name || 'No seleccionado'}</Text>
+                      </View>
+                        {selectedStylist && (
+                          <View style={{ marginTop: 20 }}>
+                            <BodyBoldText style={styles.label}>Disponibilidad semanal</BodyBoldText>
+                              {weeklyAvailability.map(({ date, timeSlots, isDayOff }) => {
 
-          <BodyBoldText style={styles.label}>Selecciona estilista</BodyBoldText>
-          <View style={[styles.input, { height: 150, justifyContent: 'center' }]}>
-          <LinearGradient colors={['#DEC89C', '#D1B380']}>
-          <Picker
-            selectedValue={selectedStylist?.id || ''}
-            onValueChange={(value) => {
-            const stylist = stylists.find(s => s.id === value);
-            setSelectedStylist(stylist || null);
-            }}
-            mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-            style={[styles.picker]}
-            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-          >
-          <Picker.Item label="Selecciona..." value="" />
-            {stylists
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map(stylist => (
-          <Picker.Item key={stylist.id} label={stylist.name} value={stylist.id} />
-          ))}
-          </Picker>
-          </LinearGradient>
-          </View>
-          
-          {selectedStylist && (
-  <View style={{ marginTop: 20 }}>
-    <BodyBoldText style={styles.label}>Disponibilidad semanal</BodyBoldText>
-    {weeklyAvailability.map(({ date, timeSlots, isDayOff }) => {
+                                return (
+                                <View key={date} style={{ marginBottom: 12 }}>
+                                {/* Show weekday + date */}
+                                  <BodyText style={{ fontWeight: 'bold' }}>
+                                  {formatDateWithWeekday(date)}
+                                  </BodyText>
 
-  return (
-    <View key={date} style={{ marginBottom: 12 }}>
-      {/* Show weekday + date */}
-      <BodyText style={{ fontWeight: 'bold' }}>
-        {formatDateWithWeekday(date)}
-      </BodyText>
+                                {/* Show availability */}
+                                  {isDayOff ? (
+                                    <BodyText style={{ color: 'gray' }}>Día libre</BodyText>
+                                  ) : timeSlots.length > 0 ? (
+                                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                                      {timeSlots.map((slot, index) => {
+                                        const isSelected =
+                                          selectedSlot?.date === date && selectedSlot?.time === slot.time;
 
-      {/* Show availability */}
-      {isDayOff ? (
-        <BodyText style={{ color: 'gray' }}>Día libre</BodyText>
-      ) : timeSlots.length > 0 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {timeSlots.map((slot, index) => {
-              const isSelected =
-                selectedSlot?.date === date && selectedSlot?.time === slot.time;
+                                      return (
+                                        <TouchableOpacity
+                                          key={index}
+                                          style={[
+                                          styles.gridItem,
+                                          {
+                                          backgroundColor: isSelected
+                                          ? '#C2A878'
+                                          : slot.booked
+                                          ? '#ddd'
+                                          : '#f0f0f0',
+                                          borderColor: isSelected
+                                          ? '#8B6E4B'
+                                          : slot.booked
+                                          ? '#aaa'
+                                          : '#ccc',
+                                          borderWidth: isSelected ? 2 : 1,
+                                          opacity: slot.booked ? 0.6 : 1,
+                                          },
+                                          ]}
+                                          disabled={slot.booked} // ✅ prevent booking if already booked
+                                          onPress={() => {
+                                            const [hour, minute] = slot.time.split(':').map(Number);
 
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.gridItem,
-                    {
-                      backgroundColor: isSelected
-                        ? '#C2A878'
-                        : slot.booked
-                        ? '#ddd'
-                        : '#f0f0f0',
-                      borderColor: isSelected
-                        ? '#8B6E4B'
-                        : slot.booked
-                        ? '#aaa'
-                        : '#ccc',
-                      borderWidth: isSelected ? 2 : 1,
-                      opacity: slot.booked ? 0.6 : 1,
-                    },
-                  ]}
-                  disabled={slot.booked} // ✅ prevent booking if already booked
-                  onPress={() => {
-  const [hour, minute] = slot.time.split(':').map(Number);
+                                            // Parse the YYYY-MM-DD string safely in local time
+                                            const [year, month, day] = date.split('-').map(Number);
+                                            const selectedDateObj = new Date(year, month - 1, day, hour, minute);
 
-  // Parse the YYYY-MM-DD string safely in local time
-  const [year, month, day] = date.split('-').map(Number);
-  const selectedDateObj = new Date(year, month - 1, day, hour, minute);
+                                            setDate(selectedDateObj);
+                                            setSelectedSlot({ date, time: slot.time });
+                                          }}
+                                        >
+                                          <Text
+                                            style={{
+                                            color: isSelected
+                                            ? 'white'
+                                            : slot.booked
+                                            ? '#888'
+                                            : 'black',
+                                            }}
+                                            >
+                                            {slot.booked ? '🔒' : '✅'} {slot.time}
+                                          </Text>
+                                        </TouchableOpacity>
+                                      );
+                                      })}
+                                    </View>
+                                  </ScrollView>
+                                  ) : (
+                                  <Text>No hay disponibilidad</Text>
+                                  )}
+                                </View>
+                                );
+                              })}
 
-  setDate(selectedDateObj);
-  setSelectedSlot({ date, time: slot.time });
-}}
-                >
-                  <Text
-                    style={{
-                      color: isSelected
-                        ? 'white'
-                        : slot.booked
-                        ? '#888'
-                        : 'black',
-                    }}
-                  >
-                    {slot.booked ? '🔒' : '✅'} {slot.time}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
-      ) : (
-        <Text>No hay disponibilidad</Text>
-      )}
-    </View>
-  );
-})}
-
-  </View>
-)}
-</View>
-          {/* Service Picker */}
-          {/* Stylist Picker */}
-          {/* Weekly Availability */}
-          {selectedStylist && (
+                          </View>
+                        )}
+            </View>
+            {selectedStylist && (
             <View style={{ marginTop: 20 }}>
               <BodyBoldText style={styles.label}>Disponibilidad semanal</BodyBoldText>
               {weeklyAvailability.map(({ date, timeSlots, isDayOff }) => (
@@ -444,61 +413,82 @@ export default function GuestBookingScreen() {
                     <Text>No hay disponibilidad</Text>
                   )}
                 </View>
-                ))}
+              ))}
             </View>
-          )}
+            )}
 
-          {/* Guest Info */}
-          <BodyBoldText style={styles.label}>Nombre de usuario</BodyBoldText>
-          <TextInput
-            style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
-            placeholder="Entra tu nombre"
-            placeholderTextColor="#888"
-            value={guestName}
-            onChangeText={setGuestName}
-          />
+            {/* Guest Info */}
+            <BodyBoldText style={styles.label}>Nombre de usuario</BodyBoldText>
+              <TextInput
+                style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
+                placeholder="Entra tu nombre"
+                placeholderTextColor="#888"
+                value={guestName}
+                onChangeText={setGuestName}
+              />
 
-          <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
-          <TextInput
-            style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
-            autoCapitalize="none"
-            placeholder="Entra tu correo electrónico"
-            placeholderTextColor="#888"
-            value={email}
-            onChangeText={setEmail}
-          />
+            <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
+              <TextInput
+                style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
+                autoCapitalize="none"
+                placeholder="Entra tu correo electrónico"
+                placeholderTextColor="#888"
+                value={email}
+                onChangeText={setEmail}
+              />
 
-          <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
-          <TextInput
-            style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
-            placeholder="Entra tu número telefónico"
-            placeholderTextColor="#888"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-          />
+            <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
+              <TextInput
+                style={[styles.inputText, { backgroundColor: '#d8d2c4' }]}
+                placeholder="Entra tu número telefónico"
+                placeholderTextColor="#888"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+              />
 
-          {/* Buttons */}
-          <View style={{ marginTop: 12 }}>
-            <Button_style2 title="Confirma tu cita" onPress={handleBooking} />
-          </View>
+            {/* Buttons */}
+            <View style={{ marginTop: 12 }}>
+              <Button_style2 title="Confirma tu cita" 
+                onPress={() => {
+                  if (!selectedSlot) {
+                    Alert.alert('Error', 'Debes seleccionar un horario');
+                    return;
+                  }
+                  if (!selectedStylist) {
+                    Alert.alert('Error', 'Debes seleccionar un estilista');
+                    return;
+                  }
+                  if (!selectedService) {
+                    Alert.alert('Error', 'Debes seleccionar un servicio');
+                    return;
+                  }
+                  handleBooking({
+                    selectedSlot,
+                    selectedStylist,
+                    selectedService,
+                    role: 'usuario',
+                    navigation,
+                  });
+                }} />
+            </View>
 
-          <View style={{ marginTop: 12 }}>
-            <Button_style2
-              title="Vuelve al inicio"
-              onPress={() => navigation.navigate('Inicio-Invitado')}
-            />
-        </View>
-      </ScrollView>
-      </KeyboardAvoidingView>
+            <View style={{ marginTop: 12 }}>
+              <Button_style2
+                title="Vuelve al inicio"
+                onPress={() => navigation.navigate('Inicio-Invitado')}
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </GradientBackground>
-  </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "transparent",
   },
   label: { fontSize: 16, fontWeight: '600', marginTop: 20 },
   buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
@@ -579,5 +569,36 @@ pickerItem: {
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
+  },
+  readOnlyField: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 8,
+  padding: 12,
+  marginTop: 8,
+  backgroundColor: '#f5f5f5',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    maxHeight: "70%",
+  },
+  stylistButton: {
+    backgroundColor: "#D1B380",
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  cancelButton: {
+    marginTop: 10,
+    alignSelf: "center",
   },
 });

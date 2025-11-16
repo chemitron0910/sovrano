@@ -11,12 +11,25 @@ service cloud.firestore {
     
     match /users/{userId}/availability/{date} {
   		allow read, write: if isAdmin() || (isEmpleado() && request.auth.uid == userId);
-      
-  		allow read, write: if isUsuario();
+      allow read, write: if isUsuario();
+      allow read: if isGuest();
+      allow update: if isGuest();
 		}
 
     match /bookings/{bookingId} {
-      allow read, write: if request.auth != null || isAdmin() || isEmpleado() || isUsuario() || isUsuario();
+      allow create: if request.auth != null && (isAdmin() || isEmpleado() || isUsuario() || isGuest());
+      allow read: if request.auth != null;
+      allow update: if (
+    		isAdmin() ||
+    		(isUsuario() && request.auth.uid == resource.data.userId) ||
+    		(isEmpleado() && request.auth.uid == resource.data.stylistId)
+  		)
+  		&&
+      (    
+    	request.resource.data.diff(resource.data).affectedKeys()
+      	.hasOnly(["status", "cancelledAt"])
+  		);
+      allow delete: if isAdmin();
     }
     
     match /services/{servicesId} {
@@ -47,6 +60,10 @@ service cloud.firestore {
     
     function isUsuario() {
       return request.auth.token.role == 'usuario';
+    }
+    
+    function isGuest() {
+      return request.auth.token.role == 'guest';
     }
     
     function isStylist(targetId) {
