@@ -356,66 +356,6 @@ export default function GuestBookingScreen() {
                           </View>
                         )}
             </View>
-            {selectedStylist && (
-            <View style={{ marginTop: 20 }}>
-              <BodyBoldText style={styles.label}>Disponibilidad semanal</BodyBoldText>
-              {weeklyAvailability.map(({ date, timeSlots, isDayOff }) => (
-                <View key={date} style={{ marginBottom: 12 }}>
-                  <BodyText style={{ fontWeight: 'bold' }}>{formatDateWithWeekday(date)}</BodyText>
-                  {isDayOff ? (
-                    <BodyText style={{ color: 'gray' }}>Día libre</BodyText>
-                  ) : timeSlots.length > 0 ? (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
-                        {timeSlots.map((slot, index) => {
-                          const isSelected =
-                            selectedSlot?.date === date && selectedSlot?.time === slot.time;
-                          return (
-                            <TouchableOpacity
-                              key={index}
-                              style={[
-                                styles.gridItem,
-                                {
-                                  backgroundColor: isSelected
-                                    ? '#C2A878'
-                                    : slot.booked
-                                    ? '#ddd'
-                                    : '#f0f0f0',
-                                  borderColor: isSelected
-                                    ? '#8B6E4B'
-                                    : slot.booked
-                                    ? '#aaa'
-                                    : '#ccc',
-                                  borderWidth: isSelected ? 2 : 1,
-                                  opacity: slot.booked ? 0.6 : 1,
-                                },
-                              ]}
-                              disabled={slot.booked}
-                              onPress={() => setSelectedSlot({ date, time: slot.time })}
-                            >
-                              <Text
-                                style={{
-                                  color: isSelected
-                                    ? 'white'
-                                    : slot.booked
-                                    ? '#888'
-                                    : 'black',
-                                }}
-                              >
-                                {slot.booked ? '🔒' : '✅'} {slot.time}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </ScrollView>
-                  ) : (
-                    <Text>No hay disponibilidad</Text>
-                  )}
-                </View>
-              ))}
-            </View>
-            )}
 
             {/* Guest Info */}
             <BodyBoldText style={styles.label}>Nombre de usuario</BodyBoldText>
