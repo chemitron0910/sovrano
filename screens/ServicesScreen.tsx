@@ -1,9 +1,10 @@
 import GradientBackground from '@/Components/GradientBackground';
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StatusBar,
@@ -35,11 +36,14 @@ export default function ServicesScreen() {
   const [empleados, setEmpleados] = useState<User[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'Usuario' | 'Invitado'>>();
+  const role = route.params?.role;
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
         const servicesSnapshot = await getDocs(collection(db, "services"));
         const allServices: Service[] = servicesSnapshot.docs.map(doc => {
@@ -81,6 +85,8 @@ export default function ServicesScreen() {
         setServiceProviders(providersMap);
       } catch (error) {
         console.error("❌ General fetch error:", error);
+      } finally {
+        setLoading(false); // 👈 hide overlay when done
       }
     }
 
@@ -99,13 +105,15 @@ export default function ServicesScreen() {
 
   const handleSelectStylist = (stylist: User) => {
     if (!selectedService) return;
-    navigation.navigate("Agenda tu cita.", {
-      serviceFromUser: selectedService,
-      stylist: {
-        id: stylist.id,
-        name: stylist.username || "Sin nombre",
-      },
-    });
+    
+    navigation.navigate("Agenda tu cita", {
+    role, // 👈 pass role directly
+    serviceFromUser: selectedService,
+    stylist: {
+      id: stylist.id,
+      name: stylist.username || "Sin nombre",
+    },
+  });
     closeModal();
   };
 
@@ -113,6 +121,13 @@ export default function ServicesScreen() {
     <GradientBackground>
     <View style={styles.container}>
       
+      {/* 👇 Overlay while loading */}
+        {loading && (
+          <View style={styles.overlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.loadingText}>Cargando servicios...</Text>
+          </View>
+        )}
         
       <ScrollView style={{ padding: 20 }}>
         
@@ -190,5 +205,18 @@ const styles = StyleSheet.create({
   cancelButton: {
     marginTop: 10,
     alignSelf: "center",
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#fff',
+    fontSize: 16,
   },
 });

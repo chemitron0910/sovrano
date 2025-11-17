@@ -21,59 +21,64 @@ export default function UserScreen() {
     hour < 12 ? 'Buenos días' : 'Buenas tardes';
 
   return (
-    
-      <GradientBackground>
-        <Logo/>
-        <View style={styles.container}>
-          <Text style={styles.welcomeText}>
-            {`${greeting}, ${username || 'invitado'} 👋!`}
-          </Text>
+    <GradientBackground>
+      <Logo/>
+      <View style={styles.container}>
+        <Text style={styles.welcomeText}>
+          {`${greeting}, ${username || 'usuario'} 👋!`}
+        </Text>
 
-          <Text style={styles.welcomeText}>
-            {`¡Nos alegra verte en Sovrano!`}
-          </Text>
-          
-          <View style={{ padding: 10 }}>
-          <Button_style2 title="Ir a servicios" onPress={()=>navigation.navigate("Nuestros servicios.")}
-          ></Button_style2>
-          </View>
+        <Text style={styles.welcomeText}>
+          {`¡Nos alegra verte en Sovrano!`}
+        </Text>
+        
+        <View style={{ padding: 10 }}>
+          <Button_style2 
+            title="Ir a servicios" 
+            onPress={() => navigation.navigate("Nuestros servicios.")}
+          />
+        </View>
 
-          <View style={{ padding: 10 }}>
+        <View style={{ padding: 10 }}>
+          {/* 👇 Pass role explicitly when navigating */}
           <Button_style2
             title="Agenda tu cita"
-            onPress={() => navigation.navigate("Agenda tu cita.", undefined)}
+            onPress={() => navigation.navigate("Agenda tu cita", { role: "usuario" })}
           />
-
-          </View>
-
-          <View style={{ padding: 10 }}>
-          <Button_style2 title="Historia de citas" onPress={()=>navigation.navigate("Historial de citas")}>
-          </Button_style2>
-          </View>
-
-          <View style={{ padding: 10 }}>
-          <Button_style2 title="Salir" onPress={async () => {
-            await logout();
-            navigation.reset({
-            index: 0,
-            routes: [{ name: 'Inicio-Sovrano' }],
-            });
-            }}>
-          </Button_style2>
-          </View>
         </View>
-      </GradientBackground>
+
+        <View style={{ padding: 10 }}>
+          <Button_style2 
+            title="Historia de citas" 
+            onPress={() => navigation.navigate("Historial de citas")}
+          />
+        </View>
+
+        <View style={{ padding: 10 }}>
+          <Button_style2 
+            title="Salir" 
+            onPress={async () => {
+              await logout();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Inicio-Sovrano' }],
+              });
+            }}
+          />
+        </View>
+      </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-      flex: 1,
-      backgroundColor: 'transparent',
-      alignContent: 'center', 
-      padding:10,
-      paddingTop: StatusBar.currentHeight || 0,
-    },
+    flex: 1,
+    backgroundColor: 'transparent',
+    alignContent: 'center', 
+    padding:10,
+    paddingTop: StatusBar.currentHeight || 0,
+  },
   text: {
     fontSize: 24,
     fontWeight: "bold",

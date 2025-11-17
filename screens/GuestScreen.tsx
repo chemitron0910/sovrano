@@ -19,46 +19,48 @@ export default function GuestScreen() {
     <GradientBackground>
       <View style={styles.container}>
         <Logo/>
-        <Button_style2 
-          title="Nuestros servicios" 
-          onPress={()=>navigation.navigate("Nuestros servicios")}>
-        </Button_style2>
 
         <Button_style2 
+          title="Nuestros servicios" 
+          onPress={() => navigation.navigate("Nuestros servicios")}
+        />
+
+        {/* 👇 Pass role explicitly when navigating */}
+        <Button_style2 
           title="Agenda tu cita" 
-          onPress={()=>navigation.navigate("Agenda tu cita")}>
-        </Button_style2>
+          onPress={() => navigation.navigate("Agenda tu cita", { role: "guest" })}
+        />
 
         <Button_style2
           title="Registrarse"
           onPress={() => navigation.navigate('Registrarse')}
         />
 
-        <Button_style2 title="Salir" onPress={async () => {
-          await logout();
-          navigation.reset({
-          index: 0,
-          routes: [{ name: 'Inicio-Sovrano' }],
-          });
-          }}>
-        </Button_style2>
-
+        <Button_style2 
+          title="Salir" 
+          onPress={async () => {
+            await logout();
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Inicio-Sovrano' }],
+            });
+          }}
+        />
       </View>
     </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  
   container: {
     flex: 1,
     backgroundColor: 'transparent',
     paddingTop: StatusBar.currentHeight || 50,
-    justifyContent: 'flex-start',      // ✅ vertical centering
-    alignItems: 'center',          // ✅ horizontal centering
-    alignSelf: 'center',              // ✅ ensures horizontal centering
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    alignSelf: 'center',
     flexDirection: 'column',
-    gap: 16,                          // ✅ slightly more spacing between buttons
+    gap: 16,
   },
   text: {
     fontSize: 24,

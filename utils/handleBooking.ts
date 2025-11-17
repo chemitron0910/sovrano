@@ -1,7 +1,5 @@
 import { addDoc, collection, doc, getDoc, setDoc } from 'firebase/firestore';
-import {
-    Alert
-} from "react-native";
+import { Alert } from "react-native";
 import { auth, db } from '../Services/firebaseConfig';
 
 type BookingParams = {
@@ -15,6 +13,53 @@ type BookingParams = {
   };
   role: 'usuario' | 'guest';
   navigation: any;
+};
+
+// 🔎 Suggest next available block across multiple days
+const findNextAvailableSuggestion = async (
+  stylistId: string,
+  startDate: Date,
+  durationHours: number
+): Promise<{ date: string; time: string } | null> => {
+  // Look ahead up to 14 days
+  for (let offset = 0; offset < 14; offset++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + offset);
+    const isoDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const availabilityRef = doc(db, 'users', stylistId, 'availability', isoDate);
+    const availabilitySnap = await getDoc(availabilityRef);
+
+    if (!availabilitySnap.exists()) {
+      continue;
+    }
+    const availabilityData = availabilitySnap.data();
+    const slots: any[] = availabilityData.timeSlots || [];
+    // Sort slots by time
+    const sortedSlots = [...slots].sort((a, b) => {
+      const [ah] = a.time.split(':').map(Number);
+      const [bh] = b.time.split(':').map(Number);
+      return ah - bh;
+    });
+
+    // Scan for a valid block
+    for (let i = 0; i < sortedSlots.length; i++) {
+      const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
+      const [h, m] = cleanTime(sortedSlots[i].time).split(':').map(Number);
+      const candidateTimes: string[] = [];
+      for (let j = 0; j < durationHours; j++) {
+        candidateTimes.push(`${String(h + j).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      }
+
+      const fits = candidateTimes.every(t => {
+        const slot = slots.find((s: any) => cleanTime(s.time) === t);
+        return slot && !slot.booked;
+      });
+      if (fits) {
+        return { date: isoDate, time: candidateTimes[0] };
+      }
+    }
+  }
+  return null;
 };
 
 export const handleBooking = async ({
@@ -43,14 +88,23 @@ export const handleBooking = async ({
     duration: selectedService?.duration || '',
     date: fullDate.toISOString(),
     time: selectedTime,
-    guestName: guestInfo?.guestName || auth.currentUser?.displayName || '',
-    email: guestInfo?.email || auth.currentUser?.email || '',
-    phoneNumber: guestInfo?.phoneNumber || '',
+    guestName:
+      role === "guest"
+        ? guestInfo?.guestName || ""
+        : auth.currentUser?.displayName || "",
+    email:
+      role === "guest"
+        ? guestInfo?.email || ""
+        : auth.currentUser?.email || "",
+    phoneNumber:
+      role === "guest"
+        ? guestInfo?.phoneNumber || ""
+        : "", // for usuario you can fetch from profile if needed
     stylistId: selectedStylist.id,
     stylistName: selectedStylist.name,
     createdAt: new Date().toISOString(),
     role,
-    userId: auth.currentUser?.uid ?? null,
+    userId: role === "usuario" ? auth.currentUser?.uid ?? null : null,
   };
 
   try {
@@ -67,7 +121,21 @@ export const handleBooking = async ({
     );
 
     if (conflict) {
-      Alert.alert('Error', 'Este horario ya está reservado o no cabe en la duración.');
+      // 👇 Suggest next available block
+      const suggestion = await findNextAvailableSuggestion(
+        selectedStylist.id,
+        fullDate,
+        durationHours
+      );
+
+      if (suggestion) {
+        Alert.alert(
+          'Horario no disponible',
+          `El siguiente horario disponible es ${suggestion.date} a las ${suggestion.time}`
+        );
+      } else {
+        Alert.alert('Error', 'No hay horarios disponibles en los próximos días.');
+      }
       return;
     }
 
@@ -84,15 +152,28 @@ export const handleBooking = async ({
 
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
 
-    navigation.navigate('Cita confirmada.', {
-      service: bookingData.service,
-      date: isoDate,
-      time: selectedTime,
-      guestName: bookingData.guestName,
-      stylistName: bookingData.stylistName,
-      bookingId: docRef.id,
-      role: bookingData.role,
-    });
+    // Navigate to correct confirmation screen
+    if (role === "guest") {
+      navigation.navigate('Cita confirmada', {
+        service: bookingData.service,
+        date: isoDate,
+        time: selectedTime,
+        guestName: bookingData.guestName,
+        stylistName: bookingData.stylistName,
+        bookingId: docRef.id,
+        role: bookingData.role,
+      });
+    } else {
+      navigation.navigate('Cita confirmada.', {
+        service: bookingData.service,
+        date: isoDate,
+        time: selectedTime,
+        guestName: bookingData.guestName,
+        stylistName: bookingData.stylistName,
+        bookingId: docRef.id,
+        role: bookingData.role,
+      });
+    }
   } catch (error) {
     console.error('Error saving booking:', error);
     Alert.alert('Error', 'No se pudo crear tu cita');

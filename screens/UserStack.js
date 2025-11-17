@@ -3,7 +3,7 @@ import BookingConfirmationScreen from "../screens/BookingConfirmationScreen";
 import ServicesScreen from '../screens/ServicesScreen';
 import UserBookingHistory from '../screens/UserBookingHistory';
 import UserTabNav from '../screens/UserTabNav';
-import UserBookingScreen from "./UserBookingScreen";
+import BookingScreen from "./BookingScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -39,8 +39,8 @@ export default function UserStack() {
         }}
       />
       <Stack.Screen
-        name="Agenda tu cita."
-        component={UserBookingScreen}
+        name="Agenda tu cita"
+        component={BookingScreen}
         options={{
         headerBackVisible: false,
         headerTitleStyle: {

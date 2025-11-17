@@ -14,6 +14,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet, Text,
+  TextInput,
   TouchableOpacity, View, useWindowDimensions
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,21 +49,17 @@ type AvailabilityDay = {
   isDayOff: boolean;
 };
 
-export default function UserBookingScreen() {
+export default function BookingScreen() {
   type BookingScreenRouteProp = RouteProp<RootStackParamList, 'Agenda tu cita'>;
   const route = useRoute<BookingScreenRouteProp>();
-  const { serviceFromUser, stylist } = route.params || {};
+  const { role, serviceFromUser, stylist } = route.params || {};
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
   const [service, setService] = useState('');
   const [date, setDate] = useState(new Date());
-  const [showPicker, setShowPicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [loading, setLoading] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [role, setRole] = useState('');
   const [stylists, setStylists] = useState<{ id: string; name: string }[]>([]);
   const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
   const services = useServices();
@@ -72,9 +69,39 @@ export default function UserBookingScreen() {
   const [loadingAvailability, setLoadingAvailability] = useState(false);
   const user = auth.currentUser;
   const guestName = user?.displayName || '';
-  const email = user?.email || '';
   const [serviceProviders, setServiceProviders] = useState<Record<string, string[]>>({});
   const [modalVisible, setModalVisible] = useState(false);
+  // User/guest fields
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  // Prefill for users
+  useEffect(() => {
+    if (role !== "guest") {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      fetchUserProfile(user.uid).then(profile => {
+        if (profile) {
+          setNombre(profile.username || user.displayName || "");
+          setEmail(profile.email || user.email || "");
+          setPhoneNumber(profile.phoneNumber || "");
+        }
+      });
+    } else {
+      // Guest → leave fields empty
+      setNombre("");
+      setEmail("");
+      setPhoneNumber("");
+    }
+  }, [role]);
+
+  // Service/stylist preselection
+  useEffect(() => {
+    if (serviceFromUser?.id) setSelectedServiceId(serviceFromUser.id);
+    if (stylist?.id) setSelectedStylist(stylist);
+  }, [serviceFromUser, stylist]);
 
 useEffect(() => {
   const buildServiceProviders = async () => {
@@ -113,23 +140,6 @@ useEffect(() => {
   if (serviceFromUser?.id) setSelectedServiceId(serviceFromUser.id);
   if (stylist?.id) setSelectedStylist(stylist);
 }, [service, stylist]);
-
-
-  useEffect(() => {
-  const loadUserProfile = async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const profile = await fetchUserProfile(user.uid);
-    if (profile?.phoneNumber) {
-      setPhoneNumber(profile.phoneNumber);
-    }
-    if (profile?.role) {;
-      setRole(profile.role);
-    }
-  };
-  loadUserProfile();
-}, []);
 
   useEffect(() => {
   const loadStylists = async () => {
@@ -217,55 +227,6 @@ useEffect(() => {
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-};
-
-const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
-
-// 🔎 Suggest next available block across multiple days
-const findNextAvailableSuggestion = async (
-  stylistId: string,
-  startDate: Date,
-  durationHours: number
-): Promise<{ date: string; time: string } | null> => {
-  // Look ahead up to 14 days
-  for (let offset = 0; offset < 14; offset++) {
-    const d = new Date(startDate);
-    d.setDate(startDate.getDate() + offset);
-    const isoDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const availabilityRef = doc(db, 'users', stylistId, 'availability', isoDate);
-    const availabilitySnap = await getDoc(availabilityRef);
-
-    if (!availabilitySnap.exists()) {
-      continue;
-    }
-    const availabilityData = availabilitySnap.data();
-    const slots: any[] = availabilityData.timeSlots || [];
-    // Sort slots by time
-    const sortedSlots = [...slots].sort((a, b) => {
-      const [ah] = a.time.split(':').map(Number);
-      const [bh] = b.time.split(':').map(Number);
-      return ah - bh;
-    });
-
-    // Scan for a valid block
-    for (let i = 0; i < sortedSlots.length; i++) {
-      const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
-      const [h, m] = cleanTime(sortedSlots[i].time).split(':').map(Number);
-      const candidateTimes: string[] = [];
-      for (let j = 0; j < durationHours; j++) {
-        candidateTimes.push(`${String(h + j).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-      }
-
-      const fits = candidateTimes.every(t => {
-        const slot = slots.find((s: any) => cleanTime(s.time) === t);
-        return slot && !slot.booked;
-      });
-      if (fits) {
-        return { date: isoDate, time: candidateTimes[0] };
-      }
-    }
-  }
-  return null;
 };
 
 return (
@@ -441,20 +402,48 @@ return (
   </View>
 )}
 
-          <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
-          <View style={[styles.readOnlyField, ,{ backgroundColor: '#d8d2c4' }]}>
-            <Text>{guestName || 'No disponible'}</Text>
-          </View>
+          {/* 👇 Role-aware fields */}
+            <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
+            {role === "guest" ? (
+              <TextInput
+                style={styles.input}
+                value={nombre}
+                onChangeText={setNombre}
+                placeholder="Escribe tu nombre"
+              />
+            ) : (
+              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+                <Text>{nombre || 'No disponible'}</Text>
+              </View>
+            )}
 
-          <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
-          <View style={[styles.readOnlyField, ,{ backgroundColor: '#d8d2c4' }]}>
-            <Text>{email || 'No disponible'}</Text>
-          </View>
+            <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
+            {role === "guest" ? (
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Escribe tu correo"
+              />
+            ) : (
+              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+                <Text>{email || 'No disponible'}</Text>
+              </View>
+            )}
 
-          <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
-          <View style={[styles.readOnlyField, ,{ backgroundColor: '#d8d2c4' }]}>
-            <Text>{phoneNumber || 'No disponible'}</Text>
-          </View>
+            <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
+            {role === "guest" ? (
+              <TextInput
+                style={styles.input}
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                placeholder="Escribe tu teléfono"
+              />
+            ) : (
+              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+                <Text>{phoneNumber || 'No disponible'}</Text>
+              </View>
+            )}
 
           <View style={{ marginTop: 12 }}>
             <Button_style2
@@ -472,13 +461,20 @@ return (
       Alert.alert('Error', 'Debes seleccionar un servicio');
       return;
     }
-    handleBooking({
-      selectedSlot,
-      selectedStylist,
-      selectedService,
-      role: 'usuario',
-      navigation,
-    });
+    if (role === "guest" || role === "usuario") {
+  handleBooking({
+    selectedSlot,
+    selectedStylist,
+    selectedService,
+    role, // ✅ now narrowed
+    guestInfo: {   // 👈 wrap inside guestInfo
+    guestName: nombre,
+    email,
+    phoneNumber,
+  },
+    navigation,
+  });
+}
   }}
   />
           </View>

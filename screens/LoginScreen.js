@@ -56,7 +56,7 @@ export default function LoginScreen({ navigation }) {
         claims = await user.getIdTokenResult(true);
         if (claims.claims.role === "guest") {
           setLoading(false);
-          navigation.navigate("Invitado");
+          navigation.navigate("Invitado", { role: "guest" });
           return;
         }
       }
@@ -117,13 +117,13 @@ export default function LoginScreen({ navigation }) {
 
       switch (userData?.role) {
         case 'admin':
-          navigation.navigate('Administrador');
+          navigation.navigate('Administrador', { role: 'admin' });
           break;
         case 'empleado':
-          navigation.navigate('Empleado');
+          navigation.navigate('Empleado', { role: 'empleado' });
           break;
         default:
-          navigation.navigate('Usuario');
+          navigation.navigate('Usuario', { role: 'usuario' });
       }
     } catch (error) {
       Alert.alert('Error', 'No se pudo iniciar sesión. Clave o email incorrecto');

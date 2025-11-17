@@ -5,6 +5,10 @@ export type User = {
 };
 
 export type RootStackParamList = {
+  "Usuario": { role: "usuario" | "admin" | "empleado" };
+  "Invitado": { role: "guest" };
+  "Administrador": { role: "admin" };
+  "Empleado": { role: "empleado" }; 
   'Cita confirmada': {
     service: string;
     date: string;
@@ -37,8 +41,8 @@ export type RootStackParamList = {
   "Historial de citas": undefined; //Usuario
   "Nuestros servicios": undefined; //Invitado
   "Nuestros servicios.": undefined; //Usuario
-  "Agenda tu cita": undefined; //Invitado
-  "Agenda tu cita."?: { //usuario
+  "Agenda tu cita": {
+    role: "guest" | "usuario" | "admin" | "empleado";
     serviceFromUser?: {
       id: string;
       name: string;
