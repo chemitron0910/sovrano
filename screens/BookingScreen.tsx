@@ -480,10 +480,18 @@ return (
           </View>
 
           <View style={{ marginTop: 12 }}>
-            <Button_style2
-              title="Vuelve al inicio"
-              onPress={() => navigation.navigate('Inicio-Usuario')}/>
-          </View>
+  <Button_style2
+    title="Vuelve al inicio"
+    onPress={() => {
+      if (role === "usuario") {
+        navigation.navigate("Inicio-Usuario");
+      } else if (role === "guest") {
+        navigation.navigate("Inicio-Invitado");
+      }
+    }}
+  />
+</View>
+
         </View>
     </ScrollView>
   </KeyboardAvoidingView>

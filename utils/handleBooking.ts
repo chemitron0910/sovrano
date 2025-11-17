@@ -15,25 +15,35 @@ type BookingParams = {
   navigation: any;
 };
 
+type TimeSlot = {
+  time: string;
+  booked: boolean;
+};
+
+const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
+
 // 🔎 Suggest next available block across multiple days
 const findNextAvailableSuggestion = async (
   stylistId: string,
   startDate: Date,
   durationHours: number
 ): Promise<{ date: string; time: string } | null> => {
-  // Look ahead up to 14 days
   for (let offset = 0; offset < 14; offset++) {
-    const d = new Date(startDate);
+    const d = new Date(startDate.getTime());
     d.setDate(startDate.getDate() + offset);
+
     const isoDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const availabilityRef = doc(db, 'users', stylistId, 'availability', isoDate);
     const availabilitySnap = await getDoc(availabilityRef);
 
-    if (!availabilitySnap.exists()) {
-      continue;
-    }
+    if (!availabilitySnap.exists()) continue;
+
     const availabilityData = availabilitySnap.data();
-    const slots: any[] = availabilityData.timeSlots || [];
+    const slots: TimeSlot[] = (availabilityData.timeSlots || []).map((s: any) => ({
+      time: cleanTime(s.time),
+      booked: s.booked,
+    }));
+
     // Sort slots by time
     const sortedSlots = [...slots].sort((a, b) => {
       const [ah] = a.time.split(':').map(Number);
@@ -42,20 +52,25 @@ const findNextAvailableSuggestion = async (
     });
 
     // Scan for a valid block
-    for (let i = 0; i < sortedSlots.length; i++) {
-      const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
-      const [h, m] = cleanTime(sortedSlots[i].time).split(':').map(Number);
-      const candidateTimes: string[] = [];
-      for (let j = 0; j < durationHours; j++) {
-        candidateTimes.push(`${String(h + j).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    for (let i = 0; i <= sortedSlots.length - durationHours; i++) {
+      const block = sortedSlots.slice(i, i + durationHours);
+
+      // Ensure all slots exist and are unbooked
+      const allUnbooked = block.every(s => !s.booked);
+
+      // Ensure times are consecutive by hour
+      let isConsecutive = true;
+      for (let j = 1; j < block.length; j++) {
+        const [prevH, prevM] = block[j - 1].time.split(':').map(Number);
+        const [currH, currM] = block[j].time.split(':').map(Number);
+        if (currH !== prevH + 1 || currM !== prevM) {
+          isConsecutive = false;
+          break;
+        }
       }
 
-      const fits = candidateTimes.every(t => {
-        const slot = slots.find((s: any) => cleanTime(s.time) === t);
-        return slot && !slot.booked;
-      });
-      if (fits) {
-        return { date: isoDate, time: candidateTimes[0] };
+      if (allUnbooked && isConsecutive) {
+        return { date: isoDate, time: block[0].time };
       }
     }
   }
@@ -70,8 +85,6 @@ export const handleBooking = async ({
   role,
   navigation,
 }: BookingParams) => {
-  const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
-
   const isoDate = selectedSlot.date;
   const selectedTime = cleanTime(selectedSlot.time);
   const [year, month, day] = isoDate.split('-').map(Number);
@@ -99,7 +112,7 @@ export const handleBooking = async ({
     phoneNumber:
       role === "guest"
         ? guestInfo?.phoneNumber || ""
-        : "", // for usuario you can fetch from profile if needed
+        : "",
     stylistId: selectedStylist.id,
     stylistName: selectedStylist.name,
     createdAt: new Date().toISOString(),
@@ -114,14 +127,18 @@ export const handleBooking = async ({
       ? availabilitySnap.data()
       : { timeSlots: [], isDayOff: false };
 
-    let slots: any[] = availabilityData.timeSlots || [];
+    let slots: TimeSlot[] = (availabilityData.timeSlots || []).map((s: any) => ({
+      time: cleanTime(s.time),
+      booked: s.booked,
+    }));
 
-    const conflict = requiredTimes.some(t =>
-      slots.find(s => cleanTime(s.time) === t)?.booked
-    );
+    // ✅ Conflict if slot missing OR already booked
+    const conflict = requiredTimes.some(t => {
+      const slot = slots.find(s => cleanTime(s.time) === t);
+      return !slot || slot.booked;
+    });
 
     if (conflict) {
-      // 👇 Suggest next available block
       const suggestion = await findNextAvailableSuggestion(
         selectedStylist.id,
         fullDate,
@@ -139,12 +156,11 @@ export const handleBooking = async ({
       return;
     }
 
+    // ✅ Only mark existing slots, never create new ones
     requiredTimes.forEach(t => {
       const idx = slots.findIndex(s => cleanTime(s.time) === t);
       if (idx >= 0) {
         slots[idx].booked = true;
-      } else {
-        slots.push({ time: t, booked: true });
       }
     });
 
@@ -152,7 +168,6 @@ export const handleBooking = async ({
 
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
 
-    // Navigate to correct confirmation screen
     if (role === "guest") {
       navigation.navigate('Cita confirmada', {
         service: bookingData.service,
