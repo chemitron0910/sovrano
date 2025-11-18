@@ -24,7 +24,12 @@ export default function GuestStack() {
           },
         }}
       />
-      <Stack.Screen name="Nuestros servicios" component={ServicesScreen} options={{headerBackVisible: true }}/>
+      <Stack.Screen
+        name="Nuestros servicios"
+        component={ServicesScreen}
+        initialParams={{ role: "guest" }}   // ✅ ensures role is always defined
+        options={{ headerBackVisible: true }}
+      />
       <Stack.Screen
         name="Agenda tu cita"
         component={BookingScreen}

@@ -445,10 +445,9 @@ return (
               </View>
             )}
 
-          <View style={{ marginTop: 12 }}>
-            <Button_style2
-              title="Confirma tu cita"
-              onPress={() => {
+          <Button_style2
+  title="Confirma tu cita"
+  onPress={async () => {
     if (!selectedSlot) {
       Alert.alert('Error', 'Debes seleccionar un horario');
       return;
@@ -461,23 +460,28 @@ return (
       Alert.alert('Error', 'Debes seleccionar un servicio');
       return;
     }
+
     if (role === "guest" || role === "usuario") {
-  handleBooking({
-    selectedSlot,
-    selectedStylist,
-    selectedService,
-    role, // ✅ now narrowed
-    guestInfo: {   // 👈 wrap inside guestInfo
-    guestName: nombre,
-    email,
-    phoneNumber,
-  },
-    navigation,
-  });
-}
+      try {
+        setLoading(true); // 👈 show overlay
+        await handleBooking({
+          selectedSlot,
+          selectedStylist,
+          selectedService,
+          role,
+          guestInfo: {
+            guestName: nombre,
+            email,
+            phoneNumber,
+          },
+          navigation,
+        });
+      } finally {
+        setLoading(false); // 👈 hide overlay
+      }
+    }
   }}
-  />
-          </View>
+/>
 
           <View style={{ marginTop: 12 }}>
   <Button_style2

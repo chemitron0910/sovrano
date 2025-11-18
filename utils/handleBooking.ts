@@ -168,27 +168,16 @@ export const handleBooking = async ({
 
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
 
-    if (role === "guest") {
-      navigation.navigate('Cita confirmada', {
-        service: bookingData.service,
-        date: isoDate,
-        time: selectedTime,
-        guestName: bookingData.guestName,
-        stylistName: bookingData.stylistName,
-        bookingId: docRef.id,
-        role: bookingData.role,
-      });
-    } else {
-      navigation.navigate('Cita confirmada.', {
-        service: bookingData.service,
-        date: isoDate,
-        time: selectedTime,
-        guestName: bookingData.guestName,
-        stylistName: bookingData.stylistName,
-        bookingId: docRef.id,
-        role: bookingData.role,
-      });
-    }
+    // ✅ Unified navigation
+navigation.navigate("Cita confirmada", {
+  service: bookingData.service,
+  date: isoDate,
+  time: selectedTime,
+  guestName: bookingData.guestName,
+  stylistName: bookingData.stylistName,
+  bookingId: docRef.id,
+  role: bookingData.role,
+});
   } catch (error) {
     console.error('Error saving booking:', error);
     Alert.alert('Error', 'No se pudo crear tu cita');

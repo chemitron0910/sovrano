@@ -26,16 +26,17 @@ export default function UserStack() {
         }}
       />
       <Stack.Screen
-        name="Nuestros servicios."
+        name="Nuestros servicios"
         component={ServicesScreen}
+        initialParams={{ role: "usuario" }}   // ✅ ensures role is always defined
         options={{
-        headerBackVisible: true,
-        headerTitleStyle: {
-        fontFamily: 'Playfair-Bold', // ✅ Your custom font
-        fontSize: 22,
-        fontWeight: '400',
-        color: '#3e3e3e', // Optional: match Sovrano’s palette
-        },
+          headerBackVisible: true,
+          headerTitleStyle: {
+            fontFamily: 'Playfair-Bold',
+            fontSize: 22,
+            fontWeight: '400',
+            color: '#3e3e3e',
+          },
         }}
       />
       <Stack.Screen
@@ -64,7 +65,7 @@ export default function UserStack() {
         },
         }}
       />
-      <Stack.Screen name="Cita confirmada." component={BookingConfirmationScreen} options={{headerBackVisible: false }}/>
+      <Stack.Screen name="Cita confirmada" component={BookingConfirmationScreen} options={{headerBackVisible: false }}/>
     </Stack.Navigator>
   );
 };

@@ -5,42 +5,18 @@ export type User = {
 };
 
 export type RootStackParamList = {
-  "Usuario": { role: "usuario" | "admin" | "empleado" };
-  "Invitado": { role: "guest" };
-  "Administrador": { role: "admin" };
-  "Empleado": { role: "empleado" }; 
-  'Cita confirmada': {
-    service: string;
-    date: string;
-    time: string;
-    guestName: string;
-    stylistName: string;
-    bookingId: string;
-    role: string;
-  }; //Invitado
-  'Cita confirmada.': {
-    service: string;
-    date: string;
-    time: string;
-    guestName: string;
-    stylistName: string;
-    bookingId: string;
-    role: string;
-  }; //Usuario
-  "Inicio-Sovrano": undefined;
-  "Inicio-Admin": { userId: string; role: string };
-  "Inicio-Empleado": undefined;
+  // Home screens
   "Inicio-Usuario": undefined;
   "Inicio-Invitado": undefined;
-  "Assignar responsabilidad": undefined;
-  "Manejar servicios": undefined;
-  "Calendario de citas": undefined; //Admin
-  "Calendario de citas.": undefined; //Staff
-  "Historia de citas": undefined; //Admin
-  "Historia de citas.": undefined; //Staff
-  "Historial de citas": undefined; //Usuario
-  "Nuestros servicios": undefined; //Invitado
-  "Nuestros servicios.": undefined; //Usuario
+  "Inicio-Admin": { userId: string; role: string };
+  "Inicio-Empleado": undefined;
+
+  // Role-specific dashboards
+  "Administrador": { role: "admin" };
+  "Empleado": { role: "empleado" };
+
+  // Booking flow
+  "Nuestros servicios": { role: "guest" | "usuario" };
   "Agenda tu cita": {
     role: "guest" | "usuario" | "admin" | "empleado";
     serviceFromUser?: {
@@ -54,8 +30,32 @@ export type RootStackParamList = {
       name: string;
     };
   };
+  "Cita confirmada": {
+    service: string;
+    date: string;
+    time: string;
+    guestName: string;
+    stylistName: string;
+    bookingId: string;
+    role: string;
+  };
+
+  // Admin/staff flows
+  "Assignar responsabilidad": undefined;
+  "Manejar servicios": undefined;
+  "Calendario de citas": undefined; // Admin
+  "Calendario de citas.": undefined; // Staff
+  "Historia de citas": undefined; // Admin
+  "Historia de citas.": undefined; // Staff
+  "Historial de citas": undefined; // Usuario
+
+  // Auth & profile
   "Registrarse": undefined;
+  "Registro exitoso": undefined;
   "Calendario-Empleado": undefined;
   "Perfil-Empleado.": undefined;
   "Mi informacion": undefined;
+
+  // Sovrano entry point
+  "Inicio-Sovrano": undefined;
 };
