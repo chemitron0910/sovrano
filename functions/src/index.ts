@@ -11,6 +11,8 @@ export {setGuestClaim} from "./setGuestClaim";
 
 export {onBookingUpdated} from "./onBookingUpdated";
 
+export {autoExtendAvailability} from "./autoExtendAvailability";
+
 export const helloWorld = functions
   .runWith({maxInstances: 10, memory: "512MB"})
   .https.onRequest((req, res) => {

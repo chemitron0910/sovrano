@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions/v1";
 import {getFirestore} from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
+import {formatBookingDate} from "./formatBookingDate";
 
 export const notifyEmployeeOnBooking = functions
   .runWith({maxInstances: 10, memory: "512MB"})
@@ -18,13 +19,15 @@ export const notifyEmployeeOnBooking = functions
         return;
       }
 
+      const formattedDate = formatBookingDate(booking.date);
+
       const res = await fetch("https://exp.host/--/api/v2/push/send", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
           to: token,
           title: "Nueva reserva",
-          body: `Nueva cita con ${booking.guestName} el ${booking.date}`,
+          body: `Nueva cita con ${booking.guestName} el ${formattedDate}`,
         }),
       });
 
@@ -34,4 +37,3 @@ export const notifyEmployeeOnBooking = functions
       logger.error("Push notification failed:", err);
     }
   });
-
