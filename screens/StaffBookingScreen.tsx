@@ -57,6 +57,7 @@ export default function StaffBookingsScreen() {
     });
 
     return (
+      
       <View style={styles.bookingItem}>
         <View style={styles.inlineText}>
           <BodyBoldText>Servicio: </BodyBoldText>
@@ -77,47 +78,46 @@ export default function StaffBookingsScreen() {
   return (
     
     <GradientBackground>
-    <View style={styles.container}>
-      <BodyBoldText style={styles.title}>Mis Reservas</BodyBoldText>
-
-      <View style={styles.filtersContainer}>
-      <View style={styles.pickerWrapper}>
-        <BodyBoldText style={styles.pickerLabel}>Filtrar por fecha:</BodyBoldText>
-        <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
-        <Picker
-          selectedValue={selectedDate}
-          onValueChange={(value) => {setSelectedDate(value);
-          }}
-          mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-          style={[styles.picker, { backgroundColor: '#E9E4D4' }]}
-          itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-        >
-          <Picker.Item label="Todas" value={null} />
-          {uniqueDates.map(date => {
-          const [year, month, day] = date.split('-');
-          const localDate = new Date(Number(year), Number(month) - 1, Number(day));
-          const formatted = localDate.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          });
-          return (
-          <Picker.Item key={date} label={formatted} value={date} />
-          );
-          })}
-
-        </Picker>
-        </LinearGradient>
+  <FlatList
+    data={filteredBookings}
+    keyExtractor={(item) => item.id}
+    renderItem={renderBookingItem}
+    ListHeaderComponent={
+      <View style={styles.container}>
+        <BodyBoldText style={styles.title}>Mis Reservas</BodyBoldText>
+        <View style={styles.filtersContainer}>
+          <View style={styles.pickerWrapper}>
+            <BodyBoldText style={styles.pickerLabel}>Filtrar por fecha:</BodyBoldText>
+            <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
+              <Picker
+                selectedValue={selectedDate}
+                onValueChange={(value) => setSelectedDate(value)}
+                mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+                style={[styles.picker, { backgroundColor: '#E9E4D4' }]}
+                itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+              >
+                <Picker.Item label="Todas" value={null} />
+                {uniqueDates.map(date => {
+                  const [year, month, day] = date.split('-');
+                  const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+                  const formatted = localDate.toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  });
+                  return (
+                    <Picker.Item key={date} label={formatted} value={date} />
+                  );
+                })}
+              </Picker>
+            </LinearGradient>
+          </View>
+        </View>
       </View>
-      </View>
-
-      <FlatList
-        data={filteredBookings}
-        keyExtractor={(item) => item.id}
-        renderItem={renderBookingItem}
-      />
-    </View>
-    </GradientBackground>
+    }
+    contentContainerStyle={styles.listContent}
+  />
+</GradientBackground>
   );
 }
 

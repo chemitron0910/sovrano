@@ -2,7 +2,7 @@ import GradientBackground from '@/Components/GradientBackground';
 import BodyText from '@/Components/typography/BodyText';
 import TitleText from '@/Components/typography/TitleText';
 import * as Notifications from 'expo-notifications';
-import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
@@ -28,9 +28,47 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const firestore = getFirestore();
+
+  const handleGuestLogin = async () => {
+    try {
+      setLoading(true);
+      setLoadingMessage('Iniciando sesión como invitado...'); // 👈 overlay text for guest
+
+      const result = await signInAnonymously(auth);
+      const user = result.user;
+
+      // Create a Firestore doc for the guest if needed
+      await setDoc(doc(db, "users", user.uid), {
+        role: "guest",
+        createdAt: new Date().toISOString(),
+      }, { merge: true });
+
+      await user.getIdToken(true);
+
+      // ✅ Wait until the claim is actually present
+      let claims;
+      for (let i = 0; i < 5; i++) {
+        await new Promise(res => setTimeout(res, 1000));
+        claims = await user.getIdTokenResult(true);
+        if (claims.claims.role === "guest") {
+          setLoading(false);
+          navigation.navigate("Invitado", { role: "guest" });
+          return;
+        }
+      }
+
+      setLoading(false);
+      Alert.alert("Error", "Guest role not yet assigned. Please try again.");
+    } catch (error) {
+      setLoading(false);
+      console.error("Guest login error:", error);
+      Alert.alert("Error", "No se pudo iniciar sesión como invitado");
+    }
+  };
 
   const validateForm = () => {
     let errors = {};
@@ -43,6 +81,7 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     if (!validateForm()) return;
     setLoading(true);
+    setLoadingMessage('Verificando credenciales...'); // 👈 overlay text for normal login
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       const user = result.user;
@@ -60,40 +99,35 @@ export default function LoginScreen({ navigation }) {
       setPassword('');
 
       async function registerPushToken(uid) {
-  try {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      console.warn('Notification permissions not granted');
-      return;
-    }
+        try {
+          const { status } = await Notifications.requestPermissionsAsync();
+          if (status !== 'granted') {
+            console.warn('Notification permissions not granted');
+            return;
+          }
 
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    //console.log("Expo Push Token object:", tokenData); // ✅ See full structure
+          const tokenData = await Notifications.getExpoPushTokenAsync();
+          const token = tokenData.data;
 
-    const token = tokenData.data;
-    //console.log(`Expo push token from login for ${uid}: ${token}`);
+          await setDoc(doc(firestore, `users/${uid}`), { expoPushToken: token }, { merge: true });
+        } catch (error) {}
+      }
 
-    await setDoc(doc(firestore, `users/${uid}`), { expoPushToken: token }, { merge: true });
-  } catch (error) {
-    //console.error("Error registering push token:", error);
-  }
-}
-
-await registerPushToken(user.uid); // ✅ Await to ensure it completes before navigating
+      await registerPushToken(user.uid);
 
       switch (userData?.role) {
         case 'admin':
-          navigation.navigate('Administrador');
+          navigation.navigate('Administrador', { role: 'admin' });
           break;
         case 'empleado':
-          navigation.navigate('Empleado');
+          navigation.navigate('Empleado', { role: 'empleado' });
           break;
         default:
-          navigation.navigate('Usuario');
+          navigation.navigate('Usuario', { role: 'usuario' });
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo iniciar sesión. Clave or email incorrecto');
-      } finally {
+      Alert.alert('Error', 'No se pudo iniciar sesión. Clave o email incorrecto');
+    } finally {
       setLoading(false);
     }
   };
@@ -134,7 +168,7 @@ await registerPushToken(user.uid); // ✅ Await to ensure it completes before na
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loadingText}>Verificando credenciales...</Text>
+          <Text style={styles.loadingText}>{loadingMessage}</Text>
         </View>
       )}
       
@@ -188,7 +222,7 @@ await registerPushToken(user.uid); // ✅ Await to ensure it completes before na
 
           <Button_style2
             title="Invitado"
-            onPress={() => navigation.navigate('Invitado')}
+            onPress={handleGuestLogin}
           />
 
           <Button_style2

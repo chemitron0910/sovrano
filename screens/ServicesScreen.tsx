@@ -1,9 +1,10 @@
 import GradientBackground from '@/Components/GradientBackground';
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StatusBar,
@@ -35,11 +36,17 @@ export default function ServicesScreen() {
   const [empleados, setEmpleados] = useState<User[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  // ✅ Correct typing: ServicesScreen is reached via "Nuestros servicios" (guest) or "Nuestros servicios." (usuario)
+  const route = useRoute<RouteProp<RootStackParamList, 'Nuestros servicios'>>();
+  const role = route.params.role;
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
         const servicesSnapshot = await getDocs(collection(db, "services"));
         const allServices: Service[] = servicesSnapshot.docs.map(doc => {
@@ -81,6 +88,8 @@ export default function ServicesScreen() {
         setServiceProviders(providersMap);
       } catch (error) {
         console.error("❌ General fetch error:", error);
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -99,7 +108,9 @@ export default function ServicesScreen() {
 
   const handleSelectStylist = (stylist: User) => {
     if (!selectedService) return;
-    navigation.navigate("Agenda tu cita.", {
+
+    navigation.navigate("Agenda tu cita", {
+      role, // ✅ pass role correctly
       serviceFromUser: selectedService,
       stylist: {
         id: stylist.id,
@@ -111,51 +122,53 @@ export default function ServicesScreen() {
 
   return (
     <GradientBackground>
-    <View style={styles.container}>
-      
-        
-      <ScrollView style={{ padding: 20 }}>
-        
-        {services.map(service => (
-          <View key={service.id} style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 18, fontWeight: "bold" }}>{service.name}</Text>
-            <Text>{service.description}</Text>
-            <Text>Duración: {service.duration}</Text>
-            <View style={{ padding: 10 }}>
-                      <Button_style2 title="Reservar" onPress={() => openModal(service)}>
-                      </Button_style2>
-                      </View>
-            
+      <View style={styles.container}>
+        {loading && (
+          <View style={styles.overlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.loadingText}>Cargando servicios...</Text>
           </View>
-        ))}
-      </ScrollView>
+        )}
 
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
-              Elige un estilista
-            </Text>
-            {(selectedService && serviceProviders[selectedService.id] || []).map((stylistId, idx) => {
-              const stylist = empleados.find(e => e.id === stylistId);
-              if (!stylist) return null;
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.stylistButton}
-                  onPress={() => handleSelectStylist(stylist)}
-                >
-                  <Text style={{ color: "white" }}>{stylist.username || "Sin nombre"}</Text>
-                </TouchableOpacity>
-              );
-            })}
-            <TouchableOpacity onPress={closeModal} style={styles.cancelButton}>
-              <Text style={{ color: "#333" }}>Cancelar</Text>
-            </TouchableOpacity>
+        <ScrollView style={{ padding: 20 }}>
+          {services.map(service => (
+            <View key={service.id} style={{ marginBottom: 20 }}>
+              <Text style={{ fontSize: 18, fontWeight: "bold" }}>{service.name}</Text>
+              <Text>{service.description}</Text>
+              <Text>Duración: {service.duration}</Text>
+              <View style={{ padding: 10 }}>
+                <Button_style2 title="Reservar" onPress={() => openModal(service)} />
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+        <Modal visible={modalVisible} animationType="slide" transparent={true}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+                Elige un estilista
+              </Text>
+              {(selectedService && serviceProviders[selectedService.id] || []).map((stylistId, idx) => {
+                const stylist = empleados.find(e => e.id === stylistId);
+                if (!stylist) return null;
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.stylistButton}
+                    onPress={() => handleSelectStylist(stylist)}
+                  >
+                    <Text style={{ color: "white" }}>{stylist.username || "Sin nombre"}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              <TouchableOpacity onPress={closeModal} style={styles.cancelButton}>
+                <Text style={{ color: "#333" }}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
     </GradientBackground>
   );
 }
@@ -164,10 +177,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
-    alignContent: 'center', 
-    padding:10,
+    alignContent: 'center',
+    padding: 10,
     paddingTop: StatusBar.currentHeight || 0,
-      },
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -190,5 +203,18 @@ const styles = StyleSheet.create({
   cancelButton: {
     marginTop: 10,
     alignSelf: "center",
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#fff',
+    fontSize: 16,
   },
 });

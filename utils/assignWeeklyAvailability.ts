@@ -1,74 +1,103 @@
-import { getIdTokenResult } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../Services/firebaseConfig';
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db } from "../Services/firebaseConfig";
 
-const dayMap = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+const dayMap = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miercoles",
+  "Jueves",
+  "Viernes",
+  "Sabado",
+];
 
-export const assignWeeklyAvailability = async (uid: string  | undefined, weeks: number = 4) => {
+const formatLocalYMD = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// ✅ Utility to sort slots chronologically
+const sortSlots = (slots: string[]) =>
+  [...slots].sort((a, b) => {
+    const [ah, am] = a.split(":").map(Number);
+    const [bh, bm] = b.split(":").map(Number);
+    return ah === bh ? am - bm : ah - bh;
+  });
+
+export const assignWeeklyAvailability = async (
+  uid: string | undefined,
+  weeks = 4
+) => {
   try {
-  const tokenResult = await getIdTokenResult(auth.currentUser!);
-
-  if ('role' in tokenResult.claims) {
-  } else {
-    console.warn('No role claim found in token:', tokenResult.claims);
-  }
-} catch (tokenError) {
-  console.error('Failed to get ID token result:', tokenError);
-}
-
-
-
-  try {
-    // 🔐 Guard against null auth.currentUser
     const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('No authenticated user found.');
+    if (!currentUser && !uid) {
+      throw new Error("No authenticated user found and no UID provided.");
     }
 
-    // 🧠 Default to current user's UID if none provided
-    const resolvedUid = uid ?? currentUser.uid;
-    if (!resolvedUid) {
-      throw new Error('No authenticated user found and no UID provided.');
-    }
+    const uidString = uid ?? currentUser?.uid;
+    if (!uidString) throw new Error("Unable to resolve UID.");
 
-    const uidString = resolvedUid as string;
-
-    const templateRef = doc(db, 'weeklyTemplates', 'default');
+    const templateRef = doc(db, "weeklyTemplates", "default");
     const templateSnap = await getDoc(templateRef);
 
     if (!templateSnap.exists()) {
-      console.warn('Weekly template not found.');
+      console.warn("Weekly template not found.");
       return;
     }
 
-    try {
-      const tokenResult = await getIdTokenResult(auth.currentUser!);
-    } catch (tokenError) {
-    console.error('Failed to get ID token result:', tokenError);
-    }
-
     const template = templateSnap.data();
-
     const today = new Date();
+
     for (let i = 0; i < weeks * 7; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
 
-      const isoDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const isoDate = formatLocalYMD(date);
       const dayOfWeek = dayMap[date.getDay()];
-      const slots = template[dayOfWeek] || [];
+      const rawSlots: string[] = template[dayOfWeek] || [];
 
-      const availabilityRef = doc(db, 'users', uidString, 'availability', isoDate);
+      // ✅ Always sort slots before processing
+      const sortedSlots = sortSlots(rawSlots);
+
+      const availabilityRef = doc(
+        db,
+        "users",
+        uidString,
+        "availability",
+        isoDate
+      );
+
       try {
+        const existingSnap = await getDoc(availabilityRef);
+        let existingSlots: any[] = [];
+
+        if (existingSnap.exists()) {
+          const existingData = existingSnap.data();
+          existingSlots = existingData.timeSlots || [];
+        }
+
+        // Create a map of existing bookings
+        const bookedMap = new Map(
+          existingSlots.filter((s) => s.booked).map((s) => [s.time, true])
+        );
+
+        // Merge sorted template with existing bookings
+        const mergedSlots = sortedSlots.map((time) => ({
+          time,
+          booked: bookedMap.get(time) || false,
+        }));
+
         await setDoc(availabilityRef, {
-        timeSlots: slots,
-        isDayOff: slots.length === 0,
+          timeSlots: mergedSlots,
+          isDayOff: mergedSlots.length === 0,
         });
       } catch (writeError) {
-        console.error('Write failed:', writeError);
+        console.error("Write failed:", writeError);
       }
     }
   } catch (error) {
-    console.error('Error assigning weekly availability:', error);
+    console.error("Error assigning weekly availability:", error);
   }
 };

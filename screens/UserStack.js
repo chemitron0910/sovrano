@@ -3,7 +3,7 @@ import BookingConfirmationScreen from "../screens/BookingConfirmationScreen";
 import ServicesScreen from '../screens/ServicesScreen';
 import UserBookingHistory from '../screens/UserBookingHistory';
 import UserTabNav from '../screens/UserTabNav';
-import UserBookingScreen from "./UserBookingScreen";
+import BookingScreen from "./BookingScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -26,21 +26,22 @@ export default function UserStack() {
         }}
       />
       <Stack.Screen
-        name="Nuestros servicios."
+        name="Nuestros servicios"
         component={ServicesScreen}
+        initialParams={{ role: "usuario" }}   // ✅ ensures role is always defined
         options={{
-        headerBackVisible: true,
-        headerTitleStyle: {
-        fontFamily: 'Playfair-Bold', // ✅ Your custom font
-        fontSize: 22,
-        fontWeight: '400',
-        color: '#3e3e3e', // Optional: match Sovrano’s palette
-        },
+          headerBackVisible: true,
+          headerTitleStyle: {
+            fontFamily: 'Playfair-Bold',
+            fontSize: 22,
+            fontWeight: '400',
+            color: '#3e3e3e',
+          },
         }}
       />
       <Stack.Screen
-        name="Agenda tu cita."
-        component={UserBookingScreen}
+        name="Agenda tu cita"
+        component={BookingScreen}
         options={{
         headerBackVisible: false,
         headerTitleStyle: {
@@ -64,7 +65,7 @@ export default function UserStack() {
         },
         }}
       />
-      <Stack.Screen name="Cita confirmada." component={BookingConfirmationScreen} options={{headerBackVisible: false }}/>
+      <Stack.Screen name="Cita confirmada" component={BookingConfirmationScreen} options={{headerBackVisible: false }}/>
     </Stack.Navigator>
   );
 };

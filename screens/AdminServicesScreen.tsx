@@ -1,12 +1,15 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
+import { Picker } from '@react-native-picker/picker';
 import { doc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Platform,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
   View
@@ -89,9 +92,12 @@ export default function AdminServiceScreen() {
     <View style={styles.serviceItem}>
       <View style={{ flex: 1 }}>
         <BodyBoldText style={styles.serviceName}>{item.name}</BodyBoldText>
-        <BodyText style={styles.serviceTime}>
-          {item.duration}
-        </BodyText>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <BodyText style={styles.serviceTime}>
+            {item.duration} {Number(item.duration) === 1 ? 'hora' : 'horas'}
+          </BodyText>
+        </View>
+
         {item.description ? <BodyText>{item.description}</BodyText> : null}
       </View>
       <View style={styles.actions}>
@@ -131,9 +137,22 @@ export default function AdminServiceScreen() {
         value={form.name} onChangeText={(text) => setForm({ ...form, name: text })}/>
 
       <BodyBoldText>Duración</BodyBoldText>
-        <TextInput style={[styles.input, { backgroundColor: '#f0f0f0' }]}
-        placeholder='Duración' placeholderTextColor="#888" 
-        value={form.duration} onChangeText={(text) => setForm({ ...form, duration: text })}/>
+<View style={[styles.input, { backgroundColor: '#f0f0f0' }]}>
+  <Picker
+    selectedValue={form.duration}
+    onValueChange={(value) => setForm({ ...form, duration: value })}
+    mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+    style={styles.picker}
+    itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+  >
+    <Picker.Item label="Selecciona duración" value="" />
+    {[1,2,3,4,5,6,7,8].map(num => (
+      <Picker.Item key={num} label={`${num}`} value={String(num)} />
+    ))}
+  </Picker>
+  <Text style={{ marginLeft: 8 }}>horas</Text>
+</View>
+
 
       <BodyBoldText>Descripción</BodyBoldText>
         <TextInput style={[styles.input, { backgroundColor: '#f0f0f0' }]}
@@ -213,4 +232,23 @@ const styles = StyleSheet.create({
   delete: {
     color: 'red',
   },
+pickerItem: {
+    fontSize: 16,
+    color: 'black',
+  },
+  picker: {
+  ...Platform.select({
+    ios: {
+      height: 150, // enough for scroll wheel
+      justifyContent: 'center',
+    },
+    android: {
+      height: 50,
+      justifyContent: 'center',
+    },
+  }),
+  borderRadius: 6,
+  borderWidth: 1,
+  borderColor: '#00796b',
+},
 });

@@ -2,7 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import BookingConfirmationScreen from "../screens/BookingConfirmationScreen";
 import GuestScreen from "../screens/GuestScreen";
 import SignUpConfirmationScreen from "../screens/SignUpConfirmationScreen";
-import GuestBookingScreen from "./GuestBookingScreen";
+import BookingScreen from "./BookingScreen";
 import ServicesScreen from "./ServicesScreen.tsx";
 import SignUpScreen from './SignUpScreen';
 
@@ -24,10 +24,15 @@ export default function GuestStack() {
           },
         }}
       />
-      <Stack.Screen name="Nuestros servicios" component={ServicesScreen} options={{headerBackVisible: true }}/>
+      <Stack.Screen
+        name="Nuestros servicios"
+        component={ServicesScreen}
+        initialParams={{ role: "guest" }}   // ✅ ensures role is always defined
+        options={{ headerBackVisible: true }}
+      />
       <Stack.Screen
         name="Agenda tu cita"
-        component={GuestBookingScreen}
+        component={BookingScreen}
         options={{
           headerBackVisible: false,
           headerTitleStyle: {

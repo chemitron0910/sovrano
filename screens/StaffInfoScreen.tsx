@@ -238,7 +238,7 @@ const handleDelete = async (index: number) => {
       <>
         <View style={{ flex: 1 }}>
           <BodyBoldText style={styles.serviceName}>{service.name}</BodyBoldText>
-          <BodyText style={styles.serviceTime}>{service.duration}</BodyText>
+          <BodyText style={styles.serviceTime}>{service.duration} {Number(service.duration) === 1 ? 'hora' : 'horas'}</BodyText>
         </View>
 
         <View style={styles.actions}>
