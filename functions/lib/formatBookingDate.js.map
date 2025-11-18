@@ -1,0 +1,1 @@
+{"version":3,"file":"formatBookingDate.js","sourceRoot":"","sources":["../src/formatBookingDate.ts"],"names":[],"mappings":";;AAUA,8CAIC;AAdD,iCAA+B;AAE/B;;;;;;;GAOG;AACH,SAAgB,iBAAiB,CAAC,OAAe;IAC/C,OAAO,gBAAQ,CAAC,OAAO,CAAC,OAAO,EAAE,EAAC,IAAI,EAAE,kBAAkB,EAAC,CAAC;SACzD,SAAS,CAAC,IAAI,CAAC;SACf,QAAQ,CAAC,iCAAiC,CAAC,CAAC;AACjD,CAAC"}
