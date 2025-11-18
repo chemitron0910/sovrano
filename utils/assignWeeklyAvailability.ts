@@ -11,6 +11,14 @@ const formatLocalYMD = (d: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+// ✅ Utility to sort slots chronologically
+const sortSlots = (slots: string[]) =>
+  [...slots].sort((a, b) => {
+    const [ah, am] = a.split(":").map(Number);
+    const [bh, bm] = b.split(":").map(Number);
+    return ah === bh ? am - bm : ah - bh;
+  });
+
 export const assignWeeklyAvailability = async (uid: string | undefined, weeks: number = 4) => {
   try {
     const tokenResult = await getIdTokenResult(auth.currentUser!);
@@ -45,40 +53,38 @@ export const assignWeeklyAvailability = async (uid: string | undefined, weeks: n
       const date = new Date(today);
       date.setDate(today.getDate() + i);
 
-      const isoDate = formatLocalYMD(date); // local day string
+      const isoDate = formatLocalYMD(date);
       const dayOfWeek = dayMap[date.getDay()];
       const rawSlots: string[] = template[dayOfWeek] || [];
 
-      const timeSlots = rawSlots.map(time => ({
-        time,
-        booked: false,
-      }));
+      // ✅ Always sort slots before processing
+      const sortedSlots = sortSlots(rawSlots);
 
       const availabilityRef = doc(db, 'users', uidString, 'availability', isoDate);
       try {
         const existingSnap = await getDoc(availabilityRef);
-let existingSlots: any[] = [];
+        let existingSlots: any[] = [];
 
-if (existingSnap.exists()) {
-  const existingData = existingSnap.data();
-  existingSlots = existingData.timeSlots || [];
-}
+        if (existingSnap.exists()) {
+          const existingData = existingSnap.data();
+          existingSlots = existingData.timeSlots || [];
+        }
 
-// Create a map of existing bookings
-const bookedMap = new Map(
-  existingSlots.filter(s => s.booked).map(s => [s.time, true])
-);
+        // Create a map of existing bookings
+        const bookedMap = new Map(
+          existingSlots.filter(s => s.booked).map(s => [s.time, true])
+        );
 
-// Merge template with existing bookings
-const mergedSlots = rawSlots.map(time => ({
-  time,
-  booked: bookedMap.get(time) || false,
-}));
+        // Merge sorted template with existing bookings
+        const mergedSlots = sortedSlots.map(time => ({
+          time,
+          booked: bookedMap.get(time) || false,
+        }));
 
-await setDoc(availabilityRef, {
-  timeSlots: mergedSlots,
-  isDayOff: mergedSlots.length === 0,
-});
+        await setDoc(availabilityRef, {
+          timeSlots: mergedSlots,
+          isDayOff: mergedSlots.length === 0,
+        });
       } catch (writeError) {
         console.error('Write failed:', writeError);
       }
