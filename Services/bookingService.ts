@@ -8,11 +8,13 @@ export type Booking = {
   userId: string;
   phone: string;
   service: string;
+  duration: string;
   stylistId: string;
   stylistName: string;
   date: string;
   time: string;
   status: string;
+  role?: 'usuario' | 'guest';
 };
 
 export const fetchAllBookings = async (): Promise<Booking[]> => {
@@ -26,11 +28,13 @@ export const fetchAllBookings = async (): Promise<Booking[]> => {
       userId: data.userId,
       phone: data.phone,
       service: data.service,
+      duration: data.duration,
       stylistId: data.stylistId,
       stylistName: data.stylistName,
       date: data.date,
       time: data.time,
       status: data.status,
+      role: data.role, 
     };
   });
 };

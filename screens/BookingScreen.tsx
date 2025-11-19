@@ -258,6 +258,48 @@ return (
       style={{ flex: 1 }}
       contentContainerStyle={styles.scrollContent}>
         <View style={[styles.formContainer, { width: windowWidth > 500 ? '70%' : '90%' }]}>
+          {/* 👇 Role-aware fields */}
+            <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
+            {role === "guest" ? (
+              <TextInput
+                style={styles.input}
+                value={nombre}
+                onChangeText={setNombre}
+                placeholder="Escribe tu nombre"
+              />
+            ) : (
+              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+                <Text>{nombre || 'No disponible'}</Text>
+              </View>
+            )}
+
+            <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
+            {role === "guest" ? (
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Escribe tu correo"
+              />
+            ) : (
+              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+                <Text>{email || 'No disponible'}</Text>
+              </View>
+            )}
+
+            <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
+            {role === "guest" ? (
+              <TextInput
+                style={styles.input}
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                placeholder="Escribe tu teléfono"
+              />
+            ) : (
+              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+                <Text>{phoneNumber || 'No disponible'}</Text>
+              </View>
+            )}
           <View style={styles.pickerWrapper}>
 
 <BodyBoldText style={styles.pickerLabel}>Selecciona un servicio</BodyBoldText>
@@ -402,49 +444,6 @@ return (
   </View>
 )}
 
-          {/* 👇 Role-aware fields */}
-            <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
-            {role === "guest" ? (
-              <TextInput
-                style={styles.input}
-                value={nombre}
-                onChangeText={setNombre}
-                placeholder="Escribe tu nombre"
-              />
-            ) : (
-              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
-                <Text>{nombre || 'No disponible'}</Text>
-              </View>
-            )}
-
-            <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
-            {role === "guest" ? (
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Escribe tu correo"
-              />
-            ) : (
-              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
-                <Text>{email || 'No disponible'}</Text>
-              </View>
-            )}
-
-            <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
-            {role === "guest" ? (
-              <TextInput
-                style={styles.input}
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                placeholder="Escribe tu teléfono"
-              />
-            ) : (
-              <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
-                <Text>{phoneNumber || 'No disponible'}</Text>
-              </View>
-            )}
-
           <Button_style2
   title="Confirma tu cita"
   onPress={async () => {
@@ -459,6 +458,23 @@ return (
     if (!selectedService) {
       Alert.alert('Error', 'Debes seleccionar un servicio');
       return;
+    }
+
+    // 🔎 Extra validation for guests
+    if (role === "guest") {
+      if (!nombre?.trim() || !email?.trim() || !phoneNumber?.trim()) {
+        Alert.alert(
+          'Error',
+          'Debes ingresar tu nombre, correo electrónico y número telefónico'
+        );
+        return;
+      }
+      // ✅ Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    Alert.alert('Error', 'Debes ingresar un correo electrónico válido');
+    return;
+  }
     }
 
     if (role === "guest" || role === "usuario") {

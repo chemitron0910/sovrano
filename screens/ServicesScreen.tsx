@@ -66,7 +66,7 @@ export default function ServicesScreen() {
             const data = doc.data() as Omit<User, "id">;
             return { id: doc.id, ...data };
           })
-          .filter(user => user.role === "empleado");
+          .filter(user => user.role === "empleado" || user.role === "admin");
         setEmpleados(empleadosList);
 
         const providersMap: Record<string, string[]> = {};

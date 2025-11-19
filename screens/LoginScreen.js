@@ -4,7 +4,7 @@ import TitleText from '@/Components/typography/TitleText';
 import * as Notifications from 'expo-notifications';
 import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +19,7 @@ import {
 import Button_style2 from '../Components/Button_style2';
 import Logo from '../Components/Logo';
 import { auth, db } from '../Services/firebaseConfig';
+import { ensureAvailability } from "../utils/ensureAvailability";
 
 export default function LoginScreen({ navigation }) {
   const windowDimensions = useWindowDimensions();
@@ -32,6 +33,10 @@ export default function LoginScreen({ navigation }) {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const firestore = getFirestore();
+
+  useEffect(() => {
+    ensureAvailability();
+  }, []);
 
   const handleGuestLogin = async () => {
     try {
