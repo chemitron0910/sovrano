@@ -10,7 +10,7 @@ export const signInAsGuest = async () => {
     throw error;
   }
 };
-export const logout = async (navigation) => {
+export const logout = async () => {
   try {
     await signOut(auth);
   } catch (error) {

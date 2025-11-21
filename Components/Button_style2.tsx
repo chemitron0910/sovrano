@@ -1,6 +1,14 @@
 import ButtonText from '@/Components/typography/ButtonText';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet } from 'react-native';
+import { ColorValue, Pressable, StyleSheet, ViewStyle } from 'react-native';
+
+interface ButtonStyle2Props {
+  title: string;
+  onPress: () => void;
+  gradientColors?: [ColorValue, ColorValue, ...ColorValue[]];
+  textColor?: string;
+  style?: ViewStyle;
+}
 
 export default function Button_style2({
   title,
@@ -8,11 +16,11 @@ export default function Button_style2({
   gradientColors = ['#c2b280', '#a68f5b'],
   textColor = '#3e3e3e',
   style = {},
-}) {
+}: ButtonStyle2Props) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.wrapper, style, pressed && styles.pressed]}>
       <LinearGradient colors={gradientColors} style={styles.gradient}>
-        <ButtonText>{title}</ButtonText>
+        <ButtonText style={{ color: textColor }}>{title}</ButtonText>
       </LinearGradient>
     </Pressable>
   );

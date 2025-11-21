@@ -5,8 +5,9 @@ import LoginScreen from "../screens/LoginScreen";
 import ResendEmailScreen from "../screens/ResendEmailScreen";
 import StaffStack from "../screens/StaffStack";
 import UserStack from "../screens/UserStack";
+import { RootStackParamList } from '../src/types';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function LoginStack() {
   return (
@@ -20,10 +21,10 @@ export default function LoginStack() {
         options={{
         headerBackVisible: false,
         headerTitleStyle: {
-        fontFamily: 'Playfair-Bold', // ✅ Your custom font
+        fontFamily: 'Playfair-Bold',
         fontSize: 22,
         fontWeight: '400',
-        color: '#3e3e3e', // Optional: match Sovrano’s palette
+        color: '#3e3e3e',
         },
         }}
       />

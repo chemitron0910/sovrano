@@ -1,17 +1,24 @@
+import { ReactElement } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function AboutScreen() {
-
+export default function AboutScreen(): ReactElement {
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
-  
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
-        <View style={{width: windowWidth > 500 ? "70%" : "90%", height: windowHeight > 600 ? "60%" : "90%"}}>
-          <Text style={{fontSize: windowWidth > 500 ? 50 : 24}}>Acerca de Sovrano</Text>
+        <View
+          style={{
+            width: windowWidth > 500 ? "70%" : "90%",
+            height: windowHeight > 600 ? "60%" : "90%",
+          }}
+        >
+          <Text style={{ fontSize: windowWidth > 500 ? 50 : 24 }}>
+            Acerca de Sovrano
+          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -27,7 +34,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    justifyContent: "center",
   },
   text: {
     fontSize: 24,

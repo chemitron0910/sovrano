@@ -35,7 +35,7 @@ export default function UserScreen() {
         <View style={{ padding: 10 }}>
           <Button_style2 
             title="Ir a servicios" 
-            onPress={() => navigation.navigate("Nuestros servicios.")}
+            onPress={() => navigation.navigate("Nuestros servicios", { role: "usuario" })}
           />
         </View>
 

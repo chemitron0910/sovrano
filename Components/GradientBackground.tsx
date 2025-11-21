@@ -1,15 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, ViewStyle } from 'react-native';
+import { ColorValue, StyleSheet, ViewStyle } from 'react-native';
 
 type Props = {
   children: React.ReactNode;
   style?: ViewStyle;
+  colors?: readonly [ColorValue, ColorValue, ...ColorValue[]]; // ✅ tuple type
 };
 
-export default function GradientBackground({ children, style }: Props) {
+export default function GradientBackground({ children, style, colors }: Props) {
   return (
     <LinearGradient
-      colors={['#E9E4D4', '#D1B380']}
+      colors={colors ?? ['#E9E4D4', '#D1B380']}
       style={[styles.gradient, style]}
     >
       {children}

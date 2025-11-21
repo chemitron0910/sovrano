@@ -6,14 +6,16 @@ export type User = {
 
 export type RootStackParamList = {
   // Home screens
-  "Inicio-Usuario": undefined;
-  "Inicio-Invitado": undefined;
+  "Inicio-Usuario": { role: "usuario" };
+  "Inicio-Invitado": { role: "guest" };
   "Inicio-Admin": { userId: string; role: string };
-  "Inicio-Empleado": undefined;
+  "Inicio-Empleado": { role: "empleado" };
 
   // Role-specific dashboards
   "Administrador": { role: "admin" };
   "Empleado": { role: "empleado" };
+  "Usuario": { role: "usuario" };
+  "Invitado": { role: "guest" };
 
   // Booking flow
   "Nuestros servicios": { role: "guest" | "usuario" };
@@ -48,13 +50,20 @@ export type RootStackParamList = {
   "Historia de citas": undefined; // Admin
   "Historia de citas.": undefined; // Staff
   "Historial de citas": undefined; // Usuario
+  "Perfil-Empleado": undefined; // Staff
 
   // Auth & profile
   "Registrarse": undefined;
-  "Registro exitoso": undefined;
+  "Registro exitoso": {
+    username: string;
+    email: string;
+    userId: string;
+  };
   "Calendario-Empleado": undefined;
   "Perfil-Empleado.": undefined;
   "Mi informacion": undefined;
+  "Re-enviar correo electronico": undefined;
+  "Acerca de Sovrano": undefined;
 
   // Sovrano entry point
   "Inicio-Sovrano": undefined;

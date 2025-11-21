@@ -22,7 +22,7 @@ export default function GuestScreen() {
 
         <Button_style2 
           title="Nuestros servicios" 
-          onPress={() => navigation.navigate("Nuestros servicios")}
+          onPress={() => navigation.navigate("Nuestros servicios", { role: "guest" })}
         />
 
         {/* 👇 Pass role explicitly when navigating */}

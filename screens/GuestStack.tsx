@@ -1,33 +1,35 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../src/types';
+
 import BookingConfirmationScreen from "../screens/BookingConfirmationScreen";
 import GuestScreen from "../screens/GuestScreen";
 import SignUpConfirmationScreen from "../screens/SignUpConfirmationScreen";
 import BookingScreen from "./BookingScreen";
-import ServicesScreen from "./ServicesScreen.tsx";
-import SignUpScreen from './SignUpScreen';
+import ServicesScreen from "./ServicesScreen";
+import SignUpScreen from "./SignUpScreen";
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function GuestStack() {
   return (
-    <Stack.Navigator screenOptions={{headerTitleAlign: 'center'}}>
+    <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
       <Stack.Screen
         name="Inicio-Invitado"
         component={GuestScreen}
         options={{
           headerBackVisible: false,
           headerTitleStyle: {
-            fontFamily: 'Playfair-Bold', // ✅ Your custom font
+            fontFamily: "Playfair-Bold",
             fontSize: 22,
-            fontWeight: '400',
-            color: '#3e3e3e', // Optional: match Sovrano’s palette
+            fontWeight: "400",
+            color: "#3e3e3e",
           },
         }}
       />
       <Stack.Screen
         name="Nuestros servicios"
         component={ServicesScreen}
-        initialParams={{ role: "guest" }}   // ✅ ensures role is always defined
+        initialParams={{ role: "guest" }} // ✅ ensures role is always defined
         options={{ headerBackVisible: true }}
       />
       <Stack.Screen
@@ -36,10 +38,10 @@ export default function GuestStack() {
         options={{
           headerBackVisible: false,
           headerTitleStyle: {
-            fontFamily: 'Playfair-Bold', // ✅ Your custom font
+            fontFamily: "Playfair-Bold",
             fontSize: 22,
-            fontWeight: '400',
-            color: '#3e3e3e', // Optional: match Sovrano’s palette
+            fontWeight: "400",
+            color: "#3e3e3e",
           },
         }}
       />
@@ -49,10 +51,10 @@ export default function GuestStack() {
         options={{
           headerBackVisible: false,
           headerTitleStyle: {
-            fontFamily: 'Playfair-Bold', // ✅ Your custom font
+            fontFamily: "Playfair-Bold",
             fontSize: 22,
-            fontWeight: '400',
-            color: '#3e3e3e', // Optional: match Sovrano’s palette
+            fontWeight: "400",
+            color: "#3e3e3e",
           },
         }}
       />
@@ -62,10 +64,10 @@ export default function GuestStack() {
         options={{
           headerBackVisible: false,
           headerTitleStyle: {
-            fontFamily: 'Playfair-Bold', // ✅ Your custom font
+            fontFamily: "Playfair-Bold",
             fontSize: 22,
-            fontWeight: '400',
-            color: '#3e3e3e', // Optional: match Sovrano’s palette
+            fontWeight: "400",
+            color: "#3e3e3e",
           },
         }}
       />
@@ -75,13 +77,13 @@ export default function GuestStack() {
         options={{
           headerBackVisible: false,
           headerTitleStyle: {
-            fontFamily: 'Playfair-Bold', // ✅ Your custom font
+            fontFamily: "Playfair-Bold",
             fontSize: 22,
-            fontWeight: '400',
-            color: '#3e3e3e', // Optional: match Sovrano’s palette
+            fontWeight: "400",
+            color: "#3e3e3e",
           },
         }}
       />
     </Stack.Navigator>
   );
-};
+}

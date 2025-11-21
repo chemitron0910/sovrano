@@ -5,33 +5,40 @@ import Button_style2 from "../Components/Button_style2";
 import { auth } from '../Services/firebaseConfig';
 
 export default function ResendEmailScreen() {
-
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
 
-  const handleResendVerification = async () => {
+  const handleResendVerification = async (): Promise<void> => {
     try {
       if (auth.currentUser) {
         await sendEmailVerification(auth.currentUser);
-        Alert.alert('Correo enviado', 'Revisa tu bandeja de entrada y tu folder the spam (Correo no deseado).');
+        Alert.alert(
+          'Correo enviado',
+          'Revisa tu bandeja de entrada y tu folder de spam (Correo no deseado).'
+        );
       } else {
         Alert.alert('Error', 'No hay usuario autenticado.');
       }
     } catch (error) {
+      console.error("Verification error:", error);
       Alert.alert('Error', 'No se pudo enviar el correo de verificación.');
     }
   };
   
   return (
-    
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
-        <View style={{width: windowWidth > 500 ? "70%" : "90%", height: windowHeight > 600 ? "60%" : "90%"}}>
-           <Button_style2 title="Re-enviar verificacion de correo electronico" onPress={handleResendVerification}
-              gradientColors={['#00c6ff', '#0072ff']}
-              textColor="#fff">
-            </Button_style2>
+        <View style={{
+          width: windowWidth > 500 ? "70%" : "90%",
+          height: windowHeight > 600 ? "60%" : "90%"
+        }}>
+          <Button_style2
+            title="Re-enviar verificacion de correo electronico"
+            onPress={handleResendVerification}
+            gradientColors={['#00c6ff', '#0072ff']}
+            textColor="#fff"
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -47,7 +54,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    justifyContent: "center",
   },
   text: {
     fontSize: 24,

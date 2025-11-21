@@ -1,6 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyText from '@/Components/typography/BodyText';
 import TitleText from '@/Components/typography/TitleText';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
 import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
@@ -19,15 +20,27 @@ import {
 import Button_style2 from '../Components/Button_style2';
 import Logo from '../Components/Logo';
 import { auth, db } from '../Services/firebaseConfig';
+import { RootStackParamList } from '../src/types';
 import { ensureAvailability } from "../utils/ensureAvailability";
 
-export default function LoginScreen({ navigation }) {
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "Inicio-Sovrano">;
+
+interface LoginScreenProps {
+  navigation: LoginScreenNavigationProp;
+}
+
+type Errors = {
+  email?: string;
+  password?: string;
+};
+
+export default function LoginScreen({ navigation }: LoginScreenProps) {
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
@@ -61,7 +74,7 @@ export default function LoginScreen({ navigation }) {
         claims = await user.getIdTokenResult(true);
         if (claims.claims.role === "guest") {
           setLoading(false);
-          navigation.navigate("Invitado", { role: "guest" });
+          navigation.navigate("Inicio-Invitado", { role: "guest" });
           return;
         }
       }
@@ -75,13 +88,13 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  const validateForm = () => {
-    let errors = {};
-    if (!email) errors.email = 'Correo electrónico es requerido';
-    if (!password) errors.password = 'Clave es requerida';
-    setErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  const validateForm = (): boolean => {
+  const errors: Errors = {};
+  if (!email) errors.email = 'Correo electrónico es requerido';
+  if (!password) errors.password = 'Clave es requerida';
+  setErrors(errors);
+  return Object.keys(errors).length === 0;
+};
 
   const handleLogin = async () => {
     if (!validateForm()) return;
@@ -103,7 +116,7 @@ export default function LoginScreen({ navigation }) {
       setEmail('');
       setPassword('');
 
-      async function registerPushToken(uid) {
+      async function registerPushToken(uid: string) {
         try {
           const { status } = await Notifications.requestPermissionsAsync();
           if (status !== 'granted') {
