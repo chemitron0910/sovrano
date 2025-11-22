@@ -146,9 +146,6 @@ export const handleBooking = async ({
       return ah === bh ? am - bm : ah - bh;
     });
 
-    console.log("Required times:", requiredTimes);
-    console.log("Available slots (sorted):", slots.map(s => s.time));
-
     // ✅ Conflict if slot missing OR already booked
     const conflict = requiredTimes.some(t => {
       const slot = slots.find(s => s.time === t);

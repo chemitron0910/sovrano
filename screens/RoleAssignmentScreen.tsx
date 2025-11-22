@@ -1,7 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import { Picker } from '@react-native-picker/picker';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import Button_style2 from "../Components/Button_style2";
 import { ROLES } from '../constants/roles';
@@ -57,16 +57,31 @@ export default function RoleAssignmentScreen() {
       <BodyBoldText style={styles.label}>Nombre de usuario</BodyBoldText>
       
       <Picker
-        selectedValue={username}
-        onValueChange={(value) => setUsername(value)}
-        style={[styles.picker, { width: '100%' }]} // ✅ Full width
-        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-      >
-      <Picker.Item label="Selecciona un usuario..." value="" />
-        {users.map((user) => (
-      <Picker.Item key={user.email} label={user.username} value={user.username} />
-        ))}
-      </Picker>
+  selectedValue={username}
+  onValueChange={(value) => setUsername(value)}
+  style={[styles.picker, { width: '100%' }]} // ✅ Full width
+  itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+>
+  <Picker.Item label="Selecciona un usuario..." value="" />
+  {users
+    .filter((user) => {
+      if (!user.lastLogin) return false; // skip if no lastLogin
+      const lastLoginDate = new Date(user.lastLogin);
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      return lastLoginDate >= oneYearAgo;
+    })
+    .slice() // copy array to avoid mutating state
+    .sort((a, b) => a.username.localeCompare(b.username)) // ✅ Alphabetical order
+    .map((user) => (
+      <Picker.Item
+        key={user.email}
+        label={`${user.username} (${user.role})`} // show username + role
+        value={user.username}
+      />
+    ))}
+</Picker>
+
       </View>
 
       <View style={styles.pickerWrapper}>

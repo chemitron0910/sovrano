@@ -2,6 +2,7 @@ export type User = {
   email: string;
   username: string;
   role: string;
+  lastLogin?: string; // ISO string or Firestore Timestamp
 };
 
 export type RootStackParamList = {
@@ -45,17 +46,12 @@ export type RootStackParamList = {
   // Admin/staff flows
   "Assignar responsabilidad": undefined;
   "Manejar servicios": undefined;
-  "Calendario de citas": {
-    date: string;
-    time: string;
-    stylistId: string;
-    role: "admin";
-  };
+  "Calendario de citas": undefined; // Admin
   "Calendario de citas.": {
     date: string;
     time: string;
     stylistId: string;
-    role: "empleado";
+    role: "staff";
   };
   "Historia de citas": undefined; // Admin
   "Historia de citas.": undefined; // Staff

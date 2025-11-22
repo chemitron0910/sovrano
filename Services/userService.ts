@@ -21,6 +21,7 @@ export const fetchAllUsers = async (): Promise<User[]> => {
       email: data.email,
       username: data.username,
       role: data.role,
+      lastLogin: data.lastLogin,
     };
   });
 };

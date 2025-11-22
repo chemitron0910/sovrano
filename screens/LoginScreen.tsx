@@ -100,58 +100,70 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 };
 
   const handleLogin = async () => {
-    if (!validateForm()) return;
-    setLoading(true);
-    setLoadingMessage('Verificando credenciales...'); // 👈 overlay text for normal login
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      const user = result.user;
+  if (!validateForm()) return;
+  setLoading(true);
+  setLoadingMessage('Verificando credenciales...'); // 👈 overlay text for normal login
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    const user = result.user;
 
-      if (!user.emailVerified) {
-        Alert.alert('Verifica tu correo electrónico antes de continuar.');
-        navigation.navigate('Re-enviar correo electronico');
-        return;
-      }
-
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const userData = userDoc.data();
-
-      setEmail('');
-      setPassword('');
-
-      async function registerPushToken(uid: string) {
-        try {
-          const { status } = await Notifications.requestPermissionsAsync();
-          if (status !== 'granted') {
-            console.warn('Notification permissions not granted');
-            return;
-          }
-
-          const tokenData = await Notifications.getExpoPushTokenAsync();
-          const token = tokenData.data;
-
-          await setDoc(doc(firestore, `users/${uid}`), { expoPushToken: token }, { merge: true });
-        } catch (error) {}
-      }
-
-      await registerPushToken(user.uid);
-
-      switch (userData?.role) {
-        case 'admin':
-          navigation.navigate('Administrador', { role: 'admin' });
-          break;
-        case 'empleado':
-          navigation.navigate('Empleado', { role: 'empleado' });
-          break;
-        default:
-          navigation.navigate('Usuario', { role: 'usuario' });
-      }
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo iniciar sesión. Clave o email incorrecto');
-    } finally {
-      setLoading(false);
+    if (!user.emailVerified) {
+      Alert.alert('Verifica tu correo electrónico antes de continuar.');
+      navigation.navigate('Re-enviar correo electronico');
+      return;
     }
-  };
+
+    const userRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userRef);
+    const userData = userDoc.data();
+
+    // ✅ Update LastLogin field
+    await setDoc(
+      userRef,
+      { lastLogin: new Date().toISOString() }, // store ISO date string
+      { merge: true }
+    );
+
+    setEmail('');
+    setPassword('');
+
+    async function registerPushToken(uid: string) {
+      try {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== 'granted') {
+          console.warn('Notification permissions not granted');
+          return;
+        }
+
+        const tokenData = await Notifications.getExpoPushTokenAsync();
+        const token = tokenData.data;
+
+        await setDoc(
+          doc(firestore, `users/${uid}`),
+          { expoPushToken: token },
+          { merge: true }
+        );
+      } catch (error) {}
+    }
+
+    await registerPushToken(user.uid);
+
+    switch (userData?.role) {
+      case 'admin':
+        navigation.navigate('Administrador', { role: 'admin' });
+        break;
+      case 'empleado':
+        navigation.navigate('Empleado', { role: 'empleado' });
+        break;
+      default:
+        navigation.navigate('Usuario', { role: 'usuario' });
+    }
+  } catch (error) {
+    Alert.alert('Error', 'No se pudo iniciar sesión. Clave o email incorrecto');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleForgotPassword = async () => {
   if (!email.trim()) {
