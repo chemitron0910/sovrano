@@ -43,7 +43,7 @@ export type RootStackParamList = {
     role: string;
   };
 
-  // Admin/staff flows
+  // Admin/empleado flows
   "Assignar responsabilidad": undefined;
   "Manejar servicios": undefined;
   "Calendario de citas": undefined; // Admin
@@ -51,12 +51,12 @@ export type RootStackParamList = {
     date: string;
     time: string;
     stylistId: string;
-    role: "staff";
+    role: "empleado";
   };
   "Historia de citas": undefined; // Admin
-  "Historia de citas.": undefined; // Staff
+  "Historia de citas.": undefined; // empleado
   "Historial de citas": undefined; // Usuario
-  "Perfil-Empleado": undefined; // Staff
+  "Perfil-Empleado": undefined; // empleado
 
   // Auth & profile
   "Registrarse": undefined;
