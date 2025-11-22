@@ -4,7 +4,7 @@ import TitleText from '@/Components/typography/TitleText';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
 import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -65,6 +65,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         createdAt: new Date().toISOString(),
       }, { merge: true });
 
+      // Force token refresh
       await user.getIdToken(true);
 
       // ✅ Wait until the claim is actually present
@@ -75,6 +76,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         if (claims.claims.role === "guest") {
           setLoading(false);
           navigation.navigate("Inicio-Invitado", { role: "guest" });
+          // 🧹 Clean up: delete the guest record from users collection
+          await deleteDoc(doc(db, "users", user.uid));
           return;
         }
       }
@@ -239,7 +242,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
           <Button_style2
-            title="Invitado"
+            title="Inicio-Invitado"
             onPress={handleGuestLogin}
           />
 

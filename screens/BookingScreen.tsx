@@ -6,7 +6,7 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
   KeyboardAvoidingView,
@@ -64,6 +64,13 @@ export default function BookingScreen() {
   const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
   const services = useServices();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const selectedService = services.find(s => s.id === selectedServiceId) || null;
+  const formatLocalYMD = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+  };
   const [weeklyAvailability, setWeeklyAvailability] = useState<AvailabilityDay[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
@@ -71,7 +78,6 @@ export default function BookingScreen() {
   const guestName = user?.displayName || '';
   const [serviceProviders, setServiceProviders] = useState<Record<string, string[]>>({});
   const [modalVisible, setModalVisible] = useState(false);
-  // User/guest fields
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -220,14 +226,12 @@ useEffect(() => {
   fetchWeeklyAvailability();
 }, [selectedStylist]);
 
-  const selectedService = services.find(s => s.id === selectedServiceId);
-
-  const formatLocalYMD = (d: Date) => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+// Initialize from params (Option 1)
+useEffect(() => {
+  if (route.params?.serviceFromUser) {
+    setSelectedServiceId(route.params.serviceFromUser.id);
+  }
+}, [route.params]);
 
 return (
     
@@ -302,33 +306,48 @@ return (
             )}
           <View style={styles.pickerWrapper}>
 
-<BodyBoldText style={styles.pickerLabel}>Selecciona un servicio</BodyBoldText>
-<View style={[styles.input, { height: 150, justifyContent: "center" }]}>
-  <LinearGradient colors={["#E9E4D4", "#E0CFA2"]}>
-    <Picker
-      selectedValue={selectedServiceId}
-      onValueChange={(value) => {
-        setSelectedServiceId(value);
-        if (value) setModalVisible(true); // open stylist modal
-      }}
-      mode={Platform.OS === "android" ? "dropdown" : undefined}
-      style={[styles.picker]}
-      itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
-    >
-      <Picker.Item label="Selecciona..." value={null} />
-      {services
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((service) => (
-        <Picker.Item
-          key={service.id}
-          label={`${service.name} (${service.duration} ${Number(service.duration) === 1 ? 'hora' : 'horas'})`}
-          value={service.id}
-        />
-      ))}
-    </Picker>
-  </LinearGradient>
-</View>
+{/* Service section */}
+<BodyBoldText style={styles.pickerLabel}>Servicio seleccionado</BodyBoldText>
 
+{route.params?.serviceFromUser ? (
+  // 🔒 Read-only when coming from Services screen
+  <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+    <Text>
+      {`${route.params.serviceFromUser.name} (${route.params.serviceFromUser.duration} ${
+        Number(route.params.serviceFromUser.duration) === 1 ? 'hora' : 'horas'
+      })`}
+    </Text>
+  </View>
+) : (
+  // 🔄 Picker when coming directly to Booking screen
+  <View style={[styles.inputPicker, { height: 150, justifyContent: "center" }]}>
+    <LinearGradient colors={["#E9E4D4", "#E0CFA2"]}>
+      <Picker
+        selectedValue={selectedServiceId}
+        onValueChange={(value) => {
+          setSelectedServiceId(value);
+          if (value) setModalVisible(true); // open stylist modal
+        }}
+        mode={Platform.OS === "android" ? "dropdown" : undefined}
+        style={[styles.picker]}
+        itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
+      >
+        <Picker.Item label="Selecciona..." value={null} />
+        {services
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((service) => (
+            <Picker.Item
+              key={service.id}
+              label={`${service.name} (${service.duration} ${
+                Number(service.duration) === 1 ? 'hora' : 'horas'
+              })`}
+              value={service.id}
+            />
+          ))}
+      </Picker>
+    </LinearGradient>
+  </View>
+)}
           </View>
 
          <Modal visible={modalVisible} animationType="slide" transparent={true}>
@@ -504,9 +523,9 @@ return (
     title="Vuelve al inicio"
     onPress={() => {
       if (role === "usuario") {
-        navigation.navigate("Inicio-Usuario");
+        navigation.navigate("Inicio-Usuario", { role: "usuario" });
       } else if (role === "guest") {
-        navigation.navigate("Inicio-Invitado");
+        navigation.navigate("Inicio-Invitado", { role: "guest" });
       }
     }}
   />
@@ -527,6 +546,14 @@ const styles = StyleSheet.create({
   },
   label: { fontSize: 16, fontWeight: '600', marginTop: 20 },
   input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+    backgroundColor:"white"
+  },
+  inputPicker: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,

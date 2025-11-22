@@ -1,28 +1,25 @@
 {
   "compilerOptions": {
-    /* ✅ Core settings */
     "target": "esnext",
     "module": "esnext",
     "jsx": "react-jsx",
     "moduleResolution": "node",
-
-    /* ✅ Interop & safety */
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": true,
-
-    /* ✅ React Native + Expo specifics */
-    "types": ["react", "react-native", "expo"],
-
-    /* ✅ Path alias for cleaner imports */
+    "types": [
+      "react",
+      "react-native",
+      "expo"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
-
-    /* ✅ Optional extras */
     "resolveJsonModule": true
   },
   "include": [
@@ -36,5 +33,6 @@
     "babel.config.js",
     "metro.config.js",
     "jest.config.js"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }

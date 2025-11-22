@@ -8,8 +8,8 @@ export type RootStackParamList = {
   // Home screens
   "Inicio-Usuario": { role: "usuario" };
   "Inicio-Invitado": { role: "guest" };
-  "Inicio-Admin": { userId: string; role: string };
-  "Inicio-Empleado": { role: "empleado" };
+  "Inicio-Admin": { role: "admin" };
+  "Inicio-Empleado": { role: "empleado" | "admin" };
 
   // Role-specific dashboards
   "Administrador": { role: "admin" };
@@ -45,8 +45,18 @@ export type RootStackParamList = {
   // Admin/staff flows
   "Assignar responsabilidad": undefined;
   "Manejar servicios": undefined;
-  "Calendario de citas": undefined; // Admin
-  "Calendario de citas.": undefined; // Staff
+  "Calendario de citas": {
+    date: string;
+    time: string;
+    stylistId: string;
+    role: "admin";
+  };
+  "Calendario de citas.": {
+    date: string;
+    time: string;
+    stylistId: string;
+    role: "empleado";
+  };
   "Historia de citas": undefined; // Admin
   "Historia de citas.": undefined; // Staff
   "Historial de citas": undefined; // Usuario

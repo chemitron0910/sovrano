@@ -29,7 +29,7 @@ export default function LoginStack() {
         }}
       />
       <Stack.Screen name="Administrador" component={AdminStack} options={{headerBackVisible: false }}/>
-      <Stack.Screen name="Invitado" component={GuestStack} options={{headerBackVisible: false, title: '' }}/>
+      <Stack.Screen name="Inicio-Invitado" component={GuestStack} options={{headerBackVisible: false, title: '' }}/>
       <Stack.Screen name="Re-enviar correo electronico" component={ResendEmailScreen}/>
     </Stack.Navigator>
   );

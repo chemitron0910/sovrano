@@ -3,7 +3,7 @@ import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import SubTitleText from '@/Components/typography/SubTitleText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Platform, StatusBar, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import Logo from '../Components/Logo';
 import { RootStackParamList } from '../src/types';
@@ -18,8 +18,8 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
   const { username, email, userId } = route.params;
 
   return (
-    <View style={styles.container}>
-      <GradientBackground>
+    <GradientBackground>
+      <View style={styles.container}>
         <View style={{ paddingHorizontal: 24, gap: 10 }}>
           <Logo />
           <View style={{ marginLeft: 24 }}>
@@ -52,46 +52,16 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
             />
           </View>
         </View>
-      </GradientBackground>
-    </View>
+      </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: 'red',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 12,
-  },
-  value: {
-    fontWeight: '600',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 14,
-    borderRadius: 30,
-    marginTop: 30,
-    alignItems: 'center',
-  },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: 'transparent',
   },
   inlineText: {
     flexDirection: 'row',

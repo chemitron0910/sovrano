@@ -1,7 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../src/types';
-
 import LoginScreen from "../screens/LoginScreen";
+import { RootStackParamList } from '../src/types';
 import AdminBookingHistory from "./AdminBookingHistory";
 import AdminBookingScreen from "./AdminBookingScreen";
 import AdminServicesScreen from "./AdminServicesScreen";

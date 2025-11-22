@@ -1,6 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../src/types';
-
 import StaffBookingHistory from './StaffBookingHistory';
 import StaffBookingScreen from './StaffBookingScreen';
 import StaffTabNav from './StaffTabNav';

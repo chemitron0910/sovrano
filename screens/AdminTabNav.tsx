@@ -4,7 +4,7 @@ import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
 import { RootStackParamList } from "../src/types";
 import AdminScreen from "./AdminScreen";
-import ProfileScreen from "./StaffProfileScreen";
+import StaffProfileScreen from "./StaffProfileScreen";
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
@@ -22,7 +22,7 @@ export default function AdminTabNav() {
       />
       <Tab.Screen
         name="Perfil-Empleado"
-        component={ProfileScreen}
+        component={StaffProfileScreen}
         options={{
           tabBarLabel: "Mi perfil",
           tabBarIcon: ({ color }) => (

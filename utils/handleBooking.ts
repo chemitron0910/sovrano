@@ -22,6 +22,12 @@ type TimeSlot = {
 
 const cleanTime = (t: string) => t.replace(/['"]+/g, '').trim();
 
+// Normalize to HH:mm
+const normalizeTime = (t: string) => {
+  const [h, m] = cleanTime(t).split(':').map(Number);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
 // 🔎 Suggest next available block across multiple days
 const findNextAvailableSuggestion = async (
   stylistId: string,
@@ -40,25 +46,23 @@ const findNextAvailableSuggestion = async (
 
     const availabilityData = availabilitySnap.data();
     const slots: TimeSlot[] = (availabilityData.timeSlots || []).map((s: any) => ({
-      time: cleanTime(s.time),
+      time: normalizeTime(s.time),
       booked: s.booked,
     }));
 
-    // Sort slots by time
+    // Sort slots chronologically
     const sortedSlots = [...slots].sort((a, b) => {
-      const [ah] = a.time.split(':').map(Number);
-      const [bh] = b.time.split(':').map(Number);
-      return ah - bh;
+      const [ah, am] = a.time.split(':').map(Number);
+      const [bh, bm] = b.time.split(':').map(Number);
+      return ah === bh ? am - bm : ah - bh;
     });
 
     // Scan for a valid block
     for (let i = 0; i <= sortedSlots.length - durationHours; i++) {
       const block = sortedSlots.slice(i, i + durationHours);
 
-      // Ensure all slots exist and are unbooked
       const allUnbooked = block.every(s => !s.booked);
 
-      // Ensure times are consecutive by hour
       let isConsecutive = true;
       for (let j = 1; j < block.length; j++) {
         const [prevH, prevM] = block[j - 1].time.split(':').map(Number);
@@ -86,15 +90,18 @@ export const handleBooking = async ({
   navigation,
 }: BookingParams) => {
   const isoDate = selectedSlot.date;
-  const selectedTime = cleanTime(selectedSlot.time);
+  const selectedTime = normalizeTime(selectedSlot.time);
   const [year, month, day] = isoDate.split('-').map(Number);
   const [hour, minute] = selectedTime.split(':').map(Number);
   const fullDate = new Date(year, month - 1, day, hour, minute);
 
   const durationHours = Number(selectedService?.duration) || 1;
-  const requiredTimes = Array.from({ length: durationHours }, (_, i) =>
-    `${String(hour + i).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
-  );
+
+  // ✅ Build requiredTimes normalized
+  const requiredTimes = Array.from({ length: durationHours }, (_, i) => {
+    const h = hour + i;
+    return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  });
 
   const bookingData = {
     service: selectedService?.name || '',
@@ -128,13 +135,23 @@ export const handleBooking = async ({
       : { timeSlots: [], isDayOff: false };
 
     let slots: TimeSlot[] = (availabilityData.timeSlots || []).map((s: any) => ({
-      time: cleanTime(s.time),
+      time: normalizeTime(s.time),
       booked: s.booked,
     }));
 
+    // ✅ Sort slots chronologically
+    slots.sort((a, b) => {
+      const [ah, am] = a.time.split(':').map(Number);
+      const [bh, bm] = b.time.split(':').map(Number);
+      return ah === bh ? am - bm : ah - bh;
+    });
+
+    console.log("Required times:", requiredTimes);
+    console.log("Available slots (sorted):", slots.map(s => s.time));
+
     // ✅ Conflict if slot missing OR already booked
     const conflict = requiredTimes.some(t => {
-      const slot = slots.find(s => cleanTime(s.time) === t);
+      const slot = slots.find(s => s.time === t);
       return !slot || slot.booked;
     });
 
@@ -147,9 +164,10 @@ export const handleBooking = async ({
 
       if (suggestion) {
         Alert.alert(
-          'Horario no disponible',
-          `El siguiente horario disponible es ${suggestion.date} a las ${suggestion.time}`
-        );
+      'Horario no disponible',
+      `La duración del servicio (${durationHours} horas) no cabe en el bloque seleccionado. 
+El siguiente horario disponible que sí acomoda la duración es ${suggestion.date} a las ${suggestion.time}.`
+    );
       } else {
         Alert.alert('Error', 'No hay horarios disponibles en los próximos días.');
       }
@@ -158,7 +176,7 @@ export const handleBooking = async ({
 
     // ✅ Only mark existing slots, never create new ones
     requiredTimes.forEach(t => {
-      const idx = slots.findIndex(s => cleanTime(s.time) === t);
+      const idx = slots.findIndex(s => s.time === t);
       if (idx >= 0) {
         slots[idx].booked = true;
       }
@@ -168,16 +186,15 @@ export const handleBooking = async ({
 
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
 
-    // ✅ Unified navigation
-navigation.navigate("Cita confirmada", {
-  service: bookingData.service,
-  date: isoDate,
-  time: selectedTime,
-  guestName: bookingData.guestName,
-  stylistName: bookingData.stylistName,
-  bookingId: docRef.id,
-  role: bookingData.role,
-});
+    navigation.navigate("Cita confirmada", {
+      service: bookingData.service,
+      date: isoDate,
+      time: selectedTime,
+      guestName: bookingData.guestName,
+      stylistName: bookingData.stylistName,
+      bookingId: docRef.id,
+      role: bookingData.role,
+    });
   } catch (error) {
     console.error('Error saving booking:', error);
     Alert.alert('Error', 'No se pudo crear tu cita');

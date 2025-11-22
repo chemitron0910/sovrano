@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions/v1";
-import {getFirestore} from "./firebase";
-import {assignWeeklyAvailability} from "./assignWeeklyAvailability";
+import { assignWeeklyAvailability } from "./assignWeeklyAvailability";
+import { getFirestore } from "./firebase";
 
 const db = getFirestore();
 
@@ -13,7 +13,7 @@ export const autoExtendAvailability = functions.pubsub
     for (const userDoc of usersSnap.docs) {
       const uid = userDoc.id;
       const role = userDoc.data().role;
-      if (role !== "empleado") continue;
+      if (role !== "empleado" && role !== "admin") continue;
 
       try {
         await assignWeeklyAvailability(uid, 4);

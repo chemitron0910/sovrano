@@ -1,9 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../src/types';
-
 import BookingConfirmationScreen from "../screens/BookingConfirmationScreen";
 import GuestScreen from "../screens/GuestScreen";
 import SignUpConfirmationScreen from "../screens/SignUpConfirmationScreen";
+import { RootStackParamList } from '../src/types';
 import BookingScreen from "./BookingScreen";
 import ServicesScreen from "./ServicesScreen";
 import SignUpScreen from "./SignUpScreen";

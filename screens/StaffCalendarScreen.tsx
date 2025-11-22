@@ -2,9 +2,11 @@ import GradientBackground from '@/Components/GradientBackground';
 import BodyText from '@/Components/typography/BodyText';
 import SubTitleText from '@/Components/typography/SubTitleText';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, FlatList, Modal,
   Platform,
@@ -13,6 +15,7 @@ import {
 } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
+import type { RootStackParamList } from '../src/types';
 
 // StaffCalendarScreen.tsx
 
@@ -47,9 +50,9 @@ export default function StaffCalendarScreen() {
     const [weeklyAvailability, setWeeklyAvailability] = useState<Record<string, AvailabilityDay>>({});
     const [weekStartDate, setWeekStartDate] = useState(new Date());
     const [showWeekPicker, setShowWeekPicker] = useState(false);
-
-  const uid = auth.currentUser?.uid;
-  const isoDate = format(selectedDate, 'yyyy-MM-dd');
+    const uid = auth.currentUser?.uid;
+    const isoDate = format(selectedDate, 'yyyy-MM-dd');
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const loadAvailability = async () => {
     if (!uid) return;
@@ -104,23 +107,63 @@ export default function StaffCalendarScreen() {
   if (!uid) return;
   setLoading(true);
   try {
-    const start = new Date(weekStartDate); // use weekStartDate if separated
+    const start = new Date(weekStartDate);
     const newAvailability: typeof weeklyAvailability = {};
 
-    const updates = Array.from({ length: 7 }, (_, i) => {
+    const updates = Array.from({ length: 7 }, async (_, i) => {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
       const iso = format(date, 'yyyy-MM-dd');
 
+      const ref = doc(db, 'users', uid, 'availability', iso);
+      const snap = await getDoc(ref);
+
+      let existingSlots: { time: string; booked: boolean }[] = [];
+      let existingIsDayOff = false;
+
+      if (snap.exists()) {
+        const data = snap.data();
+        existingSlots = data.timeSlots || [];
+        existingIsDayOff = data.isDayOff || false;
+      }
+
+      // Build a map of existing slots for quick lookup
+      const existingMap: Record<string, { time: string; booked: boolean }> = {};
+      existingSlots.forEach(s => {
+        existingMap[s.time] = s;
+      });
+
+      // Merge logic:
+      // 1. Start with all existing slots (preserve booked and unbooked).
+      // 2. For each bulk slot, update or add it.
+      const mergedMap = { ...existingMap };
+      bulkSlots.forEach(bulkSlot => {
+        if (mergedMap[bulkSlot.time]) {
+          // Preserve booked flag from existing
+          mergedMap[bulkSlot.time] = {
+            ...bulkSlot,
+            booked: mergedMap[bulkSlot.time].booked,
+          };
+        } else {
+          // Add new slot from bulk
+          mergedMap[bulkSlot.time] = bulkSlot;
+        }
+      });
+
+      // Convert back to array and sort chronologically
+      const mergedSlots = Object.values(mergedMap).sort((a, b) => {
+        const [ah, am] = a.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+        const [bh, bm] = b.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+        return ah === bh ? am - bm : ah - bh;
+      });
+
       const data = {
-        timeSlots: bulkSlots,
+        timeSlots: mergedSlots,
         isDayOff: bulkIsDayOff,
       };
 
       newAvailability[iso] = data;
-
-      const ref = doc(db, 'users', uid, 'availability', iso);
-      return setDoc(ref, data);
+      return setDoc(ref, data, { merge: true });
     });
 
     await Promise.all(updates);
@@ -132,11 +175,11 @@ export default function StaffCalendarScreen() {
     }));
 
     // ✅ Sync daily view if selectedDate is part of the updated week
-const selectedIso = format(selectedDate, 'yyyy-MM-dd');
-if (newAvailability[selectedIso]) {
-  setSelectedSlots(newAvailability[selectedIso].timeSlots);
-  setIsDayOff(newAvailability[selectedIso].isDayOff);
-}
+    const selectedIso = format(selectedDate, 'yyyy-MM-dd');
+    if (newAvailability[selectedIso]) {
+      setSelectedSlots(newAvailability[selectedIso].timeSlots);
+      setIsDayOff(newAvailability[selectedIso].isDayOff);
+    }
 
     Alert.alert('Éxito', 'Disponibilidad semanal actualizada.');
     setBulkModalVisible(false);
@@ -182,22 +225,31 @@ useEffect(() => {
   const fetchWeek = async () => {
     if (!uid || weekDates.length === 0) return;
     setLoading(true);
-    const results: typeof weeklyAvailability = {};
 
     try {
       const fetches = weekDates.map(async date => {
         const iso = format(date, 'yyyy-MM-dd');
         const ref = doc(db, 'users', uid, 'availability', iso);
         const snap = await getDoc(ref);
-        results[iso] = snap.exists()
-          ? {
-              timeSlots: snap.data().timeSlots || [],
-              isDayOff: snap.data().isDayOff || false,
-            }
-          : { timeSlots: [], isDayOff: false };
+        return {
+          iso,
+          data: snap.exists()
+            ? {
+                timeSlots: snap.data().timeSlots || [],
+                isDayOff: snap.data().isDayOff || false,
+              }
+            : { timeSlots: [], isDayOff: false },
+        };
       });
 
-      await Promise.all(fetches);
+      const resultsArray = await Promise.all(fetches);
+
+      // Build object keyed by iso date
+      const results: typeof weeklyAvailability = {};
+      resultsArray.forEach(({ iso, data }) => {
+        results[iso] = data;
+      });
+
       setWeeklyAvailability(results);
     } catch (error) {
       console.error('Error loading weekly availability:', error);
@@ -207,7 +259,7 @@ useEffect(() => {
   };
 
   fetchWeek();
-}, [weekDates]);
+}, [weekDates, uid]);
 
   useEffect(() => {
   const start = new Date(weekStartDate);
@@ -359,53 +411,81 @@ useEffect(() => {
 {weekDates.map(date => {
   const iso = format(date, 'yyyy-MM-dd');
   const dayLabel = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-}).format(date);
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+
   const data = weeklyAvailability[iso];
   const slots = data?.timeSlots || [];
   const isOff = data?.isDayOff;
 
   return (
     <View key={iso} style={styles.weekDayBlock}>
-  <Text style={styles.weekDay}>
-    {dayLabel} {isOff ? '— Día libre' : ''}
-  </Text>
+      <Text style={styles.weekDay}>
+        {dayLabel} {isOff ? '— Día libre' : ''}
+      </Text>
 
-  {!isOff && slots.length > 0 && (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {slots
-          .sort((a, b) => a.time.localeCompare(b.time))
-          .map((slot, index) => (
-            <View
-              key={index}
-              style={[
-                styles.gridItem,
-                {
-                  backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
-                  borderColor: slot.booked ? '#aaa' : '#ccc',
-                  borderWidth: 1,
-                  opacity: slot.booked ? 0.6 : 1,
-                },
-              ]}
-            >
-              <Text style={{ color: slot.booked ? '#888' : 'black' }}>
-                {slot.booked ? '🔒' : '✅'} {slot.time}
-              </Text>
-            </View>
-          ))}
+      {!isOff && slots.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {slots
+  .sort((a, b) => {
+    const [ah, am] = a.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+    const [bh, bm] = b.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+    return ah === bh ? am - bm : ah - bh;
+  })
+  .map((slot, index) => {
+    const slotContent = (
+      <View
+        key={index}
+        style={[
+          styles.gridItem,
+          {
+            backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
+            borderColor: slot.booked ? '#aaa' : '#ccc',
+            borderWidth: 1,
+            opacity: slot.booked ? 0.6 : 1,
+          },
+        ]}
+      >
+        <Text style={{ color: slot.booked ? '#888' : 'black' }}>
+          {slot.booked ? '🔒' : '✅'} {slot.time}
+        </Text>
       </View>
-    </ScrollView>
-  )}
+    );
 
-  {!isOff && slots.length === 0 && (
-    <Text style={styles.weekSlots}>Sin horarios</Text>
-  )}
-</View>
+    // If booked, wrap in TouchableOpacity to navigate
+    if (slot.booked) {
+      return (
+        <TouchableOpacity
+          key={index}
+          onPress={() =>
+            navigation.navigate("Calendario de citas.", {
+              date: iso,
+              time: slot.time,
+              stylistId: uid!,   // stylist id from your state
+              role: "empleado",  // matches RootStackParamList
+            })
+          }
+        >
+          {slotContent}
+        </TouchableOpacity>
+      );
+    }
 
+    return slotContent;
+  })}
+
+          </View>
+        </ScrollView>
+      )}
+
+      {!isOff && slots.length === 0 && (
+        <Text style={styles.weekSlots}>Sin horarios</Text>
+      )}
+    </View>
   );
 })}
 
