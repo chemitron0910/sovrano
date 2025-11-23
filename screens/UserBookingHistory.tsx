@@ -2,7 +2,7 @@ import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import { doc, updateDoc } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
@@ -50,13 +50,13 @@ export default function UserBookingHistory() {
   try {
     // 1️⃣ Mark booking as cancelled (history preserved)
     await updateDoc(doc(db, "bookings", booking.id), {
-      status: "cancelled",
+      status: "cancelada",
       cancelledAt: new Date().toISOString(),
     });
 
     // 2️⃣ Update local state so UI reflects cancellation
     setBookings(prev =>
-      prev.map(b => (b.id === booking.id ? { ...b, status: "cancelled" } : b))
+      prev.map(b => (b.id === booking.id ? { ...b, status: "cancelada" } : b))
     );
 
     // 3️⃣ Show success message
@@ -102,14 +102,14 @@ export default function UserBookingHistory() {
         </View>
         <View style={styles.inlineText}>
           <BodyBoldText>Estado: </BodyBoldText>
-          <BodyText>{item.status || 'active'}</BodyText>
+          <BodyText>{item.status || 'activa'}</BodyText>
         </View>
         <View style={styles.inlineText}>
           <BodyBoldText>ID de reserva: </BodyBoldText>
           <BodyText>{item.id}</BodyText>
         </View>
 
-        {isFuture && item.status !== 'cancelled' && (
+        {isFuture && item.status !== 'cancelada' && (
           <Button_style2
         title="Cancelar cita"
             onPress={() =>

@@ -68,7 +68,7 @@ export default function StaffScreen() {
 
           <Button_style2
             title="Calendario de citas"
-            onPress={() => navigation.navigate('Calendario de citas.')}
+            onPress={() => navigation.navigate('Calendario de citas.', { role: "empleado" })}
           />
           <Button_style2
             title="Historia de citas"
@@ -102,7 +102,7 @@ export default function StaffScreen() {
               } else if (role === 'admin') {
                 navigation.reset({
                   index: 0,
-                  routes: [{ name: 'Inicio-Admin', params: { userId: uid, role } }],
+                  routes: [{ name: 'Menu-Admin', params: { userId: uid, role } }],
                 });
               } else {
                 await logout();

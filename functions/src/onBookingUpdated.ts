@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
+import * as functions from "firebase-functions/v1";
 
 export const onBookingUpdated = functions
   .runWith({maxInstances: 10, memory: "512MB"})
@@ -9,8 +9,8 @@ export const onBookingUpdated = functions
     const before = change.before.data();
     const after = change.after.data();
 
-    // Only act when status changes to "cancelled"
-    if (before?.status !== "cancelled" && after?.status === "cancelled") {
+    // Only act when status changes to "cancelada"
+    if (before?.status !== "cancelada" && after?.status === "cancelada") {
       const isoDate = after.date.split("T")[0];
       const selectedTime = after.time;
       const stylistId = after.stylistId;

@@ -76,13 +76,6 @@ useEffect(() => {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'green',
-    paddingTop: Platform.OS === 'android' ? 25 : 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   activityContainer: {
     flex: 1,
     backgroundColor: 'blue',

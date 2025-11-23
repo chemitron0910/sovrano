@@ -18,7 +18,7 @@ export default function UserStack() {
       }}
     >
       <Stack.Screen
-        name="Inicio-Usuario"
+        name="Menu-Usuario"
         component={UserTabNav}
         options={{
           headerBackVisible: false,

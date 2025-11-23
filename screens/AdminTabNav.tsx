@@ -18,7 +18,13 @@ export default function AdminTabNav() {
       <Tab.Screen
         name="Inicio-Admin"
         component={AdminScreen}
-        options={{ headerShown: false }}
+        options={{
+        headerShown: false,
+        tabBarLabel: "Inicio",
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name="home" size={size} color={color} />
+        ),
+      }}
       />
       <Tab.Screen
         name="Perfil-Empleado"
@@ -34,7 +40,13 @@ export default function AdminTabNav() {
       <Tab.Screen
         name="Acerca de Sovrano"
         component={AboutScreen}
-        options={{ headerShown: false }}
+        options={{
+        headerShown: false,
+        tabBarLabel: "Acerca de",
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name="information-circle" size={size} color={color} />
+        ),
+      }}
       />
     </Tab.Navigator>
   );

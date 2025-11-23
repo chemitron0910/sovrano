@@ -125,6 +125,7 @@ export const handleBooking = async ({
     createdAt: new Date().toISOString(),
     role,
     userId: role === "usuario" ? auth.currentUser?.uid ?? null : null,
+    status: "activa",              // ✅ new field for all new bookings
   };
 
   try {
@@ -161,10 +162,10 @@ export const handleBooking = async ({
 
       if (suggestion) {
         Alert.alert(
-      'Horario no disponible',
-      `La duración del servicio (${durationHours} horas) no cabe en el bloque seleccionado. 
+          'Horario no disponible',
+          `La duración del servicio (${durationHours} horas) no cabe en el bloque seleccionado. 
 El siguiente horario disponible que sí acomoda la duración es ${suggestion.date} a las ${suggestion.time}.`
-    );
+        );
       } else {
         Alert.alert('Error', 'No hay horarios disponibles en los próximos días.');
       }
@@ -197,3 +198,4 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
     Alert.alert('Error', 'No se pudo crear tu cita');
   }
 };
+

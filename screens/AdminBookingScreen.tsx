@@ -3,7 +3,7 @@ import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -182,31 +182,34 @@ export default function AdminBookingsScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {bookingsForDay.map((b, idx) => {
-                    const [year, month, day] = normalizeDateString(b.date).split('-').map(Number);
-                    const [hour, minute] = b.time.split(':').map(Number);
-                    const localDateObj = new Date(year, month - 1, day, hour, minute);
+  const [year, month, day] = normalizeDateString(b.date).split('-').map(Number);
+  const [hour, minute] = b.time.split(':').map(Number);
+  const localDateObj = new Date(year, month - 1, day, hour, minute);
 
-                    const time = localDateObj.toLocaleTimeString('es-ES', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    });
+  const time = localDateObj.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-                    return (
-                      <TouchableOpacity
-                        key={idx}
-                        style={[
-                          styles.gridItem,
-                          { backgroundColor: '#f0f0f0', borderColor: '#ccc', borderWidth: 1 },
-                        ]}
-                      >
-                        <Text style={{ fontWeight: 'bold' }}>{time}</Text>
-                        <Text>Cliente: {b.guestName}</Text>
-                        <Text>Servicio: {b.service}</Text>
-                        <Text>Duración: {b.duration}h</Text>
-                        <Text>Estilista: {b.stylistName}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+  return (
+    <TouchableOpacity
+      key={idx}
+      style={[
+        styles.gridItem,
+        { backgroundColor: '#f0f0f0', borderColor: '#ccc', borderWidth: 1 },
+      ]}
+    >
+      <Text style={{ fontWeight: 'bold' }}>{time}</Text>
+      <Text>Cliente: {b.guestName}</Text>
+      <Text>Servicio: {b.service}</Text>
+      <Text>Duración: {b.duration}h</Text>
+      <Text>Estilista: {b.stylistName}</Text>
+      {/* ✅ New status line */}
+      <Text>Estado: {b.status || 'activa'}</Text>
+    </TouchableOpacity>
+  );
+})}
+
                 </View>
               </ScrollView>
             </View>

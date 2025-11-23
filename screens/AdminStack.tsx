@@ -18,7 +18,7 @@ export default function AdminStack() {
   return (
     <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
       <Stack.Screen
-        name="Inicio-Admin"
+        name="Menu-Admin"
         component={AdminTabNav}
         options={{
           headerBackVisible: true,

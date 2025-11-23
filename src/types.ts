@@ -12,6 +12,11 @@ export type RootStackParamList = {
   "Inicio-Admin": { role: "admin" };
   "Inicio-Empleado": { role: "empleado" | "admin" };
 
+  "Menu-Usuario": { role: "usuario" };
+  "Menu-Invitado": { role: "guest" };
+  "Menu-Admin": { role: "admin" };
+  "Menu-Empleado": { role: "empleado" | "admin" };
+
   // Role-specific dashboards
   "Administrador": { role: "admin" };
   "Empleado": { role: "empleado" };
@@ -48,9 +53,9 @@ export type RootStackParamList = {
   "Manejar servicios": undefined;
   "Calendario de citas": undefined; // Admin
   "Calendario de citas.": {
-    date: string;
-    time: string;
-    stylistId: string;
+    date?: string;
+    time?: string;
+    stylistId?: string;
     role: "empleado";
   };
   "Historia de citas": undefined; // Admin

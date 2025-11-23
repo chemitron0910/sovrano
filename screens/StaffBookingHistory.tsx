@@ -1,7 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
@@ -37,35 +37,40 @@ export default function StaffBookingHistory() {
   }, [stylistId]);
 
   const renderBookingItem = ({ item }: { item: Booking }) => {
-    const dateObj = new Date(item.date);
-    const formattedDate = dateObj.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+  const dateObj = new Date(item.date);
+  const formattedDate = dateObj.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 
-    const formattedTime = dateObj.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formattedTime = dateObj.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-    return (
-      <View style={styles.bookingItem}>
-        <View style={styles.inlineText}>
-          <BodyBoldText>Servicio: </BodyBoldText>
-          <BodyText>{item.service}</BodyText>
-        </View>
-        <View style={styles.inlineText}>
-          <BodyBoldText>Cliente: </BodyBoldText>
-          <BodyText>{item.guestName}</BodyText>
-        </View>
-        <View style={styles.inlineText}>
-          <BodyBoldText>Fecha/Hora: </BodyBoldText>
-          <BodyText>{formattedDate} / {formattedTime}</BodyText>
-        </View>
+  return (
+    <View style={styles.bookingItem}>
+      <View style={styles.inlineText}>
+        <BodyBoldText>Servicio: </BodyBoldText>
+        <BodyText>{item.service}</BodyText>
       </View>
-    );
-  };
+      <View style={styles.inlineText}>
+        <BodyBoldText>Cliente: </BodyBoldText>
+        <BodyText>{item.guestName}</BodyText>
+      </View>
+      <View style={styles.inlineText}>
+        <BodyBoldText>Fecha/Hora: </BodyBoldText>
+        <BodyText>{formattedDate} / {formattedTime}</BodyText>
+      </View>
+      {/* ✅ New status row */}
+      <View style={styles.inlineText}>
+        <BodyBoldText>Estado: </BodyBoldText>
+        <BodyText>{item.status || 'activa'}</BodyText>
+      </View>
+    </View>
+  );
+};
 
   return (
     <GradientBackground>

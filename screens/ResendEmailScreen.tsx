@@ -1,3 +1,4 @@
+import GradientBackground from '@/Components/GradientBackground';
 import { sendEmailVerification } from 'firebase/auth';
 import { Alert, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,6 +28,7 @@ export default function ResendEmailScreen() {
   };
   
   return (
+    <GradientBackground>
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
         <View style={{
@@ -36,19 +38,18 @@ export default function ResendEmailScreen() {
           <Button_style2
             title="Re-enviar verificacion de correo electronico"
             onPress={handleResendVerification}
-            gradientColors={['#00c6ff', '#0072ff']}
-            textColor="#fff"
           />
         </View>
       </View>
     </SafeAreaView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "transparent",
   },
   container: {
     flex: 1,

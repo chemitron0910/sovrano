@@ -131,17 +131,24 @@ export default function ServicesScreen() {
         )}
 
         <ScrollView style={{ padding: 20 }}>
-          {services.map(service => (
-            <View key={service.id} style={{ marginBottom: 20 }}>
-              <Text style={{ fontSize: 18, fontWeight: "bold" }}>{service.name}</Text>
-              <Text>{service.description}</Text>
-              <Text>Duración: {service.duration}</Text>
-              <View style={{ padding: 10 }}>
-                <Button_style2 title="Reservar" onPress={() => openModal(service)} />
-              </View>
-            </View>
-          ))}
-        </ScrollView>
+  {services.map(service => (
+    <View key={service.id} style={{ marginBottom: 20 }}>
+      <Text style={{ fontSize: 18, fontWeight: "bold" }}>{service.name}</Text>
+
+      {/* ✅ Row layout for description + button */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+        <View style={{ flex: 1 }}>
+          <Text>{service.description}</Text>
+          <Text>Duración: {service.duration}</Text>
+        </View>
+
+        <View style={{ marginLeft: 10 }}>
+          <Button_style2 title="Reservar" onPress={() => openModal(service)} />
+        </View>
+      </View>
+    </View>
+  ))}
+</ScrollView>
 
         <Modal visible={modalVisible} animationType="slide" transparent={true}>
           <View style={styles.modalOverlay}>
