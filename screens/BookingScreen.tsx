@@ -523,7 +523,7 @@ return (
     title="Vuelve al inicio"
     onPress={() => {
       if (role === "usuario") {
-        navigation.navigate("Inicio-Usuario", { role: "usuario" });
+        navigation.navigate("Menu-Usuario", { role: "usuario" });
       } else if (role === "guest") {
         navigation.navigate("Inicio-Invitado", { role: "guest" });
       }

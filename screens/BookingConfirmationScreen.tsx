@@ -11,12 +11,12 @@ import { RootStackParamList } from '../src/types';
 
 type BookingConfirmationScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  'Cita confirmada' | 'Cita confirmada.'
+  'Cita confirmada'
 >;
 
 type BookingConfirmationScreenRouteProp = RouteProp<
   RootStackParamList,
-  'Cita confirmada' | 'Cita confirmada.'
+  'Cita confirmada'
 >;
 
 type Props = {
@@ -70,9 +70,9 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
             title="Vuelve al inicio"
             onPress={() => {
             if (route.params.role === 'usuario') {
-              navigation.navigate('Inicio-Usuario');
+              navigation.navigate('Menu-Usuario', { role: "usuario" });
             } else {
-              navigation.navigate('Inicio-Invitado');
+              navigation.navigate('Inicio-Invitado', { role: "guest" });
             }
             }}
           />

@@ -8,7 +8,8 @@ import { format } from 'date-fns';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Modal,
+  ActivityIndicator, Alert,
+  FlatList, Modal,
   Platform,
   ScrollView, StyleSheet, Switch, Text,
   TouchableOpacity, View
@@ -17,24 +18,14 @@ import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 import type { RootStackParamList } from '../src/types';
 
-// StaffCalendarScreen.tsx
-
-type TimeSlot = {
-  time: string;
-  booked: boolean;
-};
-
-type Availability = {
-  isDayOff: boolean;
-  timeSlots: TimeSlot[];
-};
-
-
 export default function StaffCalendarScreen() {
     const availableTimes = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
+    const [bookedModalVisible, setBookedModalVisible] = useState(false);
+    const [bookedSlot, setBookedSlot] = useState<TimeSlot | null>(null);
+    const [bookedDateIso, setBookedDateIso] = useState<string | null>(null);
     const [isDayOff, setIsDayOff] = useState(false);
     const [loading, setLoading] = useState(false);
     const [bulkModalVisible, setBulkModalVisible] = useState(false);
@@ -42,7 +33,16 @@ export default function StaffCalendarScreen() {
     const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
     const [bulkSlots, setBulkSlots] = useState<TimeSlot[]>([]);
     const [weekDates, setWeekDates] = useState<Date[]>([]);
-    type TimeSlot = { time: string; booked: boolean };
+    type TimeSlot = {
+  time: string;
+  booked: boolean;
+  bookingId?: string | null; // allow null explicitly
+};
+
+    type Availability = {
+      isDayOff: boolean;
+      timeSlots: TimeSlot[];
+    };
     type AvailabilityDay = {
       timeSlots: TimeSlot[];
       isDayOff: boolean;
@@ -105,87 +105,96 @@ export default function StaffCalendarScreen() {
 
   const applyBulkAvailability = async () => {
   if (!uid) return;
+
   setLoading(true);
   try {
     const start = new Date(weekStartDate);
-    const newAvailability: typeof weeklyAvailability = {};
+    const newAvailability: Record<string, AvailabilityDay> = {};
 
-    const updates = Array.from({ length: 7 }, async (_, i) => {
+    for (let i = 0; i < 7; i++) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
-      const iso = format(date, 'yyyy-MM-dd');
+      const iso = format(date, "yyyy-MM-dd");
 
-      const ref = doc(db, 'users', uid, 'availability', iso);
+      const ref = doc(db, "users", uid, "availability", iso);
       const snap = await getDoc(ref);
 
-      let existingSlots: { time: string; booked: boolean }[] = [];
-      let existingIsDayOff = false;
-
+      let existingSlots: TimeSlot[] = [];
       if (snap.exists()) {
-        const data = snap.data();
-        existingSlots = data.timeSlots || [];
-        existingIsDayOff = data.isDayOff || false;
+        existingSlots = snap.data().timeSlots || [];
       }
 
-      // Build a map of existing slots for quick lookup
-      const existingMap: Record<string, { time: string; booked: boolean }> = {};
-      existingSlots.forEach(s => {
-        existingMap[s.time] = s;
+      // ✅ Build a map of existing slots keyed by time
+      const existingMap: Record<string, TimeSlot> = {};
+      existingSlots.forEach((s) => {
+        existingMap[s.time] = {
+          time: s.time,
+          booked: s.booked ?? false,
+          bookingId: s.bookingId ?? null,
+        };
       });
 
-      // Merge logic:
-      // 1. Start with all existing slots (preserve booked and unbooked).
-      // 2. For each bulk slot, update or add it.
-      const mergedMap = { ...existingMap };
-      bulkSlots.forEach(bulkSlot => {
-        if (mergedMap[bulkSlot.time]) {
-          // Preserve booked flag from existing
-          mergedMap[bulkSlot.time] = {
-            ...bulkSlot,
-            booked: mergedMap[bulkSlot.time].booked,
-          };
-        } else {
-          // Add new slot from bulk
-          mergedMap[bulkSlot.time] = bulkSlot;
+      // ✅ Only keep slots selected in modal
+      const selectedSlots = bulkSlots.map((slot) => ({
+        time: slot.time,
+        booked: false,          // availability means open
+        bookingId: null,
+      }));
+
+      // ✅ Merge: preserve booked slots, overwrite availability with modal selections
+      const mergedMap: Record<string, TimeSlot> = {};
+
+      // keep booked slots from existing data
+      Object.values(existingMap).forEach((s) => {
+        if (s.booked) {
+          mergedMap[s.time] = s; // preserve booked slot
         }
       });
 
-      // Convert back to array and sort chronologically
+      // add modal-selected slots
+      selectedSlots.forEach((s) => {
+        // if slot already booked, keep it booked
+        if (mergedMap[s.time]?.booked) {
+          return;
+        }
+        mergedMap[s.time] = s;
+      });
+
+      // sort chronologically
       const mergedSlots = Object.values(mergedMap).sort((a, b) => {
-        const [ah, am] = a.time.replace(/['"]+/g, '').trim().split(':').map(Number);
-        const [bh, bm] = b.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+        const [ah, am] = a.time.split(":").map(Number);
+        const [bh, bm] = b.time.split(":").map(Number);
         return ah === bh ? am - bm : ah - bh;
       });
 
-      const data = {
+      const data: AvailabilityDay = {
         timeSlots: mergedSlots,
-        isDayOff: bulkIsDayOff,
+        isDayOff: mergedSlots.length === 0,
       };
 
       newAvailability[iso] = data;
-      return setDoc(ref, data, { merge: true });
-    });
+      console.log("📝 Prepared data for", iso, data);
 
-    await Promise.all(updates);
+      await setDoc(ref, data, { merge: true });
+      console.log(`✅ Successfully wrote availability for ${iso}`);
+    }
 
-    // ✅ Update local state
-    setWeeklyAvailability(prev => ({
+    setWeeklyAvailability((prev) => ({
       ...prev,
       ...newAvailability,
     }));
 
-    // ✅ Sync daily view if selectedDate is part of the updated week
-    const selectedIso = format(selectedDate, 'yyyy-MM-dd');
+    const selectedIso = format(selectedDate, "yyyy-MM-dd");
     if (newAvailability[selectedIso]) {
       setSelectedSlots(newAvailability[selectedIso].timeSlots);
       setIsDayOff(newAvailability[selectedIso].isDayOff);
     }
 
-    Alert.alert('Éxito', 'Disponibilidad semanal actualizada.');
+    Alert.alert("Éxito", "Disponibilidad semanal actualizada.");
     setBulkModalVisible(false);
   } catch (error) {
-    console.error('Error applying bulk availability:', error);
-    Alert.alert('Error', 'No se pudo aplicar la disponibilidad.');
+    console.error("❌ Error applying bulk availability:", error);
+    Alert.alert("Error", "No se pudo aplicar la disponibilidad.");
   } finally {
     setLoading(false);
   }
@@ -377,6 +386,31 @@ useEffect(() => {
     </View>
   </View>
 </Modal>
+
+<Modal
+  visible={bookedModalVisible}
+  animationType="slide"
+  transparent
+  onRequestClose={() => setBookedModalVisible(false)}
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Detalles de la cita</Text>
+
+      {bookedSlot && (
+        <>
+          <Text>Fecha: {bookedDateIso}</Text>
+          <Text>Hora: {bookedSlot.time}</Text>
+          <Text>Estado: Reservado</Text>
+          {bookedSlot.bookingId && <Text>ID: {bookedSlot.bookingId}</Text>}
+        </>
+      )}
+
+      <Button_style2 title="Cerrar" onPress={() => setBookedModalVisible(false)} />
+    </View>
+  </View>
+</Modal>
+
 {/* WEEKLY EDITION */}
 <View style={{ marginTop: 24, width: '100%' }}>
   {/* Centered Subtitle */}
@@ -456,24 +490,21 @@ useEffect(() => {
       </View>
     );
 
-    // If booked, wrap in TouchableOpacity to navigate
-    if (slot.booked) {
-      return (
-        <TouchableOpacity
-          key={index}
-          onPress={() =>
-            navigation.navigate("Calendario de citas.", {
-              date: iso,
-              time: slot.time,
-              stylistId: uid!,   // stylist id from your state
-              role: "empleado",  // matches RootStackParamList
-            })
-          }
-        >
-          {slotContent}
-        </TouchableOpacity>
-      );
-    }
+    // If booked, wrap in TouchableOpacity to show booked details modal
+if (slot.booked) {
+  return (
+    <TouchableOpacity
+      key={index}
+      onPress={() => {
+        setBookedSlot(slot);
+        setBookedDateIso(iso);
+        setBookedModalVisible(true);
+      }}
+    >
+      {slotContent}
+    </TouchableOpacity>
+  );
+}
 
     return slotContent;
   })}
@@ -512,13 +543,15 @@ useEffect(() => {
                 bulkSlots.some(slot => slot.time === item)
                && styles.slotSelected,
               ]}
-              onPress={() =>
-                setBulkSlots(prev =>
-                  prev.some(slot => slot.time === item)
-                    ? prev.filter(slot => slot.time !== item)
-                    : [...prev, { time: item, booked: false }]
-                )
-              }
+             onPress={() =>
+  setBulkSlots(prev =>
+    prev.some(slot => slot.time === item)
+      // If already selected, remove it from availability
+      ? prev.filter(slot => slot.time !== item)
+      // If not selected, add it as available
+      : [...prev, { time: item, booked: false, bookingId: null }]
+  )
+}
             >
               <Text style={styles.slotText}>{item}</Text>
             </TouchableOpacity>

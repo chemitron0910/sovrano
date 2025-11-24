@@ -26,6 +26,15 @@ const sortSlots = (slots: string[]) =>
     return ah === bh ? am - bm : ah - bh;
   });
 
+  const normalizeTime = (t: string | undefined | null) => {
+  if (!t || typeof t !== "string") return "";
+  const cleaned = t.replace(/^"+|"+$/g, "").trim(); // remove leading/trailing quotes
+  if (!cleaned.includes(":")) return "";
+  const [h, m] = cleaned.split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return "";
+  return `${h}:${m.toString().padStart(2, "0")}`;
+};
+
 export const assignWeeklyAvailability = async (
   uid: string | undefined,
   weeks = 4
@@ -71,33 +80,41 @@ export const assignWeeklyAvailability = async (
 
       try {
         const existingSnap = await getDoc(availabilityRef);
-        let existingSlots: any[] = [];
+        let existingSlots: { time: string; booked: boolean; bookingId?: string | null }[] = [];
 
         if (existingSnap.exists()) {
           const existingData = existingSnap.data();
           existingSlots = existingData.timeSlots || [];
         }
 
-        // Create a map of existing bookings
-        const bookedMap = new Map(
-          existingSlots.filter((s) => s.booked).map((s) => [s.time, true])
+        // Create a map of existing slots keyed by time
+        const existingMap = new Map(
+          existingSlots.map((s) => [s.time, s])
         );
 
-        // Merge sorted template with existing bookings
-        const mergedSlots = sortedSlots.map((time) => ({
-          time,
-          booked: bookedMap.get(time) || false,
-        }));
-
-        await setDoc(availabilityRef, {
-          timeSlots: mergedSlots,
-          isDayOff: mergedSlots.length === 0,
+        // Merge sorted template with existing slots
+        const mergedSlots = sortedSlots.map((time) => {
+          const existing = existingMap.get(time);
+          return {
+            time,
+            booked: existing?.booked ?? false,
+            bookingId: existing?.bookingId ?? null, // ✅ preserve if exists, else null
+          };
         });
+
+        await setDoc(
+          availabilityRef,
+          {
+            timeSlots: mergedSlots,
+            isDayOff: mergedSlots.length === 0,
+          },
+          { merge: true }
+        );
       } catch (writeError) {
-        console.error("Write failed:", writeError);
+        console.error("❌ Write failed:", writeError);
       }
     }
   } catch (error) {
-    console.error("Error assigning weekly availability:", error);
+    console.error("❌ Error assigning weekly availability:", error);
   }
 };
