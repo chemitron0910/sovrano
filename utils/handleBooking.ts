@@ -97,7 +97,6 @@ export const handleBooking = async ({
 
   const durationHours = Number(selectedService?.duration) || 1;
 
-  // ✅ Build requiredTimes normalized
   const requiredTimes = Array.from({ length: durationHours }, (_, i) => {
     const h = hour + i;
     return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
@@ -134,19 +133,20 @@ export const handleBooking = async ({
       ? availabilitySnap.data()
       : { timeSlots: [], isDayOff: false };
 
-    let slots: TimeSlot[] = (availabilityData.timeSlots || []).map((s: any) => ({
+    let slots: any[] = (availabilityData.timeSlots || []).map((s: any) => ({
       time: normalizeTime(s.time),
       booked: s.booked,
+      bookingId: s.bookingId ?? null,
     }));
 
-    // ✅ Sort slots chronologically
+    // Sort slots chronologically
     slots.sort((a, b) => {
       const [ah, am] = a.time.split(':').map(Number);
       const [bh, bm] = b.time.split(':').map(Number);
       return ah === bh ? am - bm : ah - bh;
     });
 
-    // ✅ Conflict if slot missing OR already booked
+    // Conflict check
     const conflict = requiredTimes.some(t => {
       const slot = slots.find(s => s.time === t);
       return !slot || slot.booked;
@@ -158,30 +158,31 @@ export const handleBooking = async ({
         fullDate,
         durationHours
       );
-
       if (suggestion) {
         Alert.alert(
-      'Horario no disponible',
-      `La duración del servicio (${durationHours} horas) no cabe en el bloque seleccionado. 
+          'Horario no disponible',
+          `La duración del servicio (${durationHours} horas) no cabe en el bloque seleccionado. 
 El siguiente horario disponible que sí acomoda la duración es ${suggestion.date} a las ${suggestion.time}.`
-    );
+        );
       } else {
         Alert.alert('Error', 'No hay horarios disponibles en los próximos días.');
       }
       return;
     }
 
-    // ✅ Only mark existing slots, never create new ones
+    // Create booking document first
+    const docRef = await addDoc(collection(db, 'bookings'), bookingData);
+
+    // Mark slots as booked and attach bookingId + guestName
     requiredTimes.forEach(t => {
       const idx = slots.findIndex(s => s.time === t);
       if (idx >= 0) {
         slots[idx].booked = true;
+        slots[idx].bookingId = docRef.id;
       }
     });
 
     await setDoc(availabilityRef, { ...availabilityData, timeSlots: slots });
-
-    const docRef = await addDoc(collection(db, 'bookings'), bookingData);
 
     navigation.navigate("Cita confirmada", {
       service: bookingData.service,
@@ -197,3 +198,4 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
     Alert.alert('Error', 'No se pudo crear tu cita');
   }
 };
+

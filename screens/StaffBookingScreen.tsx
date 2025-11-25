@@ -1,7 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -92,63 +92,67 @@ export default function StaffBookingsScreen() {
         <BodyBoldText style={styles.title}>Mis Reservas</BodyBoldText>
 
         {sortedDates.map(date => {
-          // ✅ Sort bookings within each day by time
-          const bookingsForDay = groupedByDate[date].slice().sort((a, b) => {
-            const [ay, am, ad] = normalizeDateString(a.date).split('-').map(Number);
-            const [ah, amin] = a.time.split(':').map(Number);
-            const aDate = new Date(ay, am - 1, ad, ah, amin);
+  // ✅ Sort bookings within each day by time
+  const bookingsForDay = groupedByDate[date]
+    .filter(b => b.status !== "cancelled") // 🔑 exclude cancelled
+    .slice()
+    .sort((a, b) => {
+      const [ay, am, ad] = normalizeDateString(a.date).split('-').map(Number);
+      const [ah, amin] = a.time.split(':').map(Number);
+      const aDate = new Date(ay, am - 1, ad, ah, amin);
 
-            const [by, bm, bd] = normalizeDateString(b.date).split('-').map(Number);
-            const [bh, bmin] = b.time.split(':').map(Number);
-            const bDate = new Date(by, bm - 1, bd, bh, bmin);
+      const [by, bm, bd] = normalizeDateString(b.date).split('-').map(Number);
+      const [bh, bmin] = b.time.split(':').map(Number);
+      const bDate = new Date(by, bm - 1, bd, bh, bmin);
 
-            return aDate.getTime() - bDate.getTime();
-          });
+      return aDate.getTime() - bDate.getTime();
+    });
 
-          return (
-            <View key={date} style={{ marginBottom: 16 }}>
-              <BodyText style={{ fontWeight: 'bold' }}>
-                {formatDateWithWeekday(date)}
-              </BodyText>
+  return (
+    <View key={date} style={{ marginBottom: 16 }}>
+      <BodyText style={{ fontWeight: 'bold' }}>
+        {formatDateWithWeekday(date)}
+      </BodyText>
 
-              {bookingsForDay.length > 0 ? (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ flexDirection: 'row' }}
-                >
-                  {bookingsForDay.map((b, idx) => {
-                    const [year, month, day] = normalizeDateString(b.date).split('-').map(Number);
-                    const [hour, minute] = b.time.split(':').map(Number);
-                    const localDateObj = new Date(year, month - 1, day, hour, minute);
+      {bookingsForDay.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ flexDirection: 'row' }}
+        >
+          {bookingsForDay.map((b, idx) => {
+            const [year, month, day] = normalizeDateString(b.date).split('-').map(Number);
+            const [hour, minute] = b.time.split(':').map(Number);
+            const localDateObj = new Date(year, month - 1, day, hour, minute);
 
-                    const time = localDateObj.toLocaleTimeString('es-ES', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    });
+            const time = localDateObj.toLocaleTimeString('es-ES', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
 
-                    return (
-                      <TouchableOpacity
-                        key={idx}
-                        style={[
-                          styles.gridItem,
-                          { backgroundColor: '#f0f0f0', borderColor: '#ccc', borderWidth: 1 },
-                        ]}
-                      >
-                        <Text style={{ color: 'black', fontWeight: 'bold' }}>{time}</Text>
-                        <Text style={{ color: 'black' }}>Cliente: {b.guestName}</Text>
-                        <Text style={{ color: 'black' }}>Servicio: {b.service}</Text>
-                        <Text style={{ color: 'black' }}>Duración: {b.duration}h</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              ) : (
-                <Text>No hay reservas</Text>
-              )}
-            </View>
-          );
-        })}
+            return (
+              <TouchableOpacity
+                key={idx}
+                style={[
+                  styles.gridItem,
+                  { backgroundColor: '#f0f0f0', borderColor: '#ccc', borderWidth: 1 },
+                ]}
+              >
+                <Text style={{ color: 'black', fontWeight: 'bold' }}>{time}</Text>
+                <Text style={{ color: 'black' }}>Cliente: {b.guestName}</Text>
+                <Text style={{ color: 'black' }}>Servicio: {b.service}</Text>
+                <Text style={{ color: 'black' }}>Duración: {b.duration}h</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      ) : (
+        <Text>No hay reservas</Text>
+      )}
+    </View>
+  );
+})}
+
       </View>
     </GradientBackground>
   );

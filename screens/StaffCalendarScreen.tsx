@@ -33,6 +33,7 @@ export default function StaffCalendarScreen() {
     const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
     const [bulkSlots, setBulkSlots] = useState<TimeSlot[]>([]);
     const [weekDates, setWeekDates] = useState<Date[]>([]);
+    const [bookingDetails, setBookingDetails] = useState<any | null>(null);
     type TimeSlot = {
   time: string;
   booked: boolean;
@@ -197,6 +198,19 @@ export default function StaffCalendarScreen() {
     setLoading(false);
   }
 };
+
+useEffect(() => {
+  const fetchBooking = async () => {
+    if (bookedSlot?.bookingId) {
+      const bookingRef = doc(db, "bookings", bookedSlot.bookingId);
+      const bookingSnap = await getDoc(bookingRef);
+      if (bookingSnap.exists()) {
+        setBookingDetails(bookingSnap.data()); // store guestName, email, etc.
+      }
+    }
+  };
+  fetchBooking();
+}, [bookedSlot]);
 
 useEffect(() => {
   const iso = format(selectedDate, 'yyyy-MM-dd');
@@ -400,7 +414,14 @@ useEffect(() => {
           <Text>Fecha: {bookedDateIso}</Text>
           <Text>Hora: {bookedSlot.time}</Text>
           <Text>Estado: Reservado</Text>
-          {bookedSlot.bookingId && <Text>ID: {bookedSlot.bookingId}</Text>}
+          {bookedSlot.bookingId && <Text>Cita ID: {bookedSlot.bookingId}</Text>}
+        </>
+      )}
+      {bookingDetails && (
+        <>
+          <Text>Cliente: {bookingDetails.guestName}</Text>
+          <Text>Email: {bookingDetails.email}</Text>
+          <Text>Teléfono: {bookingDetails.phoneNumber}</Text>
         </>
       )}
 
