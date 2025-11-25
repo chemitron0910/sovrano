@@ -11,6 +11,7 @@ export type RootStackParamList = {
   "Inicio-Invitado": { role: "guest" };
   "Inicio-Admin": { role: "admin" };
   "Inicio-Empleado": { role: "empleado" | "admin" };
+  "Menu-Invitado": { role: "guest" };
   "Menu-Usuario": { role: "usuario" };
   "Menu-Admin": { role: "admin" };
   "Menu-Empleado": { role: "empleado" | "admin" };

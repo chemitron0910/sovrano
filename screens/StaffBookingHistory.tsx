@@ -1,13 +1,15 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
 
 export default function StaffBookingHistory() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
+  const [cancelledPast, setCancelledPast] = useState<Booking[]>([]);
+  const [cancelledUpcoming, setCancelledUpcoming] = useState<Booking[]>([]);
   const stylistId = auth.currentUser?.uid;
 
   useEffect(() => {
@@ -17,17 +19,45 @@ export default function StaffBookingHistory() {
         const now = new Date();
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(now.getDate() - 30);
+        const thirtyDaysAhead = new Date();
+        thirtyDaysAhead.setDate(now.getDate() + 30);
 
-        const filtered = data.filter(b => {
+        // ✅ Normal bookings in past 30 days
+        const pastBookings = data.filter(b => {
           const bookingDate = new Date(b.date);
           return (
             b.stylistId === stylistId &&
+            bookingDate < now &&
+            bookingDate >= thirtyDaysAgo &&
+            b.status !== "cancelled"
+          );
+        });
+
+        // ✅ Cancelled bookings in past 30 days
+        const cancelledPastBookings = data.filter(b => {
+          const bookingDate = new Date(b.date);
+          return (
+            b.stylistId === stylistId &&
+            b.status === "cancelled" &&
             bookingDate < now &&
             bookingDate >= thirtyDaysAgo
           );
         });
 
-        setBookings(filtered);
+        // ✅ Cancelled bookings in upcoming 30 days
+        const cancelledUpcomingBookings = data.filter(b => {
+          const bookingDate = new Date(b.date);
+          return (
+            b.stylistId === stylistId &&
+            b.status === "cancelled" &&
+            bookingDate >= now &&
+            bookingDate <= thirtyDaysAhead
+          );
+        });
+
+        setRecentBookings(pastBookings);
+        setCancelledPast(cancelledPastBookings);
+        setCancelledUpcoming(cancelledUpcomingBookings);
       } catch (err) {
         console.error('Error fetching booking history:', err);
       }
@@ -69,15 +99,31 @@ export default function StaffBookingHistory() {
 
   return (
     <GradientBackground>
-    <View style={styles.container}>
-      <BodyBoldText style={styles.centered}>Ultimos 30 días</BodyBoldText>
-      <FlatList
-        data={bookings}
-        keyExtractor={(item) => item.id}
-        renderItem={renderBookingItem}
-        ListEmptyComponent={<Text style={styles.empty}>No hay reservas pasadas.</Text>}
-      />
-    </View>
+      <View style={styles.container}>
+        <BodyBoldText style={styles.centered}>Últimos 30 días</BodyBoldText>
+        <FlatList
+          data={recentBookings}
+          keyExtractor={(item) => item.id}
+          renderItem={renderBookingItem}
+          ListEmptyComponent={<Text style={styles.empty}>No hay reservas pasadas.</Text>}
+        />
+
+        <BodyBoldText style={styles.centered}>Canceladas (últimos 30 días)</BodyBoldText>
+        <FlatList
+          data={cancelledPast}
+          keyExtractor={(item) => item.id}
+          renderItem={renderBookingItem}
+          ListEmptyComponent={<Text style={styles.empty}>No hay reservas canceladas pasadas.</Text>}
+        />
+
+        <BodyBoldText style={styles.centered}>Canceladas (próximos 30 días)</BodyBoldText>
+        <FlatList
+          data={cancelledUpcoming}
+          keyExtractor={(item) => item.id}
+          renderItem={renderBookingItem}
+          ListEmptyComponent={<Text style={styles.empty}>No hay reservas canceladas próximas.</Text>}
+        />
+      </View>
     </GradientBackground>
   );
 }
@@ -87,25 +133,24 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   centered: {
-    textAlign: 'center',    
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 10,
   },
   bookingItem: {
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  bookingText: {
-    fontSize: 16,
-  },
   empty: {
     fontSize: 16,
     color: '#999',
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: 20,
   },
   inlineText: {
     flexDirection: 'row',
-    alignItems: 'center', // optional: aligns text vertically
+    alignItems: 'center',
     marginLeft: 24,
   },
 });

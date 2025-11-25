@@ -13,7 +13,7 @@ export default function GuestStack() {
   return (
     <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
       <Stack.Screen
-        name="Inicio-Invitado"
+        name="Menu-Invitado"
         component={GuestScreen}
         options={{
           headerBackVisible: false,
