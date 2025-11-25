@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
@@ -54,6 +54,40 @@ export default function StaffCalendarScreen() {
     const uid = auth.currentUser?.uid;
     const isoDate = format(selectedDate, 'yyyy-MM-dd');
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+    // Helper: send push notification via Expo API
+async function sendPushNotification(token: string, title: string, body: string) {
+  await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Accept-Encoding": "gzip, deflate",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      to: token,
+      sound: "default",
+      title,
+      body,
+    }),
+  });
+}
+
+const handleCancelBooking = async (bookingId: string) => {
+  try {
+    await updateDoc(doc(db, "bookings", bookingId), {
+      status: "cancelled",
+      cancelledAt: new Date().toISOString(),
+      cancelledBy: "stylist", // 🔑 optional: track who cancelled
+    });
+
+    Alert.alert("Éxito", "La cita fue cancelada.");
+    setBookedModalVisible(false);
+  } catch (error) {
+    console.error("❌ Error cancelling booking:", error);
+    Alert.alert("Error", "No se pudo cancelar la cita.");
+  }
+};
 
   const loadAvailability = async () => {
     if (!uid) return;
@@ -425,7 +459,15 @@ useEffect(() => {
         </>
       )}
 
-      <Button_style2 title="Cerrar" onPress={() => setBookedModalVisible(false)} />
+      <View style={{ marginBottom: 20 }}><Button_style2 title="Cerrar" onPress={() => setBookedModalVisible(false)} />
+      </View>
+      {bookedSlot?.bookingId && (
+  <Button_style2
+    title="Cancelar cita"
+    onPress={() => handleCancelBooking(bookedSlot.bookingId!)}
+  />
+)}
+
     </View>
   </View>
 </Modal>
