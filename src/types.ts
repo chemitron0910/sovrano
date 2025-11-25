@@ -50,16 +50,10 @@ export type RootStackParamList = {
   "Assignar responsabilidad": undefined;
   "Manejar servicios": undefined;
   "Calendario de citas": undefined; // Admin
-  "Calendario de citas.": {
-    date: string;
-    time: string;
-    stylistId: string;
-    role: "empleado";
-  };
+  "Calendario de citas.": undefined; //empleado
   "Historia de citas": undefined; // Admin
   "Historia de citas.": undefined; // empleado
   "Historial de citas": undefined; // Usuario
-  "Perfil-Empleado": undefined; // empleado
 
   // Auth & profile
   "Registrarse": undefined;
@@ -69,7 +63,8 @@ export type RootStackParamList = {
     userId: string;
   };
   "Calendario-Empleado": undefined;
-  "Perfil-Empleado.": undefined;
+  "Perfil-Empleado": undefined;
+  "Informacion-Empleado": undefined;
   "Mi informacion": undefined;
   "Re-enviar correo electronico": undefined;
   "Acerca de Sovrano": undefined;

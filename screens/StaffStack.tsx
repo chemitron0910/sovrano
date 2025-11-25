@@ -10,7 +10,7 @@ export default function StaffStack() {
   return (
     <Stack.Navigator screenOptions={{ headerTitleAlign: 'center' }}>
       <Stack.Screen
-        name="Inicio-Empleado"
+        name="Menu-Empleado"
         component={StaffTabNav}
         options={{
           headerBackVisible: false,

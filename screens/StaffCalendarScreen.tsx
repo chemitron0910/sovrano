@@ -173,10 +173,8 @@ export default function StaffCalendarScreen() {
       };
 
       newAvailability[iso] = data;
-      console.log("📝 Prepared data for", iso, data);
 
       await setDoc(ref, data, { merge: true });
-      console.log(`✅ Successfully wrote availability for ${iso}`);
     }
 
     setWeeklyAvailability((prev) => ({

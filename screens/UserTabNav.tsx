@@ -18,7 +18,13 @@ export default function UserTabNav() {
       <Tab.Screen
         name="Inicio-Usuario"
         component={UserScreen}
-        options={{ headerShown: false }}
+        options={{
+          tabBarLabel: "Inicio-Usuario",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="home" size={20} color={color} />
+          ),
+          headerShown: false,
+         }}
       />
       <Tab.Screen
         name="Perfil-Empleado"
@@ -34,7 +40,12 @@ export default function UserTabNav() {
       <Tab.Screen
         name="Acerca de Sovrano"
         component={AboutScreen}
-        options={{ headerShown: false }}
+        options={{ 
+          tabBarLabel: "Acerca de",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="information-circle" size={20} color={color} />
+          ),
+          headerShown: false, }}
       />
     </Tab.Navigator>
   );

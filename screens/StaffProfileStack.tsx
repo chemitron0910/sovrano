@@ -11,7 +11,7 @@ export default function StaffProfileStack() {
   return (
     <Stack.Navigator screenOptions={{ headerTitleAlign: 'center' }}>
       <Stack.Screen
-        name="Perfil-Empleado"
+        name="Informacion-Empleado"
         component={StaffProfileScreen}
         options={{
           headerBackVisible: false,
