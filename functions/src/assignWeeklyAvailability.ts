@@ -48,17 +48,32 @@ export const assignWeeklyAvailability = async (
 
       const isoDate = formatLocalYMD(date);
       const dayOfWeek = dayMap[date.getDay()];
-      const rawSlots: string[] = (template[dayOfWeek] as string[]) || [];
-      const sortedSlots = sortSlots(rawSlots);
+
+      // ✅ Ensure we always get a clean array of strings
+      const rawSlots = Array.isArray(template[dayOfWeek]) ?
+        (template[dayOfWeek] as string[]) :
+        [];
+
+
+      const sortedSlots = sortSlots(rawSlots.filter(Boolean));
 
       const availabilityRef = db.doc(`users/${uid}/availability/${isoDate}`);
+
+      const timeSlots = sortedSlots.map((time) => ({
+        time: String(time).trim(),
+        booked: false,
+        bookingId: null, // safe default, consistent schema
+      }));
+
       await availabilityRef.set(
         {
-          timeSlots: sortedSlots.map((time) => ({time, booked: false})),
-          isDayOff: sortedSlots.length === 0,
+          timeSlots,
+          isDayOff: timeSlots.length === 0,
         },
         {merge: true}
       );
+
+      console.log(`Assigned availability for ${isoDate}`, timeSlots);
     }
   } catch (error) {
     console.error("Error assigning weekly availability:", error);

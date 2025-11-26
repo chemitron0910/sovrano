@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions/v1";
-import { assignWeeklyAvailability } from "./assignWeeklyAvailability";
-import { getFirestore } from "./firebase";
+import {getFirestore} from "./firebase";
+import {assignWeeklyAvailability} from "./assignWeeklyAvailability";
 
 const db = getFirestore();
 
