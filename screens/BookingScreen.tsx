@@ -77,7 +77,8 @@ export default function BookingScreen() {
   const user = auth.currentUser;
   const guestName = user?.displayName || '';
   const [serviceProviders, setServiceProviders] = useState<Record<string, string[]>>({});
-  const [modalVisible, setModalVisible] = useState(false);
+  const [stylistModalVisible, setStylistModalVisible] = useState(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -257,62 +258,109 @@ return (
   <KeyboardAvoidingView
     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     style={{ flex: 1 }}>
-<View style={{ marginTop: 12 }}>
- <Button_style2
-  title="Confirma tu cita"
-  onPress={async () => {
-    if (!selectedSlot) {
-      Alert.alert('Error', 'Debes seleccionar un horario');
-      return;
-    }
-    if (!selectedStylist) {
-      Alert.alert('Error', 'Debes seleccionar un estilista');
-      return;
-    }
-    if (!selectedService) {
-      Alert.alert('Error', 'Debes seleccionar un servicio');
-      return;
-    }
 
-    // 🔎 Extra validation for guests
-    if (role === "guest") {
-      if (!nombre?.trim() || !email?.trim() || !phoneNumber?.trim()) {
-        Alert.alert(
-          'Error',
-          'Debes ingresar tu nombre, correo electrónico y número telefónico'
-        );
-        return;
-      }
-      // ✅ Email format validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    Alert.alert('Error', 'Debes ingresar un correo electrónico válido');
-    return;
-  }
-    }
+<Modal
+  visible={confirmModalVisible}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setConfirmModalVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Confirmar cita</Text>
 
-    if (role === "guest" || role === "usuario") {
-      try {
-        setLoading(true); // 👈 show overlay
-        await handleBooking({
-          selectedSlot,
-          selectedStylist,
-          selectedService,
-          role,
-          guestInfo: {
-            guestName: nombre,
-            email,
-            phoneNumber,
-          },
-          navigation,
-        });
-      } finally {
-        setLoading(false); // 👈 hide overlay
-      }
-    }
-  }}
-/>
-</View>
+      {/* Service + Stylist */}
+      <Text>
+        {selectedService?.name} con {selectedStylist?.name}
+      </Text>
+      <Text>
+        {selectedSlot?.date} a las {selectedSlot?.time}
+      </Text>
+
+      {/* 👇 Role-aware fields */}
+      <BodyBoldText style={styles.label}>Tu nombre</BodyBoldText>
+      {role === "guest" ? (
+        <TextInput
+          style={styles.input}
+          value={nombre}
+          onChangeText={setNombre}
+          placeholder="Escribe tu nombre"
+        />
+      ) : (
+        <View style={[styles.readOnlyField, { backgroundColor: "#d8d2c4" }]}>
+          <Text>{nombre || "No disponible"}</Text>
+        </View>
+      )}
+
+      <BodyBoldText style={styles.label}>Correo electrónico</BodyBoldText>
+      {role === "guest" ? (
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Escribe tu correo"
+        />
+      ) : (
+        <View style={[styles.readOnlyField, { backgroundColor: "#d8d2c4" }]}>
+          <Text>{email || "No disponible"}</Text>
+        </View>
+      )}
+
+      <BodyBoldText style={styles.label}>Número telefónico</BodyBoldText>
+      {role === "guest" ? (
+        <TextInput
+          style={styles.input}
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          placeholder="Escribe tu teléfono"
+        />
+      ) : (
+        <View style={[styles.readOnlyField, { backgroundColor: "#d8d2c4" }]}>
+          <Text>{phoneNumber || "No disponible"}</Text>
+        </View>
+      )}
+
+      {/* Actions */}
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 20 }}>
+        <Button_style2
+          title="Cancelar"
+          onPress={() => setConfirmModalVisible(false)}
+        />
+        <Button_style2
+          title="Confirmar"
+          onPress={async () => {
+            if (role === "usuario" || role === "guest") {
+              try {
+                setLoading(true);
+                await handleBooking({
+                  selectedSlot: selectedSlot!,
+                  selectedStylist: selectedStylist!,
+                  selectedService: selectedService!,
+                  role,
+                  guestInfo: {
+                    guestName: nombre,
+                    email,
+                    phoneNumber,
+                  },
+                  navigation,
+                });
+              } finally {
+                setLoading(false);
+                setConfirmModalVisible(false);
+              }
+            } else {
+              Alert.alert(
+                "Acción no permitida",
+                "Solo usuarios o invitados pueden reservar citas."
+              );
+              setConfirmModalVisible(false);
+            }
+          }}
+        />
+      </View>
+    </View>
+  </View>
+</Modal>
     
     <ScrollView 
       style={{ flex: 1 }}
@@ -382,7 +430,7 @@ return (
         selectedValue={selectedServiceId}
         onValueChange={(value) => {
           setSelectedServiceId(value);
-          if (value) setModalVisible(true); // open stylist modal
+          if (value) setStylistModalVisible(true); // open stylist modal
         }}
         mode={Platform.OS === "android" ? "dropdown" : undefined}
         style={[styles.picker]}
@@ -406,7 +454,7 @@ return (
 )}
           </View>
 
-         <Modal visible={modalVisible} animationType="slide" transparent={true}>
+         <Modal visible={stylistModalVisible} animationType="slide" transparent={true}>
   <View style={styles.modalOverlay}>
     <View style={styles.modalContent}>
       <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
@@ -421,14 +469,14 @@ return (
             style={styles.stylistButton}
             onPress={() => {
               setSelectedStylist(stylist);
-              setModalVisible(false);
+              setStylistModalVisible(false);
             }}
           >
             <Text style={{ color: "white" }}>{stylist.name}</Text>
           </TouchableOpacity>
         );
       })}
-      <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
+      <TouchableOpacity onPress={() => setStylistModalVisible(false)} style={styles.cancelButton}>
         <Text style={{ color: "#333" }}>Cancelar</Text>
       </TouchableOpacity>
     </View>
@@ -482,16 +530,53 @@ return (
                     },
                   ]}
                   disabled={slot.booked} // ✅ prevent booking if already booked
-                  onPress={() => {
-  const [hour, minute] = slot.time.split(':').map(Number);
-
-  // Parse the YYYY-MM-DD string safely in local time
-  const [year, month, day] = date.split('-').map(Number);
+                  onPress={async () => {
+  // Parse the selected slot time
+  const [hour, minute] = slot.time.split(":").map(Number);
+  const [year, month, day] = date.split("-").map(Number);
   const selectedDateObj = new Date(year, month - 1, day, hour, minute);
 
+  // Create a local slot object to avoid async state race
+  const localSelectedSlot = { date, time: slot.time };
+
+  // Persist selection in state
   setDate(selectedDateObj);
-  setSelectedSlot({ date, time: slot.time });
+  setSelectedSlot(localSelectedSlot);
+
+  // 🔎 Validations
+  if (!localSelectedSlot) {
+    Alert.alert("Error", "Debes seleccionar un horario");
+    return;
+  }
+  if (!selectedStylist) {
+    Alert.alert("Error", "Debes seleccionar un estilista");
+    return;
+  }
+  if (!selectedService) {
+    Alert.alert("Error", "Debes seleccionar un servicio");
+    return;
+  }
+
+  if (role === "guest") {
+    if (!nombre?.trim() || !email?.trim() || !phoneNumber?.trim()) {
+      Alert.alert(
+        "Error",
+        "Debes ingresar tu nombre, correo electrónico y número telefónico"
+      );
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Error", "Debes ingresar un correo electrónico válido");
+      return;
+    }
+  }
+
+  // ✅ All good → open confirmation modal
+  setConfirmModalVisible(true);
 }}
+
+
                 >
                   <Text
                     style={{
@@ -641,5 +726,10 @@ modalOverlay: {
   cancelButton: {
     marginTop: 10,
     alignSelf: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
   },
 });

@@ -72,7 +72,7 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
             if (route.params.role === 'usuario') {
               navigation.navigate('Menu-Usuario', { role: "usuario" });
             } else {
-              navigation.navigate('Inicio-Invitado', { role: "guest" });
+              navigation.navigate('Menu-Invitado', { role: "guest" });
             }
             }}
           />

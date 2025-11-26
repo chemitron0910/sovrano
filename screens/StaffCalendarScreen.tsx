@@ -456,6 +456,7 @@ useEffect(() => {
           <Text>Cliente: {bookingDetails.guestName}</Text>
           <Text>Email: {bookingDetails.email}</Text>
           <Text>Teléfono: {bookingDetails.phoneNumber}</Text>
+          <Text>Servicio: {bookingDetails.service}</Text>
         </>
       )}
 
