@@ -1,12 +1,12 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
-import { doc, updateDoc } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
-import { auth, db } from '../Services/firebaseConfig';
+import { auth } from '../Services/firebaseConfig';
+import { handleCancelBooking } from "../utils/handleCancelBooking";
 
 export default function UserBookingHistory() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -46,29 +46,15 @@ export default function UserBookingHistory() {
   if (userId) loadBookings();
 }, [userId]);
 
-  const cancelBooking = async (booking: Booking) => {
-  try {
-    // 1️⃣ Mark booking as cancelled (history preserved)
-    await updateDoc(doc(db, "bookings", booking.id), {
-      status: "cancelled",
-      cancelledAt: new Date().toISOString(),
-    });
-
-    // 2️⃣ Update local state so UI reflects cancellation
-    setBookings(prev =>
-      prev.map(b => (b.id === booking.id ? { ...b, status: "cancelled" } : b))
-    );
-
-    // 3️⃣ Show success message
-    Alert.alert("Cancelación exitosa", "Tu cita ha sido cancelada.");
-
-    // ⛔️ No availability update here
-    // ⛔️ No push notification here
-    // Backend Cloud Function (onBookingUpdated) will handle those
-  } catch (error) {
-    console.error("Error cancelando cita:", error);
-    Alert.alert("Error", "No se pudo cancelar la cita.");
-  }
+const cancelFromUser = async (booking: Booking) => {
+  await handleCancelBooking({
+    bookingData: booking,
+    cancelledBy: "user",
+    updateLocalState: (id) =>
+      setBookings(prev =>
+        prev.map(b => (b.id === id ? { ...b, status: "cancelled" } : b))
+      ),
+  });
 };
 
   const renderBookingItem = ({ item }: { item: Booking }) => {
@@ -93,6 +79,10 @@ export default function UserBookingHistory() {
           <BodyText>{item.service}</BodyText>
         </View>
         <View style={styles.inlineText}>
+          <BodyBoldText>Duracion: </BodyBoldText>
+          <BodyText>{item.duration}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
           <BodyBoldText>Estilista: </BodyBoldText>
           <BodyText>{item.stylistName}</BodyText>
         </View>
@@ -102,7 +92,7 @@ export default function UserBookingHistory() {
         </View>
         <View style={styles.inlineText}>
           <BodyBoldText>Estado: </BodyBoldText>
-          <BodyText>{item.status || 'active'}</BodyText>
+          <BodyText>{item.status || 'Reservado'}</BodyText>
         </View>
         <View style={styles.inlineText}>
           <BodyBoldText>ID de reserva: </BodyBoldText>
@@ -118,7 +108,7 @@ export default function UserBookingHistory() {
                 '¿Seguro que deseas cancelar esta cita?',
                 [
                   { text: 'No', style: 'cancel' },
-                  { text: 'Sí', onPress: () => cancelBooking(item) },
+                  { text: "Sí", onPress: () => cancelFromUser(item) },
                 ]
               )
             }

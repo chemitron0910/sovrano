@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
@@ -17,6 +17,8 @@ import {
 import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 import type { RootStackParamList } from '../src/types';
+import { handleCancelBooking } from "../utils/handleCancelBooking";
+
 
 export default function StaffCalendarScreen() {
     const availableTimes = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
@@ -55,38 +57,15 @@ export default function StaffCalendarScreen() {
     const isoDate = format(selectedDate, 'yyyy-MM-dd');
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-    // Helper: send push notification via Expo API
-async function sendPushNotification(token: string, title: string, body: string) {
-  await fetch("https://exp.host/--/api/v2/push/send", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Accept-Encoding": "gzip, deflate",
-      "Content-Type": "application/json",
+    const cancelFromStaff = async (bookingId: string) => {
+  await handleCancelBooking({
+    bookingId,
+    cancelledBy: "stylist",
+    onAfterCancel: async () => {
+      setBookedModalVisible(false);
+      await loadAvailability(); // refresh slots after cancel
     },
-    body: JSON.stringify({
-      to: token,
-      sound: "default",
-      title,
-      body,
-    }),
   });
-}
-
-const handleCancelBooking = async (bookingId: string) => {
-  try {
-    await updateDoc(doc(db, "bookings", bookingId), {
-      status: "cancelled",
-      cancelledAt: new Date().toISOString(),
-      cancelledBy: "stylist", // 🔑 optional: track who cancelled
-    });
-
-    Alert.alert("Éxito", "La cita fue cancelada.");
-    setBookedModalVisible(false);
-  } catch (error) {
-    console.error("❌ Error cancelling booking:", error);
-    Alert.alert("Error", "No se pudo cancelar la cita.");
-  }
 };
 
   const loadAvailability = async () => {
@@ -465,7 +444,7 @@ useEffect(() => {
       {bookedSlot?.bookingId && (
   <Button_style2
     title="Cancelar cita"
-    onPress={() => handleCancelBooking(bookedSlot.bookingId!)}
+    onPress={() => cancelFromStaff(bookedSlot.bookingId!)}
   />
 )}
 
