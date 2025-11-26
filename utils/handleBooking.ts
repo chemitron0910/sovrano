@@ -124,6 +124,7 @@ export const handleBooking = async ({
     createdAt: new Date().toISOString(),
     role,
     userId: role === "usuario" ? auth.currentUser?.uid ?? null : null,
+    status: "Reservado",
   };
 
   try {

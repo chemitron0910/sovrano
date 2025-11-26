@@ -3,7 +3,7 @@ import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -204,6 +204,7 @@ export default function AdminBookingsScreen() {
                         <Text>Servicio: {b.service}</Text>
                         <Text>Duración: {b.duration}h</Text>
                         <Text>Estilista: {b.stylistName}</Text>
+                        <Text>Estado: {b.status}</Text>
                       </TouchableOpacity>
                     );
                   })}

@@ -90,6 +90,10 @@ export default function StaffBookingHistory() {
           <BodyText>{item.guestName}</BodyText>
         </View>
         <View style={styles.inlineText}>
+          <BodyBoldText>Email: </BodyBoldText>
+          <BodyText>{item.email}</BodyText>
+        </View>
+        <View style={styles.inlineText}>
           <BodyBoldText>Fecha/Hora: </BodyBoldText>
           <BodyText>{formattedDate} / {formattedTime}</BodyText>
         </View>
