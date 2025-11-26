@@ -257,6 +257,62 @@ return (
   <KeyboardAvoidingView
     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     style={{ flex: 1 }}>
+<View style={{ marginTop: 12 }}>
+ <Button_style2
+  title="Confirma tu cita"
+  onPress={async () => {
+    if (!selectedSlot) {
+      Alert.alert('Error', 'Debes seleccionar un horario');
+      return;
+    }
+    if (!selectedStylist) {
+      Alert.alert('Error', 'Debes seleccionar un estilista');
+      return;
+    }
+    if (!selectedService) {
+      Alert.alert('Error', 'Debes seleccionar un servicio');
+      return;
+    }
+
+    // 🔎 Extra validation for guests
+    if (role === "guest") {
+      if (!nombre?.trim() || !email?.trim() || !phoneNumber?.trim()) {
+        Alert.alert(
+          'Error',
+          'Debes ingresar tu nombre, correo electrónico y número telefónico'
+        );
+        return;
+      }
+      // ✅ Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    Alert.alert('Error', 'Debes ingresar un correo electrónico válido');
+    return;
+  }
+    }
+
+    if (role === "guest" || role === "usuario") {
+      try {
+        setLoading(true); // 👈 show overlay
+        await handleBooking({
+          selectedSlot,
+          selectedStylist,
+          selectedService,
+          role,
+          guestInfo: {
+            guestName: nombre,
+            email,
+            phoneNumber,
+          },
+          navigation,
+        });
+      } finally {
+        setLoading(false); // 👈 hide overlay
+      }
+    }
+  }}
+/>
+</View>
     
     <ScrollView 
       style={{ flex: 1 }}
@@ -463,73 +519,7 @@ return (
   </View>
 )}
 
-          <Button_style2
-  title="Confirma tu cita"
-  onPress={async () => {
-    if (!selectedSlot) {
-      Alert.alert('Error', 'Debes seleccionar un horario');
-      return;
-    }
-    if (!selectedStylist) {
-      Alert.alert('Error', 'Debes seleccionar un estilista');
-      return;
-    }
-    if (!selectedService) {
-      Alert.alert('Error', 'Debes seleccionar un servicio');
-      return;
-    }
-
-    // 🔎 Extra validation for guests
-    if (role === "guest") {
-      if (!nombre?.trim() || !email?.trim() || !phoneNumber?.trim()) {
-        Alert.alert(
-          'Error',
-          'Debes ingresar tu nombre, correo electrónico y número telefónico'
-        );
-        return;
-      }
-      // ✅ Email format validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    Alert.alert('Error', 'Debes ingresar un correo electrónico válido');
-    return;
-  }
-    }
-
-    if (role === "guest" || role === "usuario") {
-      try {
-        setLoading(true); // 👈 show overlay
-        await handleBooking({
-          selectedSlot,
-          selectedStylist,
-          selectedService,
-          role,
-          guestInfo: {
-            guestName: nombre,
-            email,
-            phoneNumber,
-          },
-          navigation,
-        });
-      } finally {
-        setLoading(false); // 👈 hide overlay
-      }
-    }
-  }}
-/>
-
-          <View style={{ marginTop: 12 }}>
-  <Button_style2
-    title="Vuelve al inicio"
-    onPress={() => {
-      if (role === "usuario") {
-        navigation.navigate("Menu-Usuario", { role: "usuario" });
-      } else if (role === "guest") {
-        navigation.navigate("Inicio-Invitado", { role: "guest" });
-      }
-    }}
-  />
-</View>
+         
 
         </View>
     </ScrollView>

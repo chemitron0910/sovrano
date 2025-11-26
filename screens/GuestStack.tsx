@@ -35,7 +35,7 @@ export default function GuestStack() {
         name="Agenda tu cita"
         component={BookingScreen}
         options={{
-          headerBackVisible: false,
+          headerBackVisible: true,
           headerTitleStyle: {
             fontFamily: "Playfair-Bold",
             fontSize: 22,
