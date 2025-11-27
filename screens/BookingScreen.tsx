@@ -1,6 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -82,6 +83,9 @@ export default function BookingScreen() {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [weekStartDate, setWeekStartDate] = useState(new Date());
+  const [weekDates, setWeekDates] = useState<Date[]>([]);
+  const [showWeekPicker, setShowWeekPicker] = useState(false);
 
   // Prefill for users
   useEffect(() => {
@@ -171,24 +175,23 @@ useEffect(() => {
 }, [selectedStylist]);
 
 useEffect(() => {
+  const start = new Date(weekStartDate);
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+  setWeekDates(week);
+}, [weekStartDate]);
+
+useEffect(() => {
   const fetchWeeklyAvailability = async () => {
-    if (!selectedStylist?.id) return;
+    if (!selectedStylist?.id || weekDates.length === 0) return;
 
     setLoadingAvailability(true);
 
     try {
-      const startDate = new Date();
-      const dates: string[] = [];
-
-      // Generate 7 days forward in LOCAL time
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(startDate);
-        d.setDate(startDate.getDate() + i);
-
-        const pushedDate = formatLocalYMD(d);
-
-        dates.push(pushedDate);
-      }
+      const dates: string[] = weekDates.map(d => formatLocalYMD(d));
 
       const availabilityRef = collection(db, `users/${selectedStylist.id}/availability`);
       const snapshot = await getDocs(availabilityRef);
@@ -225,7 +228,7 @@ useEffect(() => {
   };
 
   fetchWeeklyAvailability();
-}, [selectedStylist]);
+}, [selectedStylist, weekDates]); 
 
 // Initialize from params (Option 1)
 useEffect(() => {
@@ -477,6 +480,30 @@ return (
 <View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
   <Text>{selectedStylist?.name || 'No seleccionado'}</Text>
 </View>
+
+<View style={{ marginTop: 24, alignItems: 'center' }}>
+  <BodyBoldText style={styles.label}>Seleccionar inicio de semana</BodyBoldText>
+  <TouchableOpacity
+    onPress={() => setShowWeekPicker(true)}
+    style={[styles.dateButton, { backgroundColor: '#d8d2c4' }]}
+  >
+    <BodyText>{formatLocalYMD(weekStartDate)}</BodyText>
+  </TouchableOpacity>
+</View>
+
+{showWeekPicker && (
+  <DateTimePicker
+    value={weekStartDate}
+    mode="date"
+    display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+    onChange={(_, date) => {
+      setShowWeekPicker(false);
+      if (date) setWeekStartDate(date);
+    }}
+    textColor="black"
+  />
+)}
+
           {selectedStylist && (
   <View style={{ marginTop: 20 }}>
     <BodyBoldText style={styles.label}>Disponibilidad semanal</BodyBoldText>
@@ -744,4 +771,5 @@ modalOverlay: {
     alignItems: 'center',         // center horizontally
     paddingHorizontal: 20,
   },
+  dateButton: { padding: 12, backgroundColor: '#eee', borderRadius: 8 },
 });
