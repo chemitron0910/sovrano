@@ -63,7 +63,19 @@ export default function StaffCalendarScreen() {
     cancelledBy: "empleado",
     onAfterCancel: async () => {
       setBookedModalVisible(false);
-      await loadAvailability(); // refresh slots after cancel
+
+      if (bookedDateIso) {
+        setWeeklyAvailability(prev => {
+          const updated = { ...prev };
+          const slots = updated[bookedDateIso]?.timeSlots.map(s =>
+            s.bookingId === bookingId
+              ? { ...s, booked: false, bookingId: null, status: null }
+              : s
+          );
+          updated[bookedDateIso] = { ...updated[bookedDateIso], timeSlots: slots };
+          return updated;
+        });
+      }
     },
   });
 };
