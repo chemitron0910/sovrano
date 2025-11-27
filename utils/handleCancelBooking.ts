@@ -2,7 +2,7 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { Alert } from "react-native";
 import { db } from "../Services/firebaseConfig";
 
-const normalizeTime = (t: string) => {
+export const normalizeTime = (t: string) => {
   const [h, m] = t.split(":").map(Number);
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 };

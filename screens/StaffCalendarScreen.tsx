@@ -17,8 +17,7 @@ import {
 import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 import type { RootStackParamList } from '../src/types';
-import { handleCancelBooking } from "../utils/handleCancelBooking";
-
+import { handleCancelBooking, normalizeTime } from "../utils/handleCancelBooking";
 
 export default function StaffCalendarScreen() {
     const availableTimes = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
@@ -39,7 +38,7 @@ export default function StaffCalendarScreen() {
     type TimeSlot = {
   time: string;
   booked: boolean;
-  bookingId?: string | null; // allow null explicitly
+  bookingId: string | null; // allow null explicitly
 };
 
     type Availability = {
@@ -129,99 +128,174 @@ export default function StaffCalendarScreen() {
   }
 };
 
-  const applyBulkAvailability = async () => {
-  if (!uid) return;
-
+// Define fetchWeek outside useEffect so you can call it manually
+const fetchWeek = async () => {
+  if (!uid || weekDates.length === 0) return;
   setLoading(true);
+
   try {
-    const start = new Date(weekStartDate);
-    const newAvailability: Record<string, AvailabilityDay> = {};
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(start);
-      date.setDate(start.getDate() + i);
-      const iso = format(date, "yyyy-MM-dd");
-
-      const ref = doc(db, "users", uid, "availability", iso);
+    const fetches = weekDates.map(async date => {
+      const iso = format(date, 'yyyy-MM-dd');
+      const ref = doc(db, 'users', uid, 'availability', iso);
       const snap = await getDoc(ref);
-
-      let existingSlots: TimeSlot[] = [];
-      if (snap.exists()) {
-        existingSlots = snap.data().timeSlots || [];
-      }
-
-      // ✅ Build a map of existing slots keyed by time
-      const existingMap: Record<string, TimeSlot> = {};
-      existingSlots.forEach((s) => {
-        existingMap[s.time] = {
-          time: s.time,
-          booked: s.booked ?? false,
-          bookingId: s.bookingId ?? null,
-        };
-      });
-
-      // ✅ Only keep slots selected in modal
-      const selectedSlots = bulkSlots.map((slot) => ({
-        time: slot.time,
-        booked: false,          // availability means open
-        bookingId: null,
-      }));
-
-      // ✅ Merge: preserve booked slots, overwrite availability with modal selections
-      const mergedMap: Record<string, TimeSlot> = {};
-
-      // keep booked slots from existing data
-      Object.values(existingMap).forEach((s) => {
-        if (s.booked) {
-          mergedMap[s.time] = s; // preserve booked slot
-        }
-      });
-
-      // add modal-selected slots
-      selectedSlots.forEach((s) => {
-        // if slot already booked, keep it booked
-        if (mergedMap[s.time]?.booked) {
-          return;
-        }
-        mergedMap[s.time] = s;
-      });
-
-      // sort chronologically
-      const mergedSlots = Object.values(mergedMap).sort((a, b) => {
-        const [ah, am] = a.time.split(":").map(Number);
-        const [bh, bm] = b.time.split(":").map(Number);
-        return ah === bh ? am - bm : ah - bh;
-      });
-
-      const data: AvailabilityDay = {
-        timeSlots: mergedSlots,
-        isDayOff: mergedSlots.length === 0,
+      return {
+        iso,
+        data: snap.exists()
+          ? {
+              timeSlots: snap.data().timeSlots || [],
+              isDayOff: snap.data().isDayOff || false,
+            }
+          : { timeSlots: [], isDayOff: false },
       };
+    });
 
-      newAvailability[iso] = data;
+    const resultsArray = await Promise.all(fetches);
 
-      await setDoc(ref, data, { merge: true });
-    }
+    const results: typeof weeklyAvailability = {};
+    resultsArray.forEach(({ iso, data }) => {
+      results[iso] = data;
+    });
 
-    setWeeklyAvailability((prev) => ({
-      ...prev,
-      ...newAvailability,
-    }));
-
-    const selectedIso = format(selectedDate, "yyyy-MM-dd");
-    if (newAvailability[selectedIso]) {
-      setSelectedSlots(newAvailability[selectedIso].timeSlots);
-      setIsDayOff(newAvailability[selectedIso].isDayOff);
-    }
-
-    Alert.alert("Éxito", "Disponibilidad semanal actualizada.");
-    setBulkModalVisible(false);
+    setWeeklyAvailability(results);
   } catch (error) {
-    console.error("❌ Error applying bulk availability:", error);
-    Alert.alert("Error", "No se pudo aplicar la disponibilidad.");
+    console.error('Error loading weekly availability:', error);
   } finally {
     setLoading(false);
   }
+};
+
+const applyBulkAvailability = async (
+  empleadoId: string,
+  weekDates: string[],
+  bulkSlots: { time: string; booked: boolean; bookingId: string | null }[],
+  bulkIsDayOff: boolean,
+  onAfterApply?: (didApply: boolean) => void
+) => {
+  try {
+    const snapshots: {
+      isoDate: string;
+      availabilityRef: any;
+      availabilityData: any;
+      affectedBookings: any[];
+    }[] = [];
+
+    for (const isoDate of weekDates) {
+      const availabilityRef = doc(db, "users", empleadoId, "availability", isoDate);
+      const availabilitySnap = await getDoc(availabilityRef);
+      if (!availabilitySnap.exists()) continue;
+
+      const availabilityData = availabilitySnap.data();
+      let slots: any[] = availabilityData.timeSlots || [];
+
+      const slotsToRemove = bulkIsDayOff
+        ? slots.map(s => normalizeTime(s.time))
+        : slots
+            .filter(s => !bulkSlots.some(bs => bs.time === normalizeTime(s.time)))
+            .map(s => normalizeTime(s.time));
+
+      // 👇 Deduplicate by bookingId using a Map
+      const affectedBookingsMap = new Map<string, any>();
+      for (const s of slots) {
+        if (slotsToRemove.includes(normalizeTime(s.time)) && s.booked && s.bookingId) {
+          const bookingRef = doc(db, "bookings", s.bookingId);
+          const bookingSnap = await getDoc(bookingRef);
+          if (bookingSnap.exists() && bookingSnap.data().status === "Reservado") {
+            affectedBookingsMap.set(s.bookingId, { ...s, bookingData: bookingSnap.data() });
+          }
+        }
+      }
+
+      const affectedBookings = Array.from(affectedBookingsMap.values());
+      snapshots.push({ isoDate, availabilityRef, availabilityData, affectedBookings });
+    }
+
+    // Flatten all affected bookings across the week
+    const allAffected = snapshots.flatMap(s => s.affectedBookings);
+
+    if (allAffected.length > 0) {
+
+      const count = allAffected.length;
+      const plural = count === 1 ? "cita" : "citas";
+
+      Alert.alert(
+        "Advertencia",
+        `Hay ${count} ${plural} programada${count === 1 ? "" : "s"} en la semana que será${count === 1 ? "" : "n"} afectada${count === 1 ? "" : "s"}. ¿Deseas continuar y cancelar esta${count === 1 ? "" : "s"} ${plural}?`,
+        [
+          {
+            text: "No",
+            style: "cancel",
+            onPress: () => {
+              if (onAfterApply) onAfterApply(false);
+            },
+          },
+          {
+            text: "Sí",
+            onPress: async () => {
+              for (const b of allAffected) {
+                await handleCancelBooking({
+                  bookingId: b.bookingId,
+                  cancelledBy: "empleado",
+                });
+              }
+
+              for (const s of snapshots) {
+                const newSlots = bulkIsDayOff ? [] : bulkSlots;
+                await setDoc(s.availabilityRef, {
+                  ...s.availabilityData,
+                  isDayOff: bulkIsDayOff,
+                  timeSlots: newSlots,
+                });
+              }
+
+              Alert.alert("Éxito", "Disponibilidad semanal actualizada.");
+              if (onAfterApply) onAfterApply(true);
+            },
+          },
+        ]
+      );
+    } else {
+      for (const s of snapshots) {
+        const newSlots = bulkIsDayOff ? [] : bulkSlots;
+        await setDoc(s.availabilityRef, {
+          ...s.availabilityData,
+          isDayOff: bulkIsDayOff,
+          timeSlots: newSlots,
+        });
+      }
+      if (onAfterApply) onAfterApply(true);
+    }
+  } catch (error) {
+    console.error("❌ Error applying bulk availability:", error);
+    Alert.alert("Error", "No se pudo aplicar la disponibilidad semanal.");
+    if (onAfterApply) onAfterApply(false);
+  }
+};
+
+
+// wrapper for the button
+const handleApplyBulk = async () => {
+  if (!uid) {
+    Alert.alert("Error", "No se encontró el empleado actual.");
+    return;
+  }
+
+  setBulkModalVisible(false); // close modal immediately
+  setLoading(true);           // show spinner immediately
+
+  const isoWeekDates = weekDates.map(d => format(d, "yyyy-MM-dd"));
+
+  await applyBulkAvailability(
+    uid,
+    isoWeekDates,
+    bulkSlots,
+    bulkIsDayOff,
+    async (didApply) => {
+      if (didApply) {
+        await fetchWeek(); // refresh only if changes applied
+      }
+      setLoading(false);   // hide spinner after either choice
+    }
+  );
 };
 
 useEffect(() => {
@@ -261,49 +335,14 @@ useEffect(() => {
       // remove slot
       return prev.filter(slot => slot.time !== time);
     } else {
-      // add slot with booked default
-      return [...prev, { time, booked: false }];
+      // add slot with booked default and bookingId
+      return [...prev, { time, booked: false, bookingId: null }];
     }
   });
 };
 
+// Call it once when component mounts or when weekDates/uid changes
 useEffect(() => {
-  const fetchWeek = async () => {
-    if (!uid || weekDates.length === 0) return;
-    setLoading(true);
-
-    try {
-      const fetches = weekDates.map(async date => {
-        const iso = format(date, 'yyyy-MM-dd');
-        const ref = doc(db, 'users', uid, 'availability', iso);
-        const snap = await getDoc(ref);
-        return {
-          iso,
-          data: snap.exists()
-            ? {
-                timeSlots: snap.data().timeSlots || [],
-                isDayOff: snap.data().isDayOff || false,
-              }
-            : { timeSlots: [], isDayOff: false },
-        };
-      });
-
-      const resultsArray = await Promise.all(fetches);
-
-      // Build object keyed by iso date
-      const results: typeof weeklyAvailability = {};
-      resultsArray.forEach(({ iso, data }) => {
-        results[iso] = data;
-      });
-
-      setWeeklyAvailability(results);
-    } catch (error) {
-      console.error('Error loading weekly availability:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   fetchWeek();
 }, [weekDates, uid]);
 
@@ -324,7 +363,7 @@ useEffect(() => {
   <View style={styles.savingOverlay}>
     <View style={styles.savingBox}>
       <ActivityIndicator size="large" color="#fff" />
-      <Text style={styles.savingText}>Guardando disponibilidad...</Text>
+      <Text style={styles.savingText}>Actualizando disponibilidad...</Text>
     </View>
   </View>
 )}
@@ -611,7 +650,7 @@ if (slot.booked) {
           )}
         />
       )}
-        <Button_style2 title="Aplicar a la semana" onPress={applyBulkAvailability} />
+        <Button_style2 title="Aplicar a la semana" onPress={handleApplyBulk} />
         <View style={{ marginTop: 12 }}>
             <Button_style2 title="Cancelar" onPress={() => setBulkModalVisible(false)} />
         </View>
