@@ -550,7 +550,7 @@ useEffect(() => {
   return (
     <View key={iso} style={styles.weekDayBlock}>
       <Text style={styles.weekDay}>
-        {dayLabel} {isOff ? '— Día libre' : ''}
+        {dayLabel} {isOff ? '— Día libre o no programado' : ''}
       </Text>
 
       {!isOff && slots.length > 0 && (
