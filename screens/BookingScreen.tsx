@@ -215,7 +215,7 @@ useEffect(() => {
             isDayOff: data.isDayOff ?? false,
           });
         } else {
-          results.push({ date, timeSlots: [], isDayOff: true });
+          results.push({ date, timeSlots: [], isDayOff: false });
         }
       }
 
