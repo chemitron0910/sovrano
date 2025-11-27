@@ -10,7 +10,7 @@ const normalizeTime = (t: string) => {
 export type CancelBookingOptions = {
   bookingId?: string;          // used when you only have the id
   bookingData?: any;           // used when you already have the booking object
-  cancelledBy?: "stylist" | "user";
+  cancelledBy?: "empleado" | "usuario";
   onAfterCancel?: () => void;  // optional callback (refresh availability, update state)
   updateLocalState?: (id: string) => void; // optional callback for UserBookingHistory
 };
@@ -18,7 +18,7 @@ export type CancelBookingOptions = {
 export const handleCancelBooking = async ({
   bookingId,
   bookingData,
-  cancelledBy = "user",
+  cancelledBy = "usuario",
   onAfterCancel,
   updateLocalState,
 }: CancelBookingOptions) => {

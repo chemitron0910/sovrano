@@ -49,7 +49,7 @@ export default function UserBookingHistory() {
 const cancelFromUser = async (booking: Booking) => {
   await handleCancelBooking({
     bookingData: booking,
-    cancelledBy: "user",
+    cancelledBy: "usuario",
     updateLocalState: (id) =>
       setBookings(prev =>
         prev.map(b => (b.id === id ? { ...b, status: "cancelled" } : b))

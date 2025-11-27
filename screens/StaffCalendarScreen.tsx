@@ -60,7 +60,7 @@ export default function StaffCalendarScreen() {
     const cancelFromStaff = async (bookingId: string) => {
   await handleCancelBooking({
     bookingId,
-    cancelledBy: "stylist",
+    cancelledBy: "empleado",
     onAfterCancel: async () => {
       setBookedModalVisible(false);
       await loadAvailability(); // refresh slots after cancel
