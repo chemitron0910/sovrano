@@ -59,7 +59,6 @@ export default function BookingScreen() {
   const [service, setService] = useState('');
   const [date, setDate] = useState(new Date());
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [loading, setLoading] = useState(false);
   const [stylists, setStylists] = useState<{ id: string; name: string }[]>([]);
   const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
   const services = useServices();
@@ -82,6 +81,7 @@ export default function BookingScreen() {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   // Prefill for users
   useEffect(() => {
@@ -240,20 +240,8 @@ return (
     style={styles.safeContainer}
     edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : undefined}
   >
-  {loading && (
-    <View style={styles.overlay}>
-      <ActivityIndicator size="large" color="#fff" />
-        <Text style={styles.loadingText}>Guardando tu cita...</Text>
-    </View>
-  )}
 
-  {loadingAvailability && (
-  <View style={styles.overlay}>
-    <ActivityIndicator size="large" color="#fff" />
-    <Text style={styles.loadingText}>Cargando disponibilidad...</Text>
-  </View>
-)}
-
+  <View style={{ flex: 1 }}>
   <GradientBackground>
   <KeyboardAvoidingView
     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -327,36 +315,38 @@ return (
           onPress={() => setConfirmModalVisible(false)}
         />
         <Button_style2
-          title="Confirmar"
-          onPress={async () => {
-            if (role === "usuario" || role === "guest") {
-              try {
-                setLoading(true);
-                await handleBooking({
-                  selectedSlot: selectedSlot!,
-                  selectedStylist: selectedStylist!,
-                  selectedService: selectedService!,
-                  role,
-                  guestInfo: {
-                    guestName: nombre,
-                    email,
-                    phoneNumber,
-                  },
-                  navigation,
-                });
-              } finally {
-                setLoading(false);
-                setConfirmModalVisible(false);
-              }
-            } else {
-              Alert.alert(
-                "Acción no permitida",
-                "Solo usuarios o invitados pueden reservar citas."
-              );
-              setConfirmModalVisible(false);
-            }
-          }}
-        />
+  title="Confirmar"
+  onPress={async () => {
+    if (role === "usuario" || role === "guest") {
+      try {
+        setConfirmModalVisible(false);   // close modal immediately
+        setBookingLoading(true);         // show loader overlay
+
+        await handleBooking({
+          selectedSlot: selectedSlot!,
+          selectedStylist: selectedStylist!,
+          selectedService: selectedService!,
+          role,
+          guestInfo: {
+            guestName: nombre,
+            email,
+            phoneNumber,
+          },
+          navigation,
+        });
+      } finally {
+        setBookingLoading(false);        // hide loader after booking
+      }
+    } else {
+      Alert.alert(
+        "Acción no permitida",
+        "Solo usuarios o invitados pueden reservar citas."
+      );
+      setConfirmModalVisible(false);
+    }
+  }}
+/>
+
       </View>
     </View>
   </View>
@@ -600,16 +590,30 @@ return (
     </View>
   );
 })}
-
   </View>
-)}
-
-         
+)}         
 
         </View>
     </ScrollView>
   </KeyboardAvoidingView>
   </GradientBackground>
+  {bookingLoading && (
+  <View style={styles.overlay} pointerEvents="none">
+    <ActivityIndicator size="large" color="#fff" />
+    <Text style={styles.loadingText}>Confirmando tu cita…</Text>
+  </View>
+)}
+
+{loadingAvailability && (
+  <View style={styles.overlay}>
+    <ActivityIndicator size="large" color="#fff" />
+    <Text style={styles.loadingText}>Cargando disponibilidad...</Text>
+  </View>
+)}
+  </View>
+
+  
+
 </SafeAreaView>
   );
 }
@@ -645,6 +649,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 999,
+    elevation: 9999,     // Android layering
   },
   loadingText: {
     marginTop: 12,
@@ -731,5 +736,12 @@ modalOverlay: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
+  },
+  activityContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',   // light neutral background
+    justifyContent: 'center',     // center vertically
+    alignItems: 'center',         // center horizontally
+    paddingHorizontal: 20,
   },
 });

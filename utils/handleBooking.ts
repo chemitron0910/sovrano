@@ -1,4 +1,5 @@
 import { addDoc, collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { Alert } from "react-native";
 import { auth, db } from '../Services/firebaseConfig';
 
@@ -171,10 +172,36 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
       return;
     }
 
-    // Create booking document first
+    // ✅ Create booking document first
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
 
-    // Mark slots as booked and attach bookingId + guestName
+    // ✅ Send confirmation email via Cloud Function
+    try {
+      const functions = getFunctions();
+      const sendGuestEmail = httpsCallable(functions, "sendGuestEmail");
+
+      await sendGuestEmail({
+        to: bookingData.email,
+        subject: "Confirmación de tu cita en Sovrano",
+        text: `Hola ${bookingData.guestName}, tu cita para ${bookingData.service} está reservada el ${isoDate} a las ${selectedTime} con ${bookingData.stylistName}.`,
+        html: `
+          <p>Hola ${bookingData.guestName},</p>
+          <p>Tu cita para <strong>${bookingData.service}</strong> está reservada:</p>
+          <ul>
+            <li><strong>Fecha:</strong> ${isoDate}</li>
+            <li><strong>Hora:</strong> ${selectedTime}</li>
+            <li><strong>Estilista:</strong> ${bookingData.stylistName}</li>
+          </ul>
+          <p>¡Gracias por confiar en Sovrano!</p>
+        `,
+        bookingId: docRef.id,
+      });
+    } catch (emailError) {
+      console.error("Error sending confirmation email:", emailError);
+      // Don’t block booking flow if email fails
+    }
+
+    // ✅ Mark slots as booked and attach bookingId + guestName
     requiredTimes.forEach(t => {
       const idx = slots.findIndex(s => s.time === t);
       if (idx >= 0) {
@@ -199,4 +226,3 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
     Alert.alert('Error', 'No se pudo crear tu cita');
   }
 };
-

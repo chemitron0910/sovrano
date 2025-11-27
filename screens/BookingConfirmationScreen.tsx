@@ -64,7 +64,10 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
           <View style={styles.inlineText}>
             <BodyBoldText>Cita ID: </BodyBoldText>
             <BodyText>{bookingId}</BodyText>
-          </View>  
+          </View> 
+          <View style={{marginLeft: 24 }}>
+            <BodyBoldText>Un correo electronico fue enviado a tu direccion electronica. Si no lo encuentras, revisa tu correo de spam o correo no deseado</BodyBoldText>
+          </View>
 
           <Button_style2
             title="Vuelve al inicio"
