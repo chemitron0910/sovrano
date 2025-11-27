@@ -1,4 +1,5 @@
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { Alert } from "react-native";
 import { db } from "../Services/firebaseConfig";
 
@@ -8,11 +9,11 @@ export const normalizeTime = (t: string) => {
 };
 
 export type CancelBookingOptions = {
-  bookingId?: string;          // used when you only have the id
-  bookingData?: any;           // used when you already have the booking object
+  bookingId?: string;
+  bookingData?: any;
   cancelledBy?: "empleado" | "usuario";
-  onAfterCancel?: () => void;  // optional callback (refresh availability, update state)
-  updateLocalState?: (id: string) => void; // optional callback for UserBookingHistory
+  onAfterCancel?: () => void;
+  updateLocalState?: (id: string) => void;
 };
 
 export const handleCancelBooking = async ({
@@ -54,14 +55,13 @@ export const handleCancelBooking = async ({
       cancelledBy,
     });
 
-    // 3️⃣ Load stylist availability for that day
+    // 3️⃣ Free up stylist availability
     const availabilityRef = doc(db, "users", stylistId, "availability", isoDate);
     const availabilitySnap = await getDoc(availabilityRef);
     if (availabilitySnap.exists()) {
       const availabilityData = availabilitySnap.data();
       let slots: any[] = availabilityData.timeSlots || [];
 
-      // 4️⃣ Free up the correct number of consecutive slots
       const [hour, minute] = startTime.split(":").map(Number);
       const requiredTimes = Array.from({ length: durationHours }, (_, i) => {
         const h = hour + i;
@@ -78,15 +78,41 @@ export const handleCancelBooking = async ({
       await setDoc(availabilityRef, { ...availabilityData, timeSlots: slots });
     }
 
-    // 5️⃣ Update local state if provided (UserBookingHistory)
+    // 4️⃣ Update local state if provided
     if (updateLocalState) {
       updateLocalState(booking.id);
     }
 
-    // 6️⃣ Success message
+    // 5️⃣ Success message
     Alert.alert("Éxito", "La cita fue cancelada y los horarios liberados.");
 
-    // 7️⃣ Run any extra callback (StaffCalendarScreen refresh)
+    // 6️⃣ Send cancellation email via Cloud Function
+    try {
+      const functions = getFunctions();
+      const sendGuestEmail = httpsCallable(functions, "sendGuestEmail");
+
+      await sendGuestEmail({
+        to: booking.email,
+        subject: "Cancelación de tu cita en Sovrano",
+        text: `Hola ${booking.guestName}, tu cita para ${booking.service} el ${isoDate} a las ${startTime} con ${booking.stylistName} ha sido cancelada.`,
+        html: `
+          <p>Hola ${booking.guestName},</p>
+          <p>Tu cita para <strong>${booking.service}</strong> ha sido cancelada:</p>
+          <ul>
+            <li><strong>Fecha:</strong> ${isoDate}</li>
+            <li><strong>Hora:</strong> ${startTime}</li>
+            <li><strong>Estilista:</strong> ${booking.stylistName}</li>
+          </ul>
+          <p>Si deseas, puedes reservar otra cita en Sovrano.</p>
+        `,
+        bookingId: booking.id,
+      });
+    } catch (emailError) {
+      console.error("Error sending cancellation email:", emailError);
+      // Don’t block cancellation flow if email fails
+    }
+
+    // 7️⃣ Run any extra callback
     if (onAfterCancel) {
       onAfterCancel();
     }
