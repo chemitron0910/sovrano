@@ -100,30 +100,173 @@ export default function StaffCalendarScreen() {
     }
   };
 
-  const saveAvailability = async () => {
+  const finalizeAvailability = async (
+  ref: any,
+  existingSlots: TimeSlot[],
+  normalizedSelected: TimeSlot[],
+  affectedBookings: TimeSlot[]
+) => {
+  const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
+  const bulkTimes = new Set(normalizedSelected.map(s => s.time));
+
+  const cleanedSlots = existingSlots.filter(slot => {
+    const wasCancelled = affectedBookings.some(b => b.bookingId === slot.bookingId);
+    const normalizedTime = norm(slot.time);
+
+    if (wasCancelled && !bulkTimes.has(normalizedTime)) {
+      return false;
+    }
+    if (wasCancelled) {
+      slot.booked = false;
+      slot.bookingId = null;
+    }
+    return true;
+  });
+
+  const preservedBooked = cleanedSlots.filter(sl => sl.booked && !!sl.bookingId);
+
+  const mergedMap = new Map<string, TimeSlot>();
+  for (const sl of normalizedSelected) mergedMap.set(sl.time, sl);
+  for (const sl of preservedBooked) mergedMap.set(sl.time, sl);
+
+  const mergedSlots: TimeSlot[] = Array.from(mergedMap.values()).sort((a, b) =>
+    a.time.localeCompare(b.time)
+  );
+
+  const newData: Availability = {
+    timeSlots: mergedSlots,
+    isDayOff,
+  };
+
+  await setDoc(ref, newData);
+
+  setWeeklyAvailability(prev => ({
+    ...prev,
+    [isoDate]: newData,
+  }));
+
+  Alert.alert('Guardado', `Disponibilidad actualizada para ${isoDate}`);
+  setLoading(false);
+};
+
+const saveAvailability = async () => {
   if (!uid) return;
   setLoading(true);
   try {
     const ref = doc(db, 'users', uid, 'availability', isoDate);
+    const snap = await getDoc(ref);
 
-    const newData: Availability = {
-      timeSlots: selectedSlots, // ✅ already normalized
-      isDayOff,
-    };
+    const existingData: Availability = snap.exists()
+      ? (snap.data() as Availability)
+      : { timeSlots: [], isDayOff: false };
 
-    await setDoc(ref, newData);
+    const existingSlots = existingData.timeSlots || [];
+    const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
 
-    // Update weeklyAvailability state so UI refreshes
-    setWeeklyAvailability(prev => ({
-      ...prev,
-      [isoDate]: newData,
+    // Normalize selected slots (new availability)
+    const normalizedSelected: TimeSlot[] = selectedSlots.map(s => ({
+      time: norm(s.time),
+      booked: false,
+      bookingId: null,
     }));
 
-    Alert.alert('Guardado', `Disponibilidad actualizada para ${isoDate}`);
+    // 1) Day off flow — dedupe bookings by bookingId
+    if (isDayOff) {
+      const bookedSlots = existingSlots.filter(s => s.booked && s.bookingId);
+      const uniqueBookings = Array.from(
+        new Map(bookedSlots.map(s => [s.bookingId, s])).values()
+      );
+
+      if (uniqueBookings.length > 0) {
+        const count = uniqueBookings.length;
+        const plural = count === 1 ? "cita" : "citas";
+
+        Alert.alert(
+          "Advertencia",
+          `Hay ${count} ${plural} programada${count === 1 ? "" : "s"} en este día que será${count === 1 ? "" : "n"} cancelada${count === 1 ? "" : "s"}. ¿Deseas continuar y cancelar esta${count === 1 ? "" : "s"} ${plural}?`,
+          [
+            {
+              text: "No",
+              style: "cancel",
+              onPress: () => setLoading(false),
+            },
+            {
+              text: "Sí",
+              onPress: async () => {
+                for (const b of uniqueBookings) {
+                  await handleCancelBooking({
+                    bookingId: b.bookingId!,
+                    cancelledBy: "empleado",
+                  });
+                }
+                await setDoc(ref, { isDayOff: true, timeSlots: [] });
+                setWeeklyAvailability(prev => ({
+                  ...prev,
+                  [isoDate]: { isDayOff: true, timeSlots: [] },
+                }));
+                Alert.alert("Guardado", `El día ${isoDate} fue marcado como libre.`);
+                setLoading(false);
+              },
+            },
+          ]
+        );
+      } else {
+        await setDoc(ref, { isDayOff: true, timeSlots: [] });
+        setWeeklyAvailability(prev => ({
+          ...prev,
+          [isoDate]: { isDayOff: true, timeSlots: [] },
+        }));
+        Alert.alert("Guardado", `El día ${isoDate} fue marcado como libre.`);
+        setLoading(false);
+      }
+      return; // Exit early for day off
+    }
+
+    // 2) Normal flow — dedupe affected bookings by bookingId
+    const slotsToRemove = existingSlots
+      .filter(s => !normalizedSelected.some(ns => ns.time === norm(s.time)))
+      .map(s => norm(s.time));
+
+    const affectedSlots = existingSlots.filter(
+      s => slotsToRemove.includes(norm(s.time)) && s.booked && s.bookingId
+    );
+    const affectedBookings = Array.from(
+      new Map(affectedSlots.map(s => [s.bookingId, s])).values()
+    );
+
+    if (affectedBookings.length > 0) {
+      const count = affectedBookings.length;
+      const plural = count === 1 ? "cita" : "citas";
+
+      Alert.alert(
+        "Advertencia",
+        `Hay ${count} ${plural} programada${count === 1 ? "" : "s"} en este día que será${count === 1 ? "" : "n"} afectada${count === 1 ? "" : "s"}. ¿Deseas continuar y cancelar esta${count === 1 ? "" : "s"} ${plural}?`,
+        [
+          {
+            text: "No",
+            style: "cancel",
+            onPress: () => setLoading(false),
+          },
+          {
+            text: "Sí",
+            onPress: async () => {
+              for (const b of affectedBookings) {
+                await handleCancelBooking({
+                  bookingId: b.bookingId!,
+                  cancelledBy: "empleado",
+                });
+              }
+              await finalizeAvailability(ref, existingSlots, normalizedSelected, affectedBookings);
+            },
+          },
+        ]
+      );
+    } else {
+      await finalizeAvailability(ref, existingSlots, normalizedSelected, []);
+    }
   } catch (error) {
-    console.error('Error saving availability:', error);
-    Alert.alert('Error', 'No se pudo guardar la disponibilidad.');
-  } finally {
+    console.error("Error saving availability:", error);
+    Alert.alert("Error", "No se pudo guardar la disponibilidad.");
     setLoading(false);
   }
 };
@@ -187,7 +330,7 @@ const applyBulkAvailability = async (
         ? availabilitySnap.data()
         : { timeSlots: [], isDayOff: false };
 
-      let slots: any[] = availabilityData.timeSlots || [];
+      const slots: any[] = availabilityData.timeSlots || [];
 
       const slotsToRemove = bulkIsDayOff
         ? slots.map(s => normalizeTime(s.time))
@@ -212,9 +355,10 @@ const applyBulkAvailability = async (
     }
 
     const allAffected = snapshots.flatMap(s => s.affectedBookings);
+    const uniqueBookingIds = Array.from(new Set(allAffected.map(b => b.bookingId)));
 
-    if (allAffected.length > 0) {
-      const count = allAffected.length;
+    if (uniqueBookingIds.length > 0) {
+      const count = uniqueBookingIds.length;
       const plural = count === 1 ? "cita" : "citas";
 
       Alert.alert(
@@ -231,38 +375,35 @@ const applyBulkAvailability = async (
           {
             text: "Sí",
             onPress: async () => {
-              for (const b of allAffected) {
+              for (const bookingId of uniqueBookingIds) {
                 await handleCancelBooking({
-                  bookingId: b.bookingId,
+                  bookingId,
                   cancelledBy: "empleado",
                 });
               }
 
-              // 🧹 Clean up cancelled slots before merge
               const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
-const bulkTimes = new Set(bulkSlots.map(bs => norm(bs.time)));
+              const bulkTimes = new Set(bulkSlots.map(bs => norm(bs.time)));
 
-for (const s of snapshots) {
-  const cleanedSlots = (s.availabilityData.timeSlots || []).filter((slot: any) => {
-    const wasCancelled = slot.bookingId && allAffected.some(b => b.bookingId === slot.bookingId);
-    const normalizedTime = norm(slot.time);
+              for (const s of snapshots) {
+                const cancelledIds = new Set(allAffected.map(b => b.bookingId));
 
-    // Remove if it was cancelled AND not part of bulk
-    if (wasCancelled && !bulkTimes.has(normalizedTime)) {
-      return false;
-    }
+                const cleanedSlots = (s.availabilityData.timeSlots || []).filter((slot: any) => {
+                  const normalizedTime = norm(slot.time);
 
-    // If it was cancelled but still in bulk, just unbook it
-    if (wasCancelled) {
-      slot.booked = false;
-      slot.bookingId = null;
-    }
+                  if (cancelledIds.has(slot.bookingId)) {
+                    if (!bulkTimes.has(normalizedTime)) {
+                      return false; // remove slot entirely
+                    }
+                    slot.booked = false;
+                    slot.bookingId = null;
+                  }
 
-    return true;
-  });
+                  return true;
+                });
 
-  s.availabilityData.timeSlots = cleanedSlots;
-}
+                s.availabilityData.timeSlots = cleanedSlots;
+              }
 
               for (const s of snapshots) {
                 if (bulkIsDayOff) {
@@ -360,8 +501,6 @@ for (const s of snapshots) {
     if (onAfterApply) onAfterApply(false);
   }
 };
-
-
 
 // wrapper for the button
 const handleApplyBulk = async () => {
@@ -498,25 +637,49 @@ useEffect(() => {
   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 16 }}>
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {selectedSlots
-        .sort((a, b) => a.time.localeCompare(b.time))
-        .map((slot, index) => (
-          <View
-            key={index}
-            style={[
-              styles.gridItem,
-              {
-                backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
-                borderColor: slot.booked ? '#aaa' : '#ccc',
-                borderWidth: 1,
-                opacity: slot.booked ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Text style={{ color: slot.booked ? '#888' : 'black' }}>
-              {slot.booked ? '🔒' : '✅'} {slot.time}
-            </Text>
-          </View>
-        ))}
+        .sort((a, b) => {
+          const [ah, am] = a.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+          const [bh, bm] = b.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+          return ah === bh ? am - bm : ah - bh;
+        })
+        .map((slot, index) => {
+          const slotContent = (
+            <View
+              key={index}
+              style={[
+                styles.gridItem,
+                {
+                  backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
+                  borderColor: slot.booked ? '#aaa' : '#ccc',
+                  borderWidth: 1,
+                  opacity: slot.booked ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text style={{ color: slot.booked ? '#888' : 'black' }}>
+                {slot.booked ? '🔒' : '✅'} {slot.time}
+              </Text>
+            </View>
+          );
+
+          // If booked, wrap in TouchableOpacity to show booking details modal
+          if (slot.booked) {
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => {
+                  setBookedSlot(slot);
+                  setBookedDateIso(isoDate);
+                  setBookedModalVisible(true);
+                }}
+              >
+                {slotContent}
+              </TouchableOpacity>
+            );
+          }
+
+          return slotContent;
+        })}
     </View>
   </ScrollView>
 )}
