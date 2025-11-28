@@ -518,102 +518,101 @@ return (
 
       {/* Show availability */}
       {isDayOff ? (
-        <BodyText style={{ color: 'gray' }}>Día libre</BodyText>
-      ) : timeSlots.length > 0 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {timeSlots.map((slot, index) => {
-              const isSelected =
-                selectedSlot?.date === date && selectedSlot?.time === slot.time;
+  <BodyText style={{ color: 'gray' }}>Día libre</BodyText>
+) : timeSlots.length > 0 ? (
+  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      {[...timeSlots]
+        .sort((a, b) => {
+          const [ah, am = 0] = a.time.split(":").map(Number);
+          const [bh, bm = 0] = b.time.split(":").map(Number);
+          return ah === bh ? am - bm : ah - bh;
+        })
+        .map((slot, index) => {
+          const isSelected =
+            selectedSlot?.date === date && selectedSlot?.time === slot.time;
 
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.gridItem,
-                    {
-                      backgroundColor: isSelected
-                        ? '#C2A878'
-                        : slot.booked
-                        ? '#ddd'
-                        : '#f0f0f0',
-                      borderColor: isSelected
-                        ? '#8B6E4B'
-                        : slot.booked
-                        ? '#aaa'
-                        : '#ccc',
-                      borderWidth: isSelected ? 2 : 1,
-                      opacity: slot.booked ? 0.6 : 1,
-                    },
-                  ]}
-                  disabled={slot.booked} // ✅ prevent booking if already booked
-                  onPress={async () => {
-  // Parse the selected slot time
-  const [hour, minute] = slot.time.split(":").map(Number);
-  const [year, month, day] = date.split("-").map(Number);
-  const selectedDateObj = new Date(year, month - 1, day, hour, minute);
+          return (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.gridItem,
+                {
+                  backgroundColor: isSelected
+                    ? '#C2A878'
+                    : slot.booked
+                    ? '#ddd'
+                    : '#f0f0f0',
+                  borderColor: isSelected
+                    ? '#8B6E4B'
+                    : slot.booked
+                    ? '#aaa'
+                    : '#ccc',
+                  borderWidth: isSelected ? 2 : 1,
+                  opacity: slot.booked ? 0.6 : 1,
+                },
+              ]}
+              disabled={slot.booked}
+              onPress={async () => {
+                const [hour, minute] = slot.time.split(":").map(Number);
+                const [year, month, day] = date.split("-").map(Number);
+                const selectedDateObj = new Date(year, month - 1, day, hour, minute);
 
-  // Create a local slot object to avoid async state race
-  const localSelectedSlot = { date, time: slot.time };
+                const localSelectedSlot = { date, time: slot.time };
 
-  // Persist selection in state
-  setDate(selectedDateObj);
-  setSelectedSlot(localSelectedSlot);
+                setDate(selectedDateObj);
+                setSelectedSlot(localSelectedSlot);
 
-  // 🔎 Validations
-  if (!localSelectedSlot) {
-    Alert.alert("Error", "Debes seleccionar un horario");
-    return;
-  }
-  if (!selectedStylist) {
-    Alert.alert("Error", "Debes seleccionar un estilista");
-    return;
-  }
-  if (!selectedService) {
-    Alert.alert("Error", "Debes seleccionar un servicio");
-    return;
-  }
+                if (!localSelectedSlot) {
+                  Alert.alert("Error", "Debes seleccionar un horario");
+                  return;
+                }
+                if (!selectedStylist) {
+                  Alert.alert("Error", "Debes seleccionar un estilista");
+                  return;
+                }
+                if (!selectedService) {
+                  Alert.alert("Error", "Debes seleccionar un servicio");
+                  return;
+                }
 
-  if (role === "guest") {
-    if (!nombre?.trim() || !email?.trim() || !phoneNumber?.trim()) {
-      Alert.alert(
-        "Error",
-        "Debes ingresar tu nombre, correo electrónico y número telefónico"
-      );
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert("Error", "Debes ingresar un correo electrónico válido");
-      return;
-    }
-  }
+                if (role === "guest") {
+                  if (!nombre?.trim() || !email?.trim() || !phoneNumber?.trim()) {
+                    Alert.alert(
+                      "Error",
+                      "Debes ingresar tu nombre, correo electrónico y número telefónico"
+                    );
+                    return;
+                  }
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (!emailRegex.test(email)) {
+                    Alert.alert("Error", "Debes ingresar un correo electrónico válido");
+                    return;
+                  }
+                }
 
-  // ✅ All good → open confirmation modal
-  setConfirmModalVisible(true);
-}}
-
-
-                >
-                  <Text
-                    style={{
-                      color: isSelected
-                        ? 'white'
-                        : slot.booked
-                        ? '#888'
-                        : 'black',
-                    }}
-                  >
-                    {slot.booked ? '🔒' : '✅'} {slot.time}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
-      ) : (
-        <Text>No hay disponibilidad</Text>
-      )}
+                setConfirmModalVisible(true);
+              }}
+            >
+              <Text
+                style={{
+                  color: isSelected
+                    ? 'white'
+                    : slot.booked
+                    ? '#888'
+                    : 'black',
+                }}
+              >
+                {slot.booked ? '🔒' : '✅'} {slot.time}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+    </View>
+  </ScrollView>
+) : (
+  <Text>No hay disponibilidad</Text>
+)}
     </View>
   );
 })}

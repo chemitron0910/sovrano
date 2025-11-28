@@ -182,9 +182,11 @@ const applyBulkAvailability = async (
     for (const isoDate of weekDates) {
       const availabilityRef = doc(db, "users", empleadoId, "availability", isoDate);
       const availabilitySnap = await getDoc(availabilityRef);
-      if (!availabilitySnap.exists()) continue;
 
-      const availabilityData = availabilitySnap.data();
+      const availabilityData = availabilitySnap.exists()
+        ? availabilitySnap.data()
+        : { timeSlots: [], isDayOff: false };
+
       let slots: any[] = availabilityData.timeSlots || [];
 
       const slotsToRemove = bulkIsDayOff
@@ -193,7 +195,6 @@ const applyBulkAvailability = async (
             .filter(s => !bulkSlots.some(bs => bs.time === normalizeTime(s.time)))
             .map(s => normalizeTime(s.time));
 
-      // 👇 Deduplicate by bookingId using a Map
       const affectedBookingsMap = new Map<string, any>();
       for (const s of slots) {
         if (slotsToRemove.includes(normalizeTime(s.time)) && s.booked && s.bookingId) {
@@ -206,14 +207,13 @@ const applyBulkAvailability = async (
       }
 
       const affectedBookings = Array.from(affectedBookingsMap.values());
+
       snapshots.push({ isoDate, availabilityRef, availabilityData, affectedBookings });
     }
 
-    // Flatten all affected bookings across the week
     const allAffected = snapshots.flatMap(s => s.affectedBookings);
 
     if (allAffected.length > 0) {
-
       const count = allAffected.length;
       const plural = count === 1 ? "cita" : "citas";
 
@@ -238,12 +238,70 @@ const applyBulkAvailability = async (
                 });
               }
 
+              // 🧹 Clean up cancelled slots before merge
+              const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
+const bulkTimes = new Set(bulkSlots.map(bs => norm(bs.time)));
+
+for (const s of snapshots) {
+  const cleanedSlots = (s.availabilityData.timeSlots || []).filter((slot: any) => {
+    const wasCancelled = slot.bookingId && allAffected.some(b => b.bookingId === slot.bookingId);
+    const normalizedTime = norm(slot.time);
+
+    // Remove if it was cancelled AND not part of bulk
+    if (wasCancelled && !bulkTimes.has(normalizedTime)) {
+      return false;
+    }
+
+    // If it was cancelled but still in bulk, just unbook it
+    if (wasCancelled) {
+      slot.booked = false;
+      slot.bookingId = null;
+    }
+
+    return true;
+  });
+
+  s.availabilityData.timeSlots = cleanedSlots;
+}
+
               for (const s of snapshots) {
-                const newSlots = bulkIsDayOff ? [] : bulkSlots;
+                if (bulkIsDayOff) {
+                  await setDoc(s.availabilityRef, {
+                    ...s.availabilityData,
+                    isDayOff: true,
+                    timeSlots: [],
+                  });
+                  continue;
+                }
+
+                const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
+
+                const existingSlots: TimeSlot[] = (s.availabilityData.timeSlots || []).map((slot: any) => ({
+                  time: norm(slot.time),
+                  booked: !!slot.booked,
+                  bookingId: slot.bookingId ?? null,
+                }));
+
+                const preservedBooked = existingSlots.filter(sl => sl.booked && !!sl.bookingId);
+
+                const normalizedBulkSlots: TimeSlot[] = bulkSlots.map(bs => ({
+                  time: norm(bs.time),
+                  booked: false,
+                  bookingId: null,
+                }));
+
+                const mergedMap = new Map<string, TimeSlot>();
+                for (const sl of normalizedBulkSlots) mergedMap.set(sl.time, sl);
+                for (const sl of preservedBooked) mergedMap.set(sl.time, sl);
+
+                const mergedSlots: TimeSlot[] = Array.from(mergedMap.values()).sort((a, b) =>
+                  a.time.localeCompare(b.time)
+                );
+
                 await setDoc(s.availabilityRef, {
                   ...s.availabilityData,
-                  isDayOff: bulkIsDayOff,
-                  timeSlots: newSlots,
+                  isDayOff: false,
+                  timeSlots: mergedSlots,
                 });
               }
 
@@ -255,11 +313,43 @@ const applyBulkAvailability = async (
       );
     } else {
       for (const s of snapshots) {
-        const newSlots = bulkIsDayOff ? [] : bulkSlots;
+        if (bulkIsDayOff) {
+          await setDoc(s.availabilityRef, {
+            ...s.availabilityData,
+            isDayOff: true,
+            timeSlots: [],
+          });
+          continue;
+        }
+
+        const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
+
+        const existingSlots: TimeSlot[] = (s.availabilityData.timeSlots || []).map((slot: any) => ({
+          time: norm(slot.time),
+          booked: !!slot.booked,
+          bookingId: slot.bookingId ?? null,
+        }));
+
+        const preservedBooked = existingSlots.filter(sl => sl.booked && !!sl.bookingId);
+
+        const normalizedBulkSlots: TimeSlot[] = bulkSlots.map(bs => ({
+          time: norm(bs.time),
+          booked: false,
+          bookingId: null,
+        }));
+
+        const mergedMap = new Map<string, TimeSlot>();
+        for (const sl of normalizedBulkSlots) mergedMap.set(sl.time, sl);
+        for (const sl of preservedBooked) mergedMap.set(sl.time, sl);
+
+        const mergedSlots: TimeSlot[] = Array.from(mergedMap.values()).sort((a, b) =>
+          a.time.localeCompare(b.time)
+        );
+
         await setDoc(s.availabilityRef, {
           ...s.availabilityData,
-          isDayOff: bulkIsDayOff,
-          timeSlots: newSlots,
+          isDayOff: false,
+          timeSlots: mergedSlots,
         });
       }
       if (onAfterApply) onAfterApply(true);
@@ -270,6 +360,7 @@ const applyBulkAvailability = async (
     if (onAfterApply) onAfterApply(false);
   }
 };
+
 
 
 // wrapper for the button
@@ -550,7 +641,7 @@ useEffect(() => {
   return (
     <View key={iso} style={styles.weekDayBlock}>
       <Text style={styles.weekDay}>
-        {dayLabel} {isOff ? '— Día libre o no programado' : ''}
+        {dayLabel} {isOff ? '— Día libre' : ''}
       </Text>
 
       {!isOff && slots.length > 0 && (

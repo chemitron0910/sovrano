@@ -66,7 +66,7 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
             <BodyText>{bookingId}</BodyText>
           </View> 
           <View style={{marginLeft: 24 }}>
-            <BodyBoldText>Un correo electronico fue enviado a tu direccion electronica. Si no lo encuentras, revisa tu correo de spam o correo no deseado</BodyBoldText>
+            <BodyBoldText>Un correo fue enviado a tu direccion electronica. Si no lo encuentras, revisa tu carpeta de spam o correo no deseado</BodyBoldText>
           </View>
 
           <Button_style2
