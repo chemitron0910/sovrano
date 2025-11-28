@@ -1,8 +1,9 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
+import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
 
@@ -10,10 +11,13 @@ export default function StaffBookingHistory() {
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
   const [cancelledPast, setCancelledPast] = useState<Booking[]>([]);
   const [cancelledUpcoming, setCancelledUpcoming] = useState<Booking[]>([]);
+  const [selectedOption, setSelectedOption] = useState<string>('recent');
+  const [loading, setLoading] = useState(false);
   const stylistId = auth.currentUser?.uid;
 
   useEffect(() => {
     const loadBookings = async () => {
+      setLoading(true);
       try {
         const data = await fetchAllBookings();
         const now = new Date();
@@ -22,7 +26,6 @@ export default function StaffBookingHistory() {
         const thirtyDaysAhead = new Date();
         thirtyDaysAhead.setDate(now.getDate() + 30);
 
-        // ✅ Normal bookings in past 30 days
         const pastBookings = data.filter(b => {
           const bookingDate = new Date(b.date);
           return (
@@ -33,7 +36,6 @@ export default function StaffBookingHistory() {
           );
         });
 
-        // ✅ Cancelled bookings in past 30 days
         const cancelledPastBookings = data.filter(b => {
           const bookingDate = new Date(b.date);
           return (
@@ -44,7 +46,6 @@ export default function StaffBookingHistory() {
           );
         });
 
-        // ✅ Cancelled bookings in upcoming 30 days
         const cancelledUpcomingBookings = data.filter(b => {
           const bookingDate = new Date(b.date);
           return (
@@ -60,6 +61,8 @@ export default function StaffBookingHistory() {
         setCancelledUpcoming(cancelledUpcomingBookings);
       } catch (err) {
         console.error('Error fetching booking history:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -73,7 +76,6 @@ export default function StaffBookingHistory() {
       month: '2-digit',
       year: 'numeric',
     });
-
     const formattedTime = dateObj.toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
@@ -101,32 +103,66 @@ export default function StaffBookingHistory() {
     );
   };
 
+  const renderList = () => {
+    switch (selectedOption) {
+      case 'recent':
+        return (
+          <>
+            <FlatList
+              data={recentBookings}
+              keyExtractor={(item) => item.id}
+              renderItem={renderBookingItem}
+              ListEmptyComponent={<Text style={styles.empty}>No hay reservas pasadas.</Text>}
+            />
+          </>
+        );
+      case 'cancelledPast':
+        return (
+          <>
+            <FlatList
+              data={cancelledPast}
+              keyExtractor={(item) => item.id}
+              renderItem={renderBookingItem}
+              ListEmptyComponent={<Text style={styles.empty}>No hay reservas canceladas pasadas.</Text>}
+            />
+          </>
+        );
+      case 'cancelledUpcoming':
+        return (
+          <>
+            <FlatList
+              data={cancelledUpcoming}
+              keyExtractor={(item) => item.id}
+              renderItem={renderBookingItem}
+              ListEmptyComponent={<Text style={styles.empty}>No hay reservas canceladas próximas.</Text>}
+            />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <GradientBackground>
       <View style={styles.container}>
-        <BodyBoldText style={styles.centered}>Últimos 30 días</BodyBoldText>
-        <FlatList
-          data={recentBookings}
-          keyExtractor={(item) => item.id}
-          renderItem={renderBookingItem}
-          ListEmptyComponent={<Text style={styles.empty}>No hay reservas pasadas.</Text>}
-        />
+        {loading && (
+          <View style={styles.overlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.overlayText}>Cargando historial de reservas...</Text>
+          </View>
+        )}
 
-        <BodyBoldText style={styles.centered}>Canceladas (últimos 30 días)</BodyBoldText>
-        <FlatList
-          data={cancelledPast}
-          keyExtractor={(item) => item.id}
-          renderItem={renderBookingItem}
-          ListEmptyComponent={<Text style={styles.empty}>No hay reservas canceladas pasadas.</Text>}
-        />
+        <Picker
+          selectedValue={selectedOption}
+          onValueChange={(value) => setSelectedOption(value)}
+        >
+          <Picker.Item label="Últimos 30 días" value="recent" />
+          <Picker.Item label="Canceladas (últimos 30 días)" value="cancelledPast" />
+          <Picker.Item label="Canceladas (próximos 30 días)" value="cancelledUpcoming" />
+        </Picker>
 
-        <BodyBoldText style={styles.centered}>Canceladas (próximos 30 días)</BodyBoldText>
-        <FlatList
-          data={cancelledUpcoming}
-          keyExtractor={(item) => item.id}
-          renderItem={renderBookingItem}
-          ListEmptyComponent={<Text style={styles.empty}>No hay reservas canceladas próximas.</Text>}
-        />
+        {!loading && renderList()}
       </View>
     </GradientBackground>
   );
@@ -134,7 +170,7 @@ export default function StaffBookingHistory() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    flex: 1,
   },
   centered: {
     textAlign: 'center',
@@ -156,5 +192,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 24,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  overlayText: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

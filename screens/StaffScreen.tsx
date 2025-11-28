@@ -7,7 +7,6 @@ import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import ExtendWeeklyAvailability from '../Components/ExtendWeeklyAvailability';
 import Logo from '../Components/Logo';
-import { logout } from '../Services/authService';
 import { auth, db } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
 
@@ -73,45 +72,6 @@ export default function StaffScreen() {
           <Button_style2
             title="Historia de citas"
             onPress={() => navigation.navigate('Historia de citas.')}
-          />
-
-          <Button_style2
-            title={buttonTitle}
-            onPress={async () => {
-              const currentUser = auth.currentUser;
-
-              if (!currentUser) {
-                await logout();
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'Inicio-Sovrano' }],
-                });
-                return;
-              }
-
-              const uid = currentUser.uid;
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              const role = userDoc.data()?.role;
-
-              if (role === 'empleado') {
-                await logout();
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'Inicio-Sovrano' }],
-                });
-              } else if (role === 'admin') {
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'Inicio-Admin', params: { userId: uid, role } }],
-                });
-              } else {
-                await logout();
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'Inicio-Sovrano' }],
-                });
-              }
-            }}
           />
         </View>
       </View>

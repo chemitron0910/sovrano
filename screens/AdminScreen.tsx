@@ -67,8 +67,8 @@ export default function AdminScreen() {
 
           <Button_style2 title="Assignar responsabilidad" onPress={() => navigation.navigate("Assignar responsabilidad")} />
           <Button_style2 title="Manejar servicios" onPress={() => navigation.navigate("Manejar servicios")} />
-          <Button_style2 title="Calendario de citas" onPress={() => navigation.navigate("Calendario de citas")} />
-          <Button_style2 title="Historia de citas" onPress={() => navigation.navigate("Historia de citas")} />
+          
+          <Button_style2 title="Mis empleados" onPress={() => navigation.navigate("Mis empleados")} />
 
           <Button_style2
             title="Inicio empleado"

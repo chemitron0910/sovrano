@@ -4,6 +4,7 @@ import { RootStackParamList } from '../src/types';
 import AdminBookingHistory from "./AdminBookingHistory";
 import AdminBookingScreen from "./AdminBookingScreen";
 import AdminServicesScreen from "./AdminServicesScreen";
+import AdminStaffScreen from "./AdminStaffScreen";
 import AdminTabNav from "./AdminTabNav";
 import RoleAssignmentScreen from "./RoleAssignmentScreen";
 import StaffBookingHistory from "./StaffBookingHistory";
@@ -86,7 +87,7 @@ export default function AdminStack() {
         name="Inicio-Empleado"
         component={StaffScreen}
         options={{
-          headerBackVisible: false,
+          headerBackVisible: true,
           headerTitleStyle: {
             fontFamily: "Playfair-Bold",
             fontSize: 22,
@@ -137,6 +138,19 @@ export default function AdminStack() {
       <Stack.Screen
         name="Mi informacion"
         component={StaffInfoScreen}
+        options={{
+          headerBackVisible: true,
+          headerTitleStyle: {
+            fontFamily: "Playfair-Bold",
+            fontSize: 22,
+            fontWeight: "400",
+            color: "#3e3e3e",
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Mis empleados"
+        component={AdminStaffScreen}
         options={{
           headerBackVisible: true,
           headerTitleStyle: {
