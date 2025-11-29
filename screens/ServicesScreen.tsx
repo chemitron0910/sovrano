@@ -28,6 +28,7 @@ type User = {
   id: string;
   role: string;
   username?: string;
+  activo?: boolean;
 };
 
 export default function ServicesScreen() {
@@ -45,56 +46,59 @@ export default function ServicesScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const servicesSnapshot = await getDocs(collection(db, "services"));
-        const allServices: Service[] = servicesSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name,
-            description: data.description,
-            duration: data.duration,
-          };
-        });
-        setServices(allServices);
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const servicesSnapshot = await getDocs(collection(db, "services"));
+      const allServices: Service[] = servicesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name,
+          description: data.description,
+          duration: data.duration,
+        };
+      });
+      setServices(allServices);
 
-        const usersSnapshot = await getDocs(collection(db, "users"));
-        const empleadosList: User[] = usersSnapshot.docs
-          .map(doc => {
-            const data = doc.data() as Omit<User, "id">;
-            return { id: doc.id, ...data };
-          })
-          .filter(user => user.role === "empleado" || user.role === "admin");
-        setEmpleados(empleadosList);
+      const usersSnapshot = await getDocs(collection(db, "users"));
+      const empleadosList: User[] = usersSnapshot.docs
+        .map(doc => {
+          const data = doc.data() as Omit<User, "id">;
+          return { id: doc.id, ...data };
+        })
+        .filter(user =>
+          (user.role === "empleado" || user.role === "admin") &&
+          user.activo === true // ✅ only active empleados/admins
+        );
+      setEmpleados(empleadosList);
 
-        const providersMap: Record<string, string[]> = {};
-        for (const empleado of empleadosList) {
-          try {
-            const infoDoc = await getDoc(doc(db, `users/${empleado.id}/profile/info`));
-            if (!infoDoc.exists()) continue;
-            const info = infoDoc.data();
-            const providedServices = info?.services || [];
-            for (const service of providedServices) {
-              if (!service.id) continue;
-              if (!providersMap[service.id]) providersMap[service.id] = [];
-              providersMap[service.id].push(empleado.id);
-            }
-          } catch (error) {
-            console.error(`❌ Error fetching profile for ${empleado.id}:`, error);
+      const providersMap: Record<string, string[]> = {};
+      for (const empleado of empleadosList) {
+        try {
+          const infoDoc = await getDoc(doc(db, `users/${empleado.id}/profile/info`));
+          if (!infoDoc.exists()) continue;
+          const info = infoDoc.data();
+          const providedServices = info?.services || [];
+          for (const service of providedServices) {
+            if (!service.id) continue;
+            if (!providersMap[service.id]) providersMap[service.id] = [];
+            providersMap[service.id].push(empleado.id);
           }
+        } catch (error) {
+          console.error(`❌ Error fetching profile for ${empleado.id}:`, error);
         }
-        setServiceProviders(providersMap);
-      } catch (error) {
-        console.error("❌ General fetch error:", error);
-      } finally {
-        setLoading(false);
       }
+      setServiceProviders(providersMap);
+    } catch (error) {
+      console.error("❌ General fetch error:", error);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    fetchData();
-  }, []);
+  fetchData();
+}, []);
 
   const openModal = (service: Service) => {
     setSelectedService(service);

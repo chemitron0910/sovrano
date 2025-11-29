@@ -124,6 +124,9 @@ useEffect(() => {
       const providersMap: Record<string, string[]> = {};
 
       for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        if (!data.activo) continue; // ✅ only active empleados/admins
+
         const stylistId = docSnap.id;
         const infoDoc = await getDoc(doc(db, `users/${stylistId}/profile/info`));
         if (!infoDoc.exists()) continue;
@@ -146,22 +149,29 @@ useEffect(() => {
   buildServiceProviders();
 }, []);
 
-
   useEffect(() => {
   if (serviceFromUser?.id) setSelectedServiceId(serviceFromUser.id);
   if (stylist?.id) setSelectedStylist(stylist);
 }, [service, stylist]);
 
-  useEffect(() => {
+useEffect(() => {
   const loadStylists = async () => {
     try {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('role', 'in', ['empleado', 'admin']));
       const snapshot = await getDocs(q);
-      const stylistList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().username || doc.data().email || 'Sin nombre',
-      }));
+
+      const stylistList = snapshot.docs
+        .map(docSnap => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            name: data.username || data.email || 'Sin nombre',
+            activo: data.activo ?? false, // ✅ include activo
+          };
+        })
+        .filter(stylist => stylist.activo); // ✅ only active
+
       setStylists(stylistList);
     } catch (error) {
       console.error('Error fetching stylists:', error);
