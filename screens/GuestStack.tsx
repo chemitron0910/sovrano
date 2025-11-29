@@ -4,6 +4,7 @@ import GuestScreen from "../screens/GuestScreen";
 import SignUpConfirmationScreen from "../screens/SignUpConfirmationScreen";
 import { RootStackParamList } from '../src/types';
 import BookingScreen from "./BookingScreen";
+import GuestStaffInfoScreen from './GuestStaffInfoScreen';
 import ServicesScreen from "./ServicesScreen";
 import SignUpScreen from "./SignUpScreen";
 
@@ -31,6 +32,13 @@ export default function GuestStack() {
         initialParams={{ role: "guest" }} // ✅ ensures role is always defined
         options={{ headerBackVisible: true }}
       />
+      <Stack.Screen
+        name="Nuestros artistas"
+        component={GuestStaffInfoScreen}
+        initialParams={{ role: "guest", staffId: "" }} // ✅ include staffId
+        options={{ headerBackVisible: true }}
+      />
+
       <Stack.Screen
         name="Agenda tu cita"
         component={BookingScreen}

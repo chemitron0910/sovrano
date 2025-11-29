@@ -75,6 +75,7 @@ export type RootStackParamList = {
   "Mi informacion": undefined;
   "Re-enviar correo electronico": undefined;
   "Acerca de Sovrano": undefined;
+  "Nuestros artistas": { role: "guest" | "usuario"; staffId: string };
 
   // Sovrano entry point
   "Inicio-Sovrano": undefined;

@@ -8,7 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getAuth } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, getFirestore, setDoc } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -197,6 +197,17 @@ const handleDelete = async (index: number) => {
         multiline
         style={[styles.inputText, { height: 100 }]}
       />
+
+      <SubTitleText>Instagram</SubTitleText>
+<TextInput
+  placeholder="Link a tu cuenta de Instagram"
+  placeholderTextColor="#888"
+  value={socialLinks.instagram}
+  onChangeText={(text) =>
+    setSocialLinks((prev) => ({ ...prev, instagram: text }))
+  }
+  style={styles.inputText}
+/>
 
       <SubTitleText>Servicios ofrecidos</SubTitleText>
       {services.map((service, index) => (
