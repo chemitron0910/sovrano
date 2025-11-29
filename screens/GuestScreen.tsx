@@ -23,7 +23,6 @@ export default function GuestScreen() {
   type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
   const navigation = useNavigation<NavigationProp>();
   const windowDimensions = useWindowDimensions();
-
   const [modalVisible, setModalVisible] = useState(false);
   const [stylists, setStylists] = useState<{ id: string; name: string; profilePic?: string }[]>([]);
 

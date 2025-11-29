@@ -6,6 +6,7 @@ import ServicesScreen from "../screens/ServicesScreen";
 import UserBookingHistory from "../screens/UserBookingHistory";
 import UserTabNav from "../screens/UserTabNav";
 import BookingScreen from "./BookingScreen";
+import GuestStaffInfoScreen from './GuestStaffInfoScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -29,6 +30,12 @@ export default function UserStack() {
             color: "#3e3e3e",
           },
         }}
+      />
+      <Stack.Screen
+        name="Nuestros artistas"
+        component={GuestStaffInfoScreen}
+        initialParams={{ role: "guest", staffId: "" }} // ✅ include staffId
+        options={{ headerBackVisible: true }}
       />
       <Stack.Screen
         name="Nuestros servicios"
