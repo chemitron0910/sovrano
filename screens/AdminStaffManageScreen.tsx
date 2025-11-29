@@ -23,6 +23,7 @@ import { db } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
 
 type UserRecord = {
+  autoNumber: string;
   id: string;
   username: string;
   email: string;
@@ -187,6 +188,7 @@ export default function AdminStaffManageScreen() {
         style={styles.profileImage}
       />
       <View style={{ flex: 1, marginLeft: 12 }}>
+        <Text style={styles.field}>Número de Usuario: {u.autoNumber}</Text>
         <Text style={styles.field}>Usuario: {u.username}</Text>
         <Text style={styles.field}>Email: {u.email}</Text>
         <Text style={styles.field}>Teléfono: {u.phoneNumber}</Text>
