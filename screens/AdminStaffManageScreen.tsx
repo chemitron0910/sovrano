@@ -3,10 +3,11 @@ import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { collection, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -30,6 +31,7 @@ type UserRecord = {
   lastLogin?: string;
   role: string;
   activo: boolean;
+  profilePic?: string;
 };
 
 export default function AdminStaffManageScreen() {
@@ -42,6 +44,37 @@ export default function AdminStaffManageScreen() {
 
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
   const [editFields, setEditFields] = useState<Partial<UserRecord>>({});
+
+  useEffect(() => {
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const snapshot = await getDocs(collection(db, 'users'));
+      const data: UserRecord[] = [];
+
+      for (const docSnap of snapshot.docs) {
+        const userData = { id: docSnap.id, ...(docSnap.data() as any) } as UserRecord;
+
+        // ✅ Look for nested profile/info document
+        const profileRef = doc(db, `users/${docSnap.id}/profile/info`);
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+          const profileData = profileSnap.data();
+          userData.profilePic = profileData.profilePic ?? undefined;
+        }
+
+        data.push(userData);
+      }
+
+      setUsers(data);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchUsers();
+}, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -148,11 +181,19 @@ export default function AdminStaffManageScreen() {
             ) : (
               filteredUsers.map(u => (
                 <TouchableOpacity key={u.id} style={styles.card} onPress={() => handleEdit(u)}>
-                  <Text style={styles.field}>Usuario: {u.username}</Text>
-                  <Text style={styles.field}>Email: {u.email}</Text>
-                  <Text style={styles.field}>Teléfono: {u.phoneNumber}</Text>
-                  <Text style={styles.field}>Creado: {formatDate(u.createdAt)}</Text>
-                  <Text style={styles.field}>Último login: {formatDate(u.lastLogin)}</Text>
+                  <View style={styles.cardRow}>
+      <Image
+        source={u.profilePic ? { uri: u.profilePic } : require('../assets/images/defaultProfile.png')}
+        style={styles.profileImage}
+      />
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <Text style={styles.field}>Usuario: {u.username}</Text>
+        <Text style={styles.field}>Email: {u.email}</Text>
+        <Text style={styles.field}>Teléfono: {u.phoneNumber}</Text>
+        <Text style={styles.field}>Creado: {formatDate(u.createdAt)}</Text>
+        <Text style={styles.field}>Último login: {formatDate(u.lastLogin)}</Text>
+      </View>
+    </View>
                 </TouchableOpacity>
               ))
             )}
@@ -289,4 +330,14 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 20,
   },
+  cardRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+profileImage: {
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+  backgroundColor: '#ccc',
+},
 });
