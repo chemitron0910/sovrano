@@ -15,6 +15,7 @@ export default function UserProfileScreen() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [userAutoNumber, setUserAutoNumber] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -33,6 +34,7 @@ export default function UserProfileScreen() {
         if (snap.exists()) {
           const data = snap.data();
           setPhoneNumber(data.phoneNumber || '');
+          setUserAutoNumber(data.autoNumber || '');
         }
       } catch (err) {
         console.error('Error fetching user profile:', err);
@@ -68,6 +70,11 @@ export default function UserProfileScreen() {
   return (
     <GradientBackground>
       <View style={styles.container}>
+        <Text style={styles.label}>Numero de Usuario</Text>
+        <View style={styles.readOnlyField}>
+          <Text>{userAutoNumber || 'No disponible'}</Text>
+        </View>
+
         <Text style={styles.label}>Usuario</Text>
         <View style={styles.readOnlyField}>
           <Text>{username || 'No disponible'}</Text>

@@ -95,8 +95,8 @@ const cancelFromUser = async (booking: Booking) => {
           <BodyText>{item.status || 'Reservado'}</BodyText>
         </View>
         <View style={styles.inlineText}>
-          <BodyBoldText>ID de reserva: </BodyBoldText>
-          <BodyText>{item.id}</BodyText>
+          <BodyBoldText>Cita número: </BodyBoldText>
+          <BodyText>{item.autoNumber}</BodyText>
         </View>
 
         {isFuture && item.status !== 'cancelled' && (
