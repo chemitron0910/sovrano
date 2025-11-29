@@ -36,10 +36,10 @@ export default function StaffCalendarScreen() {
     const [weekDates, setWeekDates] = useState<Date[]>([]);
     const [bookingDetails, setBookingDetails] = useState<any | null>(null);
     type TimeSlot = {
-  time: string;
-  booked: boolean;
-  bookingId: string | null; // allow null explicitly
-};
+      time: string;
+      booked: boolean;
+      bookingId: string | null; // allow null explicitly
+    };
 
     type Availability = {
       isDayOff: boolean;
@@ -534,7 +534,8 @@ useEffect(() => {
       const bookingRef = doc(db, "bookings", bookedSlot.bookingId);
       const bookingSnap = await getDoc(bookingRef);
       if (bookingSnap.exists()) {
-        setBookingDetails(bookingSnap.data()); // store guestName, email, etc.
+        const data = bookingSnap.data();
+        setBookingDetails(data); // includes guestName, email, service, autoNumber, etc.
       }
     }
   };
@@ -732,7 +733,12 @@ useEffect(() => {
           <Text>Fecha: {bookedDateIso}</Text>
           <Text>Hora: {bookedSlot.time}</Text>
           <Text>Estado: Reservado</Text>
-          {bookedSlot.bookingId && <Text>Cita ID: {bookedSlot.bookingId}</Text>}
+          {bookingDetails?.autoNumber && (
+            <Text>Cita número: {bookingDetails.autoNumber}</Text>
+          )}
+          {bookingDetails?.userAutoNumber && (
+            <Text>Usuario número: {bookingDetails.userAutoNumber}</Text>
+          )}
         </>
       )}
       {bookingDetails && (

@@ -105,7 +105,8 @@ export const handleCancelBooking = async ({
           </ul>
           <p>Si deseas, puedes reservar otra cita en Sovrano.</p>
         `,
-        bookingId: booking.id,
+        autoNumber: booking.autoNumber,       // ✅ booking sequential number
+        userAutoNumber: booking.userAutoNumber // ✅ user sequential number
       });
     } catch (emailError) {
       console.error("Error sending cancellation email:", emailError);
