@@ -422,7 +422,7 @@ return (
     <Text>
       {`${route.params.serviceFromUser.name} (${route.params.serviceFromUser.duration} ${
         Number(route.params.serviceFromUser.duration) === 1 ? 'hora' : 'horas'
-      })`}
+      }) ${route.params.serviceFromUser.cost}`}
     </Text>
   </View>
 ) : (
@@ -455,6 +455,11 @@ return (
     </LinearGradient>
   </View>
 )}
+
+<BodyBoldText style={styles.label}>Costo estimado del servicio seleccionado</BodyBoldText>
+<View style={[styles.readOnlyField, { backgroundColor: '#d8d2c4' }]}>
+  <Text>{selectedService ? `$${selectedService.cost}` : 'No seleccionado'}</Text>
+</View>
           </View>
 
          <Modal visible={stylistModalVisible} animationType="slide" transparent={true}>

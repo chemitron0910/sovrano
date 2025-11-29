@@ -31,6 +31,7 @@ export type RootStackParamList = {
       name: string;
       description: string;
       duration: string;
+      cost: string;
     };
     stylist?: {
       id: string;

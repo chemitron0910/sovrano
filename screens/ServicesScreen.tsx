@@ -22,6 +22,7 @@ type Service = {
   name: string;
   description: string;
   duration: string;
+  cost: string,
 };
 
 type User = {
@@ -57,6 +58,7 @@ export default function ServicesScreen() {
           name: data.name,
           description: data.description,
           duration: data.duration,
+          cost: data.cost
         };
       });
       setServices(allServices);
@@ -140,6 +142,7 @@ export default function ServicesScreen() {
               <Text style={{ fontSize: 18, fontWeight: "bold" }}>{service.name}</Text>
               <Text>{service.description}</Text>
               <Text>Duración: {service.duration}</Text>
+              <Text>Costo estimado: ${service.cost}</Text>
               <View style={{ padding: 10 }}>
                 <Button_style2 title="Reservar" onPress={() => openModal(service)} />
               </View>

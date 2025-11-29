@@ -6,6 +6,7 @@ export type Service = {
   name: string;
   duration: string;
   description?: string;
+  cost?: string;
 };
 
 // Fetch all services
