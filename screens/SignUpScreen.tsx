@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, runTransaction, setDoc } from 'firebase/firestore';
 import { ReactElement, useState } from 'react';
 import {
   ActivityIndicator,
@@ -53,6 +53,27 @@ export default function SignUpScreen(): ReactElement {
   const navigation = useNavigation<NavigationProp>();
   const [loading, setLoading] = useState(false);
 
+  // Helper to get next sequential number
+async function getNextUserNumber() {
+  const counterRef = doc(db, "counters", "usersCounter");
+
+  const newNumber = await runTransaction(db, async (transaction) => {
+    const counterSnap = await transaction.get(counterRef);
+
+    if (!counterSnap.exists()) {
+      transaction.set(counterRef, { lastNumber: 1 });
+      return 1;
+    }
+
+    const lastNumber = counterSnap.data().lastNumber || 0;
+    const nextNumber = lastNumber + 1;
+    transaction.update(counterRef, { lastNumber: nextNumber });
+    return nextNumber;
+  });
+
+  return newNumber;
+}
+
   const validateForm = (): boolean => {
     const newErrors: Errors = {};
 
@@ -73,60 +94,64 @@ export default function SignUpScreen(): ReactElement {
   };
 
   const handleSubmit = async (): Promise<void> => {
-    if (!validateForm()) return;
-    setLoading(true);
+  if (!validateForm()) return;
+  setLoading(true);
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = userCredential.user.uid;
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
 
-      await setDoc(doc(db, 'users', uid), {
-        username,
-        email,
-        phoneNumber,
-        createdAt: new Date().toISOString(),
-        role: 'usuario',
-        activo: true, // ✅ automatically set active
-      });
+    // ✅ Get sequential number
+    const autoNumber = await getNextUserNumber();
 
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { displayName: username });
-        await sendEmailVerification(auth.currentUser);
-      }
+    await setDoc(doc(db, 'users', uid), {
+      username,
+      email,
+      phoneNumber,
+      createdAt: new Date().toISOString(),
+      role: 'usuario',
+      activo: true,
+      autoNumber, // ✅ sequential number
+    });
 
-      navigation.navigate('Registro exitoso', {
-        username,
-        email,
-        userId: uid,
-      });
-
-      setUsername('');
-      setPassword('');
-      setEmail('');
-      setErrors({});
-    } catch (error: any) {
-      if (error.code === 'auth/email-already-in-use') {
-        try {
-          const loginCredential = await signInWithEmailAndPassword(auth, email, password);
-          const uid = loginCredential.user.uid;
-
-          navigation.navigate('Registro exitoso', {
-            username: loginCredential.user.displayName || '',
-            email,
-            userId: uid,
-          });
-
-          Alert.alert('Inicio de sesión', 'Ya tenías una cuenta. Has iniciado sesión correctamente.');
-        } catch (loginError: any) {
-          Alert.alert('Error al iniciar sesión:', JSON.stringify(loginError, null, 2));
-        }
-      } else {
-        Alert.alert('Error creando usuario:', JSON.stringify(error, null, 2));
-      }
-    } finally {
-      setLoading(false);
+    if (auth.currentUser) {
+      await updateProfile(auth.currentUser, { displayName: username });
+      await sendEmailVerification(auth.currentUser);
     }
-  };
+
+    navigation.navigate('Registro exitoso', {
+      username,
+      email,
+      userId: uid,
+    });
+
+    setUsername('');
+    setPassword('');
+    setEmail('');
+    setErrors({});
+  } catch (error: any) {
+    if (error.code === 'auth/email-already-in-use') {
+      try {
+        const loginCredential = await signInWithEmailAndPassword(auth, email, password);
+        const uid = loginCredential.user.uid;
+
+        navigation.navigate('Registro exitoso', {
+          username: loginCredential.user.displayName || '',
+          email,
+          userId: uid,
+        });
+
+        Alert.alert('Inicio de sesión', 'Ya tenías una cuenta. Has iniciado sesión correctamente.');
+      } catch (loginError: any) {
+        Alert.alert('Error al iniciar sesión:', JSON.stringify(loginError, null, 2));
+      }
+    } else {
+      Alert.alert('Error creando usuario:', JSON.stringify(error, null, 2));
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <KeyboardAvoidingView

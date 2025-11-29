@@ -6,7 +6,7 @@ service cloud.firestore {
   		allow read: if request.auth != null;
   		allow update: if request.auth.uid == userId || isAdmin();
   		allow create: if request.auth != null;
-  		allow delete: if isAdmin();
+  		allow delete: if isAdmin() || (isGuest() && request.auth.uid == userId);
 		}
     
     match /users/{userId}/availability/{date} {
@@ -27,7 +27,7 @@ service cloud.firestore {
   		&&
       (    
     	request.resource.data.diff(resource.data).affectedKeys()
-      	.hasOnly(["status", "cancelledAt"])
+      	.hasOnly(["status", "cancelledAt", "cancelledBy"])
   		);
       allow delete: if isAdmin();
     }

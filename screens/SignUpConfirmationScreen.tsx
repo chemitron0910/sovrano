@@ -48,7 +48,7 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
           <View style={{ padding: 24 }}>
             <Button_style2
               title="Vuelve al inicio"
-              onPress={() => navigation.navigate('Inicio-Invitado', { role: "guest" })}
+              onPress={() => navigation.navigate('Inicio-Sovrano')}
             />
           </View>
         </View>

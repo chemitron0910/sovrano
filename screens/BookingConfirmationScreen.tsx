@@ -25,24 +25,21 @@ type Props = {
 };
 
 export default function BookingConfirmationScreen({ navigation, route }: Props) {
+  const windowDimensions = useWindowDimensions();
+  const windowWidth = windowDimensions.width;
+  const windowHeight = windowDimensions.height;
 
-    const windowDimensions = useWindowDimensions();
-    const windowWidth = windowDimensions.width;
-    const windowHeight = windowDimensions.height;
+  // ✅ Now using autoNumber and userAutoNumber
+  const { service, date, time, stylistName, autoNumber, userAutoNumber } = route.params;
 
-    const { service, date, time, stylistName, bookingId } = route.params;
-
-    return (
-
-      <View style={styles.container}>
+  return (
+    <View style={styles.container}>
       <GradientBackground>
         <View>
-          <Logo/>
+          <Logo />
         </View>
-        <View style={{
-          gap: 10
-          } }>
-          <View style={{marginLeft: 24 }}>
+        <View style={{ gap: 10 }}>
+          <View style={{ marginLeft: 24 }}>
             <SubTitleText>Gracias por agendar tu cita</SubTitleText>
           </View>
           <View style={styles.inlineText}>
@@ -62,28 +59,35 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
             <BodyText>{time}</BodyText>
           </View>
           <View style={styles.inlineText}>
-            <BodyBoldText>Cita ID: </BodyBoldText>
-            <BodyText>{bookingId}</BodyText>
-          </View> 
-          <View style={{marginLeft: 24 }}>
-            <BodyBoldText>Un correo fue enviado a tu direccion electronica. Si no lo encuentras, revisa tu carpeta de spam o correo no deseado</BodyBoldText>
+            <BodyBoldText>Cita número: </BodyBoldText>
+            <BodyText>{autoNumber}</BodyText>
+          </View>
+          {userAutoNumber && (
+            <View style={styles.inlineText}>
+              <BodyBoldText>Usuario número: </BodyBoldText>
+              <BodyText>{userAutoNumber}</BodyText>
+            </View>
+          )}
+          <View style={{ marginLeft: 24 }}>
+            <BodyBoldText>
+              Un correo fue enviado a tu direccion electronica. Si no lo encuentras, revisa tu carpeta de spam o correo no deseado
+            </BodyBoldText>
           </View>
 
           <Button_style2
             title="Vuelve al inicio"
             onPress={() => {
-            if (route.params.role === 'usuario') {
-              navigation.navigate('Menu-Usuario', { role: "usuario" });
-            } else {
-              navigation.navigate('Menu-Invitado', { role: "guest" });
-            }
+              if (route.params.role === 'usuario') {
+                navigation.navigate('Menu-Usuario', { role: 'usuario' });
+              } else {
+                navigation.navigate('Menu-Invitado', { role: 'guest' });
+              }
             }}
           />
         </View>
       </GradientBackground>
     </View>
   );
-
 }
 
 const styles = StyleSheet.create({
@@ -92,22 +96,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     alignContent: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 12,
-  },
-  value: {
-    fontWeight: '600',
-  },
   inlineText: {
     flexDirection: 'row',
-    alignItems: 'center', // optional: aligns text vertically
+    alignItems: 'center',
     marginLeft: 24,
   },
 });

@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { Alert } from "react-native";
 import { auth, db } from '../Services/firebaseConfig';
@@ -82,6 +82,27 @@ const findNextAvailableSuggestion = async (
   return null;
 };
 
+// Helper to get next sequential booking number
+async function getNextBookingNumber() {
+  const counterRef = doc(db, "counters", "bookingsCounter");
+
+  const newNumber = await runTransaction(db, async (transaction) => {
+    const counterSnap = await transaction.get(counterRef);
+
+    if (!counterSnap.exists()) {
+      transaction.set(counterRef, { lastNumber: 1 });
+      return 1;
+    }
+
+    const lastNumber = counterSnap.data().lastNumber || 0;
+    const nextNumber = lastNumber + 1;
+    transaction.update(counterRef, { lastNumber: nextNumber });
+    return nextNumber;
+  });
+
+  return newNumber;
+}
+
 export const handleBooking = async ({
   selectedSlot,
   selectedStylist,
@@ -103,32 +124,47 @@ export const handleBooking = async ({
     return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   });
 
-  const bookingData = {
-    service: selectedService?.name || '',
-    duration: selectedService?.duration || '',
-    date: fullDate.toISOString(),
-    time: selectedTime,
-    guestName:
-      role === "guest"
-        ? guestInfo?.guestName || ""
-        : auth.currentUser?.displayName || "",
-    email:
-      role === "guest"
-        ? guestInfo?.email || ""
-        : auth.currentUser?.email || "",
-    phoneNumber:
-      role === "guest"
-        ? guestInfo?.phoneNumber || ""
-        : "",
-    stylistId: selectedStylist.id,
-    stylistName: selectedStylist.name,
-    createdAt: new Date().toISOString(),
-    role,
-    userId: role === "usuario" ? auth.currentUser?.uid ?? null : null,
-    status: "Reservado",
-  };
-
   try {
+    // ✅ Get sequential booking number
+    const autoNumber = await getNextBookingNumber();
+
+    // ✅ If user, fetch their autoNumber from users collection
+    let userAutoNumber: number | null = null;
+    if (role === "usuario" && auth.currentUser?.uid) {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        userAutoNumber = userSnap.data().autoNumber ?? null;
+      }
+    }
+
+    const bookingData = {
+      service: selectedService?.name || '',
+      duration: selectedService?.duration || '',
+      date: fullDate.toISOString(),
+      time: selectedTime,
+      guestName:
+        role === "guest"
+          ? guestInfo?.guestName || ""
+          : auth.currentUser?.displayName || "",
+      email:
+        role === "guest"
+          ? guestInfo?.email || ""
+          : auth.currentUser?.email || "",
+      phoneNumber:
+        role === "guest"
+          ? guestInfo?.phoneNumber || ""
+          : "",
+      stylistId: selectedStylist.id,
+      stylistName: selectedStylist.name,
+      createdAt: new Date().toISOString(),
+      role,
+      userId: role === "usuario" ? auth.currentUser?.uid ?? null : null,
+      userAutoNumber,   // ✅ include user’s sequential number
+      status: "Reservado",
+      autoNumber,       // ✅ booking sequential number
+    };
+
     const availabilityRef = doc(db, 'users', selectedStylist.id, 'availability', isoDate);
     const availabilitySnap = await getDoc(availabilityRef);
     const availabilityData = availabilitySnap.exists()
@@ -172,7 +208,7 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
       return;
     }
 
-    // ✅ Create booking document first
+    // ✅ Create booking document with sequential number
     const docRef = await addDoc(collection(db, 'bookings'), bookingData);
 
     // ✅ Send confirmation email via Cloud Function
@@ -194,7 +230,8 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
           </ul>
           <p>¡Gracias por confiar en Sovrano!</p>
         `,
-        bookingId: docRef.id,
+        autoNumber,        // booking sequential number
+        userAutoNumber,    // user sequential number (if available)
       });
     } catch (emailError) {
       console.error("Error sending confirmation email:", emailError);
@@ -219,7 +256,9 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
       guestName: bookingData.guestName,
       stylistName: bookingData.stylistName,
       bookingId: docRef.id,
+      autoNumber, // ✅ pass booking sequential number to confirmation screen
       role: bookingData.role,
+      userAutoNumber: bookingData.userAutoNumber, // ✅ pass user sequential number to confirmation screen
     });
   } catch (error) {
     console.error('Error saving booking:', error);

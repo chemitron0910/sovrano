@@ -44,7 +44,8 @@ export type RootStackParamList = {
     time: string;
     guestName: string;
     stylistName: string;
-    bookingId: string;
+    autoNumber: string;
+    userAutoNumber: string;
     role: string;
   };
 

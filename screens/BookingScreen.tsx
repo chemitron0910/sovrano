@@ -422,7 +422,7 @@ return (
     <Text>
       {`${route.params.serviceFromUser.name} (${route.params.serviceFromUser.duration} ${
         Number(route.params.serviceFromUser.duration) === 1 ? 'hora' : 'horas'
-      }) ${route.params.serviceFromUser.cost}`}
+      })`}
     </Text>
   </View>
 ) : (
