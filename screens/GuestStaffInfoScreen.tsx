@@ -37,7 +37,7 @@ export default function GuestStaffInfoScreen({ route }: Props) {
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [socialLinks, setSocialLinks] = useState<{ instagram?: string; facebook?: string; website?: string }>({});
   const [generalInfo, setGeneralInfo] = useState('');
-  const [services, setServices] = useState<{ id: string; name: string; duration: string }[]>([]);
+  const [services, setServices] = useState<{ id: string; name: string; duration: string; cost?: string }[]>([]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -94,8 +94,9 @@ export default function GuestStaffInfoScreen({ route }: Props) {
             <View key={index} style={styles.serviceItem}>
               <BodyBoldText style={styles.serviceName}>{service.name}</BodyBoldText>
               <BodyText style={styles.serviceTime}>
-                {service.duration} {Number(service.duration) === 1 ? 'hora' : 'horas'}
+                {service.duration} {Number(service.duration) === 1 ? 'hora' : 'horas'} — ${service.cost || 'N/A'}
               </BodyText>
+
             </View>
           ))
         ) : (
