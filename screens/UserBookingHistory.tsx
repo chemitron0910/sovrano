@@ -52,7 +52,7 @@ const cancelFromUser = async (booking: Booking) => {
     cancelledBy: "usuario",
     updateLocalState: (id) =>
       setBookings(prev =>
-        prev.map(b => (b.id === id ? { ...b, status: "cancelled" } : b))
+        prev.map(b => (b.id === id ? { ...b, status: "Cancelado" } : b))
       ),
   });
 };
@@ -99,7 +99,7 @@ const cancelFromUser = async (booking: Booking) => {
           <BodyText>{item.autoNumber}</BodyText>
         </View>
 
-        {isFuture && item.status !== 'cancelled' && (
+        {isFuture && item.status !== 'Cancelado' && (
           <Button_style2
         title="Cancelar cita"
             onPress={() =>

@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
+import * as functions from "firebase-functions/v1";
 
 /**
  * Sends a push notification via Expo's Push API.
@@ -37,8 +37,8 @@ export const onBookingUpdated = functions
     const before = change.before.data();
     const after = change.after.data();
 
-    // Only act when status changes to "cancelled"
-    if (before?.status !== "cancelled" && after?.status === "cancelled") {
+    // Only act when status changes to "Cancelado"
+    if (before?.status !== "Cancelado" && after?.status === "Cancelado") {
       const isoDate = after.date.split("T")[0];
       const selectedTime = after.time;
       const stylistId = after.stylistId;
@@ -60,7 +60,7 @@ export const onBookingUpdated = functions
         );
       }
 
-      // Notify stylist if guest cancelled
+      // Notify stylist if guest Cancelado
       if (after.cancelledBy !== "stylist") {
         const stylistDoc = await admin
           .firestore()
@@ -77,7 +77,7 @@ export const onBookingUpdated = functions
         }
       }
 
-      // Notify guest if stylist cancelled
+      // Notify guest if stylist Cancelado
       if (after.cancelledBy === "stylist") {
         const guestId = after.userId;
         const guestDoc = await admin

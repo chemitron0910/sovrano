@@ -50,7 +50,7 @@ export const handleCancelBooking = async ({
 
     // 2️⃣ Update booking status
     await updateDoc(bookingRef, {
-      status: "cancelled",
+      status: "Cancelado",
       cancelledAt: new Date().toISOString(),
       cancelledBy,
     });

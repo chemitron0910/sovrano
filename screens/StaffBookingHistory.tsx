@@ -32,7 +32,7 @@ export default function StaffBookingHistory() {
             b.stylistId === stylistId &&
             bookingDate < now &&
             bookingDate >= thirtyDaysAgo &&
-            b.status !== "cancelled"
+            b.status !== "Cancelado"
           );
         });
 
@@ -40,7 +40,7 @@ export default function StaffBookingHistory() {
           const bookingDate = new Date(b.date);
           return (
             b.stylistId === stylistId &&
-            b.status === "cancelled" &&
+            b.status === "Cancelado" &&
             bookingDate < now &&
             bookingDate >= thirtyDaysAgo
           );
@@ -50,7 +50,7 @@ export default function StaffBookingHistory() {
           const bookingDate = new Date(b.date);
           return (
             b.stylistId === stylistId &&
-            b.status === "cancelled" &&
+            b.status === "Cancelado" &&
             bookingDate >= now &&
             bookingDate <= thirtyDaysAhead
           );

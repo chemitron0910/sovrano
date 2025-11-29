@@ -94,7 +94,7 @@ export default function StaffBookingsScreen() {
         {sortedDates.map(date => {
   // ✅ Sort bookings within each day by time
   const bookingsForDay = groupedByDate[date]
-    .filter(b => b.status !== "cancelled") // 🔑 exclude cancelled
+    .filter(b => b.status !== "Cancelado") // 🔑 exclude Cancelado
     .slice()
     .sort((a, b) => {
       const [ay, am, ad] = normalizeDateString(a.date).split('-').map(Number);

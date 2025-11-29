@@ -171,15 +171,15 @@ export default function AdminBookingHistory() {
                 matchesCriteria =
                   bookingDate < now &&
                   bookingDate >= thirtyDaysAgo &&
-                  b.status !== 'cancelled';
+                  b.status !== 'Cancelado';
               } else if (selectedCriteria === 'cancelledPast') {
                 matchesCriteria =
-                  b.status === 'cancelled' &&
+                  b.status === 'Cancelado' &&
                   bookingDate < now &&
                   bookingDate >= thirtyDaysAgo;
               } else if (selectedCriteria === 'cancelledUpcoming') {
                 matchesCriteria =
-                  b.status === 'cancelled' &&
+                  b.status === 'Cancelado' &&
                   bookingDate >= now &&
                   bookingDate <= thirtyDaysAhead;
               }
