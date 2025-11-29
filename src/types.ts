@@ -67,6 +67,7 @@ export type RootStackParamList = {
   };
   "Calendario-Empleado": undefined;
   "Perfil-Empleado": undefined;
+  "Perfil-usuario": undefined;
   "Informacion-Empleado": undefined;
   "Mi informacion": undefined;
   "Re-enviar correo electronico": undefined;

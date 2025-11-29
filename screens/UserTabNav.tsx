@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Platform, StyleSheet } from "react-native";
 import AboutScreen from "../screens/AboutScreen";
 import { RootStackParamList } from "../src/types";
-import ProfileScreen from "./StaffProfileScreen";
+import UserProfileScreen from "./UserProfileScreen";
 import UserScreen from "./UserScreen";
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
@@ -28,7 +28,7 @@ export default function UserTabNav() {
       />
       <Tab.Screen
         name="Perfil-Empleado"
-        component={ProfileScreen}
+        component={UserProfileScreen}
         options={{
           tabBarLabel: "Mi perfil",
           tabBarIcon: ({ color }) => (

@@ -21,7 +21,7 @@ export default function UserStack() {
         name="Menu-Usuario"
         component={UserTabNav}
         options={{
-          headerBackVisible: false,
+          headerBackVisible: true,
           headerTitleStyle: {
             fontFamily: "Playfair-Bold",
             fontSize: 22,
