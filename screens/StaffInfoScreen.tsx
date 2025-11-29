@@ -19,20 +19,19 @@ import Button_style2 from '../Components/Button_style2';
 
   export default function StaffInfoScreen(){
 
-    const auth = getAuth();
+  const auth = getAuth();
   const firestore = getFirestore();
   const uid = auth.currentUser?.uid;
-
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', website: '' });
   const [generalInfo, setGeneralInfo] = useState('');
-  const [services, setServices] = useState<{ id: string; name: string; duration: string }[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [services, setServices] = useState<{ id: string; name: string; duration: string; cost?: string }[]>([]);
   const [availableServices, setAvailableServices] = useState<
-  { id: string; name: string; duration: string; description?: string }[]
->([]);
+  { id: string; name: string; duration: string; description?: string; cost?: string }[]
+  >([]);
 
-    const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -60,6 +59,7 @@ import Button_style2 from '../Components/Button_style2';
         name: data.name,
         duration: data.duration,
         description: data.description,
+        cost: data.cost,
       };
     });
     setAvailableServices(list);
@@ -225,6 +225,7 @@ const handleDelete = async (index: number) => {
     id: selected.id,
     name: selected.name,
     duration: selected.duration,
+    cost: selected.cost,
   };
   setServices(updated);
 }
@@ -249,7 +250,10 @@ const handleDelete = async (index: number) => {
       <>
         <View style={{ flex: 1 }}>
           <BodyBoldText style={styles.serviceName}>{service.name}</BodyBoldText>
-          <BodyText style={styles.serviceTime}>{service.duration} {Number(service.duration) === 1 ? 'hora' : 'horas'}</BodyText>
+          <BodyText style={styles.serviceTime}>
+            {service.duration} {Number(service.duration) === 1 ? 'hora' : 'horas'} — ${service.cost || 'N/A'}
+          </BodyText>
+
         </View>
 
         <View style={styles.actions}>
