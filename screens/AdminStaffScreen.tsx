@@ -34,6 +34,7 @@ export default function AdminStaffScreen(){
                   marginTop: 20,
                 }}>
         
+    <Button_style2 title="Manejar empleados" onPress={() => navigation.navigate("Manejar empleados")} />
     <Button_style2 title="Calendario de citas" onPress={() => navigation.navigate("Calendario de citas")} />
     <Button_style2 title="Historia de citas" onPress={() => navigation.navigate("Historia de citas")} />
 

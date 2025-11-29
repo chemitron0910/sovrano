@@ -86,6 +86,7 @@ export default function SignUpScreen(): ReactElement {
         phoneNumber,
         createdAt: new Date().toISOString(),
         role: 'usuario',
+        activo: true, // ✅ automatically set active
       });
 
       if (auth.currentUser) {
