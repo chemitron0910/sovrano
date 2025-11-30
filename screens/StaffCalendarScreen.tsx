@@ -36,10 +36,10 @@ export default function StaffCalendarScreen() {
     const [weekDates, setWeekDates] = useState<Date[]>([]);
     const [bookingDetails, setBookingDetails] = useState<any | null>(null);
     type TimeSlot = {
-      time: string;
-      booked: boolean;
-      bookingId: string | null; // allow null explicitly
-    };
+  time: string;
+  booked: boolean;
+  bookingId: string | null; // allow null explicitly
+};
 
     type Availability = {
       isDayOff: boolean;
@@ -100,173 +100,30 @@ export default function StaffCalendarScreen() {
     }
   };
 
-  const finalizeAvailability = async (
-  ref: any,
-  existingSlots: TimeSlot[],
-  normalizedSelected: TimeSlot[],
-  affectedBookings: TimeSlot[]
-) => {
-  const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
-  const bulkTimes = new Set(normalizedSelected.map(s => s.time));
-
-  const cleanedSlots = existingSlots.filter(slot => {
-    const wasCancelled = affectedBookings.some(b => b.bookingId === slot.bookingId);
-    const normalizedTime = norm(slot.time);
-
-    if (wasCancelled && !bulkTimes.has(normalizedTime)) {
-      return false;
-    }
-    if (wasCancelled) {
-      slot.booked = false;
-      slot.bookingId = null;
-    }
-    return true;
-  });
-
-  const preservedBooked = cleanedSlots.filter(sl => sl.booked && !!sl.bookingId);
-
-  const mergedMap = new Map<string, TimeSlot>();
-  for (const sl of normalizedSelected) mergedMap.set(sl.time, sl);
-  for (const sl of preservedBooked) mergedMap.set(sl.time, sl);
-
-  const mergedSlots: TimeSlot[] = Array.from(mergedMap.values()).sort((a, b) =>
-    a.time.localeCompare(b.time)
-  );
-
-  const newData: Availability = {
-    timeSlots: mergedSlots,
-    isDayOff,
-  };
-
-  await setDoc(ref, newData);
-
-  setWeeklyAvailability(prev => ({
-    ...prev,
-    [isoDate]: newData,
-  }));
-
-  Alert.alert('Guardado', `Disponibilidad actualizada para ${isoDate}`);
-  setLoading(false);
-};
-
-const saveAvailability = async () => {
+  const saveAvailability = async () => {
   if (!uid) return;
   setLoading(true);
   try {
     const ref = doc(db, 'users', uid, 'availability', isoDate);
-    const snap = await getDoc(ref);
 
-    const existingData: Availability = snap.exists()
-      ? (snap.data() as Availability)
-      : { timeSlots: [], isDayOff: false };
+    const newData: Availability = {
+      timeSlots: selectedSlots, // ✅ already normalized
+      isDayOff,
+    };
 
-    const existingSlots = existingData.timeSlots || [];
-    const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
+    await setDoc(ref, newData);
 
-    // Normalize selected slots (new availability)
-    const normalizedSelected: TimeSlot[] = selectedSlots.map(s => ({
-      time: norm(s.time),
-      booked: false,
-      bookingId: null,
+    // Update weeklyAvailability state so UI refreshes
+    setWeeklyAvailability(prev => ({
+      ...prev,
+      [isoDate]: newData,
     }));
 
-    // 1) Day off flow — dedupe bookings by bookingId
-    if (isDayOff) {
-      const bookedSlots = existingSlots.filter(s => s.booked && s.bookingId);
-      const uniqueBookings = Array.from(
-        new Map(bookedSlots.map(s => [s.bookingId, s])).values()
-      );
-
-      if (uniqueBookings.length > 0) {
-        const count = uniqueBookings.length;
-        const plural = count === 1 ? "cita" : "citas";
-
-        Alert.alert(
-          "Advertencia",
-          `Hay ${count} ${plural} programada${count === 1 ? "" : "s"} en este día que será${count === 1 ? "" : "n"} cancelada${count === 1 ? "" : "s"}. ¿Deseas continuar y cancelar esta${count === 1 ? "" : "s"} ${plural}?`,
-          [
-            {
-              text: "No",
-              style: "cancel",
-              onPress: () => setLoading(false),
-            },
-            {
-              text: "Sí",
-              onPress: async () => {
-                for (const b of uniqueBookings) {
-                  await handleCancelBooking({
-                    bookingId: b.bookingId!,
-                    cancelledBy: "empleado",
-                  });
-                }
-                await setDoc(ref, { isDayOff: true, timeSlots: [] });
-                setWeeklyAvailability(prev => ({
-                  ...prev,
-                  [isoDate]: { isDayOff: true, timeSlots: [] },
-                }));
-                Alert.alert("Guardado", `El día ${isoDate} fue marcado como libre.`);
-                setLoading(false);
-              },
-            },
-          ]
-        );
-      } else {
-        await setDoc(ref, { isDayOff: true, timeSlots: [] });
-        setWeeklyAvailability(prev => ({
-          ...prev,
-          [isoDate]: { isDayOff: true, timeSlots: [] },
-        }));
-        Alert.alert("Guardado", `El día ${isoDate} fue marcado como libre.`);
-        setLoading(false);
-      }
-      return; // Exit early for day off
-    }
-
-    // 2) Normal flow — dedupe affected bookings by bookingId
-    const slotsToRemove = existingSlots
-      .filter(s => !normalizedSelected.some(ns => ns.time === norm(s.time)))
-      .map(s => norm(s.time));
-
-    const affectedSlots = existingSlots.filter(
-      s => slotsToRemove.includes(norm(s.time)) && s.booked && s.bookingId
-    );
-    const affectedBookings = Array.from(
-      new Map(affectedSlots.map(s => [s.bookingId, s])).values()
-    );
-
-    if (affectedBookings.length > 0) {
-      const count = affectedBookings.length;
-      const plural = count === 1 ? "cita" : "citas";
-
-      Alert.alert(
-        "Advertencia",
-        `Hay ${count} ${plural} programada${count === 1 ? "" : "s"} en este día que será${count === 1 ? "" : "n"} afectada${count === 1 ? "" : "s"}. ¿Deseas continuar y cancelar esta${count === 1 ? "" : "s"} ${plural}?`,
-        [
-          {
-            text: "No",
-            style: "cancel",
-            onPress: () => setLoading(false),
-          },
-          {
-            text: "Sí",
-            onPress: async () => {
-              for (const b of affectedBookings) {
-                await handleCancelBooking({
-                  bookingId: b.bookingId!,
-                  cancelledBy: "empleado",
-                });
-              }
-              await finalizeAvailability(ref, existingSlots, normalizedSelected, affectedBookings);
-            },
-          },
-        ]
-      );
-    } else {
-      await finalizeAvailability(ref, existingSlots, normalizedSelected, []);
-    }
+    Alert.alert('Guardado', `Disponibilidad actualizada para ${isoDate}`);
   } catch (error) {
-    console.error("Error saving availability:", error);
-    Alert.alert("Error", "No se pudo guardar la disponibilidad.");
+    console.error('Error saving availability:', error);
+    Alert.alert('Error', 'No se pudo guardar la disponibilidad.');
+  } finally {
     setLoading(false);
   }
 };
@@ -325,12 +182,10 @@ const applyBulkAvailability = async (
     for (const isoDate of weekDates) {
       const availabilityRef = doc(db, "users", empleadoId, "availability", isoDate);
       const availabilitySnap = await getDoc(availabilityRef);
+      if (!availabilitySnap.exists()) continue;
 
-      const availabilityData = availabilitySnap.exists()
-        ? availabilitySnap.data()
-        : { timeSlots: [], isDayOff: false };
-
-      const slots: any[] = availabilityData.timeSlots || [];
+      const availabilityData = availabilitySnap.data();
+      let slots: any[] = availabilityData.timeSlots || [];
 
       const slotsToRemove = bulkIsDayOff
         ? slots.map(s => normalizeTime(s.time))
@@ -338,6 +193,7 @@ const applyBulkAvailability = async (
             .filter(s => !bulkSlots.some(bs => bs.time === normalizeTime(s.time)))
             .map(s => normalizeTime(s.time));
 
+      // 👇 Deduplicate by bookingId using a Map
       const affectedBookingsMap = new Map<string, any>();
       for (const s of slots) {
         if (slotsToRemove.includes(normalizeTime(s.time)) && s.booked && s.bookingId) {
@@ -350,15 +206,15 @@ const applyBulkAvailability = async (
       }
 
       const affectedBookings = Array.from(affectedBookingsMap.values());
-
       snapshots.push({ isoDate, availabilityRef, availabilityData, affectedBookings });
     }
 
+    // Flatten all affected bookings across the week
     const allAffected = snapshots.flatMap(s => s.affectedBookings);
-    const uniqueBookingIds = Array.from(new Set(allAffected.map(b => b.bookingId)));
 
-    if (uniqueBookingIds.length > 0) {
-      const count = uniqueBookingIds.length;
+    if (allAffected.length > 0) {
+
+      const count = allAffected.length;
       const plural = count === 1 ? "cita" : "citas";
 
       Alert.alert(
@@ -375,74 +231,19 @@ const applyBulkAvailability = async (
           {
             text: "Sí",
             onPress: async () => {
-              for (const bookingId of uniqueBookingIds) {
+              for (const b of allAffected) {
                 await handleCancelBooking({
-                  bookingId,
+                  bookingId: b.bookingId,
                   cancelledBy: "empleado",
                 });
               }
 
-              const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
-              const bulkTimes = new Set(bulkSlots.map(bs => norm(bs.time)));
-
               for (const s of snapshots) {
-                const cancelledIds = new Set(allAffected.map(b => b.bookingId));
-
-                const cleanedSlots = (s.availabilityData.timeSlots || []).filter((slot: any) => {
-                  const normalizedTime = norm(slot.time);
-
-                  if (cancelledIds.has(slot.bookingId)) {
-                    if (!bulkTimes.has(normalizedTime)) {
-                      return false; // remove slot entirely
-                    }
-                    slot.booked = false;
-                    slot.bookingId = null;
-                  }
-
-                  return true;
-                });
-
-                s.availabilityData.timeSlots = cleanedSlots;
-              }
-
-              for (const s of snapshots) {
-                if (bulkIsDayOff) {
-                  await setDoc(s.availabilityRef, {
-                    ...s.availabilityData,
-                    isDayOff: true,
-                    timeSlots: [],
-                  });
-                  continue;
-                }
-
-                const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
-
-                const existingSlots: TimeSlot[] = (s.availabilityData.timeSlots || []).map((slot: any) => ({
-                  time: norm(slot.time),
-                  booked: !!slot.booked,
-                  bookingId: slot.bookingId ?? null,
-                }));
-
-                const preservedBooked = existingSlots.filter(sl => sl.booked && !!sl.bookingId);
-
-                const normalizedBulkSlots: TimeSlot[] = bulkSlots.map(bs => ({
-                  time: norm(bs.time),
-                  booked: false,
-                  bookingId: null,
-                }));
-
-                const mergedMap = new Map<string, TimeSlot>();
-                for (const sl of normalizedBulkSlots) mergedMap.set(sl.time, sl);
-                for (const sl of preservedBooked) mergedMap.set(sl.time, sl);
-
-                const mergedSlots: TimeSlot[] = Array.from(mergedMap.values()).sort((a, b) =>
-                  a.time.localeCompare(b.time)
-                );
-
+                const newSlots = bulkIsDayOff ? [] : bulkSlots;
                 await setDoc(s.availabilityRef, {
                   ...s.availabilityData,
-                  isDayOff: false,
-                  timeSlots: mergedSlots,
+                  isDayOff: bulkIsDayOff,
+                  timeSlots: newSlots,
                 });
               }
 
@@ -454,43 +255,11 @@ const applyBulkAvailability = async (
       );
     } else {
       for (const s of snapshots) {
-        if (bulkIsDayOff) {
-          await setDoc(s.availabilityRef, {
-            ...s.availabilityData,
-            isDayOff: true,
-            timeSlots: [],
-          });
-          continue;
-        }
-
-        const norm = (t: string) => normalizeTime(String(t)).replace(/['"]+/g, "").trim();
-
-        const existingSlots: TimeSlot[] = (s.availabilityData.timeSlots || []).map((slot: any) => ({
-          time: norm(slot.time),
-          booked: !!slot.booked,
-          bookingId: slot.bookingId ?? null,
-        }));
-
-        const preservedBooked = existingSlots.filter(sl => sl.booked && !!sl.bookingId);
-
-        const normalizedBulkSlots: TimeSlot[] = bulkSlots.map(bs => ({
-          time: norm(bs.time),
-          booked: false,
-          bookingId: null,
-        }));
-
-        const mergedMap = new Map<string, TimeSlot>();
-        for (const sl of normalizedBulkSlots) mergedMap.set(sl.time, sl);
-        for (const sl of preservedBooked) mergedMap.set(sl.time, sl);
-
-        const mergedSlots: TimeSlot[] = Array.from(mergedMap.values()).sort((a, b) =>
-          a.time.localeCompare(b.time)
-        );
-
+        const newSlots = bulkIsDayOff ? [] : bulkSlots;
         await setDoc(s.availabilityRef, {
           ...s.availabilityData,
-          isDayOff: false,
-          timeSlots: mergedSlots,
+          isDayOff: bulkIsDayOff,
+          timeSlots: newSlots,
         });
       }
       if (onAfterApply) onAfterApply(true);
@@ -501,6 +270,7 @@ const applyBulkAvailability = async (
     if (onAfterApply) onAfterApply(false);
   }
 };
+
 
 // wrapper for the button
 const handleApplyBulk = async () => {
@@ -534,8 +304,7 @@ useEffect(() => {
       const bookingRef = doc(db, "bookings", bookedSlot.bookingId);
       const bookingSnap = await getDoc(bookingRef);
       if (bookingSnap.exists()) {
-        const data = bookingSnap.data();
-        setBookingDetails(data); // includes guestName, email, service, autoNumber, etc.
+        setBookingDetails(bookingSnap.data()); // store guestName, email, etc.
       }
     }
   };
@@ -638,49 +407,25 @@ useEffect(() => {
   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 16 }}>
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {selectedSlots
-        .sort((a, b) => {
-          const [ah, am] = a.time.replace(/['"]+/g, '').trim().split(':').map(Number);
-          const [bh, bm] = b.time.replace(/['"]+/g, '').trim().split(':').map(Number);
-          return ah === bh ? am - bm : ah - bh;
-        })
-        .map((slot, index) => {
-          const slotContent = (
-            <View
-              key={index}
-              style={[
-                styles.gridItem,
-                {
-                  backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
-                  borderColor: slot.booked ? '#aaa' : '#ccc',
-                  borderWidth: 1,
-                  opacity: slot.booked ? 0.6 : 1,
-                },
-              ]}
-            >
-              <Text style={{ color: slot.booked ? '#888' : 'black' }}>
-                {slot.booked ? '🔒' : '✅'} {slot.time}
-              </Text>
-            </View>
-          );
-
-          // If booked, wrap in TouchableOpacity to show booking details modal
-          if (slot.booked) {
-            return (
-              <TouchableOpacity
-                key={index}
-                onPress={() => {
-                  setBookedSlot(slot);
-                  setBookedDateIso(isoDate);
-                  setBookedModalVisible(true);
-                }}
-              >
-                {slotContent}
-              </TouchableOpacity>
-            );
-          }
-
-          return slotContent;
-        })}
+        .sort((a, b) => a.time.localeCompare(b.time))
+        .map((slot, index) => (
+          <View
+            key={index}
+            style={[
+              styles.gridItem,
+              {
+                backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
+                borderColor: slot.booked ? '#aaa' : '#ccc',
+                borderWidth: 1,
+                opacity: slot.booked ? 0.6 : 1,
+              },
+            ]}
+          >
+            <Text style={{ color: slot.booked ? '#888' : 'black' }}>
+              {slot.booked ? '🔒' : '✅'} {slot.time}
+            </Text>
+          </View>
+        ))}
     </View>
   </ScrollView>
 )}
@@ -733,12 +478,7 @@ useEffect(() => {
           <Text>Fecha: {bookedDateIso}</Text>
           <Text>Hora: {bookedSlot.time}</Text>
           <Text>Estado: Reservado</Text>
-          {bookingDetails?.autoNumber && (
-            <Text>Cita número: {bookingDetails.autoNumber}</Text>
-          )}
-          {bookingDetails?.userAutoNumber && (
-            <Text>Usuario número: {bookingDetails.userAutoNumber}</Text>
-          )}
+          {bookedSlot.bookingId && <Text>Cita ID: {bookedSlot.bookingId}</Text>}
         </>
       )}
       {bookingDetails && (
