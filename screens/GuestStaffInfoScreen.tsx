@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Button_style2 from '../Components/Button_style2';
 import { RootStackParamList } from '../src/types';
 
 // Define route type
@@ -29,36 +30,47 @@ type Props = {
   navigation: GuestStaffInfoScreenNavigationProp;
 };
 
-export default function GuestStaffInfoScreen({ route }: Props) {
-  const { staffId, role } = route.params; // ✅ read staffId and role from params
+export default function GuestStaffInfoScreen({ route, navigation }: Props) {
+  const { staffId, role } = route.params;
   const firestore = getFirestore();
-
   const [loading, setLoading] = useState(true);
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [socialLinks, setSocialLinks] = useState<{ instagram?: string; facebook?: string; website?: string }>({});
   const [generalInfo, setGeneralInfo] = useState('');
   const [services, setServices] = useState<{ id: string; name: string; duration: string; cost?: string }[]>([]);
+  const [stylistName, setStylistName] = useState<string>("Sin nombre");
+  const [stylistAutoNumber, setStylistAutoNumber] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const ref = doc(firestore, `users/${staffId}/profile/info`);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const data = snap.data();
-          setProfilePic(data.profilePic ?? null);
-          setSocialLinks(data.socialLinks ?? {});
-          setGeneralInfo(data.generalInfo ?? '');
-          setServices(data.services ?? []);
-        }
-      } catch (err) {
-        console.error('Error loading staff profile:', err);
-      } finally {
-        setLoading(false);
+  const loadProfile = async () => {
+    try {
+      // 🔎 Fetch main user doc
+      const userRef = doc(firestore, "users", staffId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        setStylistName(userData.username || userData.email || "Sin nombre");
+        setStylistAutoNumber(userData.autoNumber?.toString() || null);
       }
-    };
-    loadProfile();
-  }, [staffId]);
+
+      // 🔎 Fetch profile subdoc
+      const ref = doc(firestore, `users/${staffId}/profile/info`);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        setProfilePic(data.profilePic ?? null);
+        setSocialLinks(data.socialLinks ?? {});
+        setGeneralInfo(data.generalInfo ?? "");
+        setServices(data.services ?? []);
+      }
+    } catch (err) {
+      console.error("Error loading staff profile:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  loadProfile();
+}, [staffId]);
 
   if (loading) {
     return (
@@ -84,25 +96,11 @@ export default function GuestStaffInfoScreen({ route }: Props) {
             </View>
           )}
         </View>
-
+        <BodyBoldText style={styles.stylistName}>
+          {stylistName} {stylistAutoNumber ? `(Artista id: ${stylistAutoNumber})` : ""}
+        </BodyBoldText>
         <SubTitleText>Sobre mí</SubTitleText>
         <BodyText style={styles.generalInfo}>{generalInfo || 'No disponible'}</BodyText>
-
-        <SubTitleText>Servicios ofrecidos</SubTitleText>
-        {services.length > 0 ? (
-          services.map((service, index) => (
-            <View key={index} style={styles.serviceItem}>
-              <BodyBoldText style={styles.serviceName}>{service.name}</BodyBoldText>
-              <BodyText style={styles.serviceTime}>
-                {service.duration} {Number(service.duration) === 1 ? 'hora' : 'horas'} — ${service.cost || 'N/A'}
-              </BodyText>
-
-            </View>
-          ))
-        ) : (
-          <BodyText>No hay servicios disponibles</BodyText>
-        )}
-
         <SubTitleText>Redes sociales</SubTitleText>
         {socialLinks.instagram ? (
           <TouchableOpacity onPress={() => Linking.openURL(socialLinks.instagram!)}>
@@ -119,6 +117,41 @@ export default function GuestStaffInfoScreen({ route }: Props) {
             <BodyText style={styles.link}>Sitio web</BodyText>
           </TouchableOpacity>
         ) : null}
+
+        <SubTitleText>Servicios ofrecidos</SubTitleText>
+        {services.length > 0 ? (
+          services.map((service, index) => (
+            <View key={index} style={styles.serviceItem}>
+              <BodyBoldText style={styles.serviceName}>{service.name}</BodyBoldText>
+              <BodyText style={styles.serviceTime}>
+                {service.duration} {Number(service.duration) === 1 ? 'hora' : 'horas'} — ${service.cost || 'N/A'}
+              </BodyText>
+
+              <Button_style2
+  title="Reservar"
+  onPress={() =>
+    navigation.navigate("Agenda tu cita", {
+      role,
+      serviceFromUser: {
+        id: service.id,
+        name: service.name,
+        duration: service.duration,
+        cost: service.cost || "N/A",
+        description: "", // optional
+      },
+      stylist: {
+        id: staffId,
+        name: stylistName, // fetched from Firestore
+      },
+    })
+  }
+/>
+
+            </View>
+          ))
+        ) : (
+          <BodyText>No hay servicios disponibles</BodyText>
+        )}
       </ScrollView>
     </GradientBackground>
   );
@@ -170,4 +203,12 @@ const styles = StyleSheet.create({
     color: '#0072ff',
     marginBottom: 8,
   },
+  stylistName: {
+  fontSize: 18,
+  fontWeight: "700",
+  marginBottom: 12,
+  textAlign: "center",
+  color: "#3e3e3e",
+},
+
 });

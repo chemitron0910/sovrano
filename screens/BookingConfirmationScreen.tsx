@@ -30,7 +30,7 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
   const windowHeight = windowDimensions.height;
 
   // ✅ Now using autoNumber and userAutoNumber
-  const { service, date, time, stylistName, autoNumber, userAutoNumber } = route.params;
+  const { service, date, time, stylistName, stylistAutoNumber, autoNumber, userAutoNumber } = route.params;
 
   return (
     <View style={styles.container}>
@@ -43,9 +43,13 @@ export default function BookingConfirmationScreen({ navigation, route }: Props) 
             <SubTitleText>Gracias por agendar tu cita</SubTitleText>
           </View>
           <View style={styles.inlineText}>
-            <BodyBoldText>Estilista: </BodyBoldText>
+            <BodyBoldText>Artista: </BodyBoldText>
             <BodyText>{stylistName}</BodyText>
           </View>
+          <View style={styles.inlineText}>
+  <BodyBoldText>Artista id: </BodyBoldText>
+  <BodyText>{stylistAutoNumber || "No disponible"}</BodyText>
+</View>
           <View style={styles.inlineText}>
             <BodyBoldText>Servicio: </BodyBoldText>
             <BodyText>{service}</BodyText>

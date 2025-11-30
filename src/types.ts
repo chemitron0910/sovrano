@@ -48,6 +48,7 @@ export type RootStackParamList = {
     autoNumber: string;
     userAutoNumber: string;
     role: string;
+    stylistAutoNumber?: string;
   };
 
   // Admin/empleado flows

@@ -5,7 +5,7 @@ import { auth, db } from '../Services/firebaseConfig';
 
 type BookingParams = {
   selectedSlot: { date: string; time: string };
-  selectedStylist: { id: string; name: string };
+  selectedStylist: { id: string; name: string; autoNumber?: string };
   selectedService: { name: string; duration: string };
   guestInfo?: {
     guestName: string;
@@ -138,6 +138,18 @@ export const handleBooking = async ({
       }
     }
 
+    // ✅ Fetch stylist autoNumber from Firestore
+let stylistAutoNumber: string | null = null;
+try {
+  const stylistRef = doc(db, "users", selectedStylist.id);
+  const stylistSnap = await getDoc(stylistRef);
+  if (stylistSnap.exists()) {
+    stylistAutoNumber = stylistSnap.data().autoNumber?.toString() || null;
+  }
+} catch (err) {
+  console.error("Error fetching stylist autoNumber:", err);
+}
+
     const bookingData = {
       service: selectedService?.name || '',
       duration: selectedService?.duration || '',
@@ -157,6 +169,7 @@ export const handleBooking = async ({
           : "",
       stylistId: selectedStylist.id,
       stylistName: selectedStylist.name,
+      stylistAutoNumber,
       createdAt: new Date().toISOString(),
       role,
       userId: role === "usuario" ? auth.currentUser?.uid ?? null : null,
@@ -227,6 +240,7 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
             <li><strong>Fecha:</strong> ${isoDate}</li>
             <li><strong>Hora:</strong> ${selectedTime}</li>
             <li><strong>Estilista:</strong> ${bookingData.stylistName}</li>
+            <li><strong>Estilista ID:</strong> ${bookingData.stylistAutoNumber || "No disponible"}</li>
           </ul>
           <p>¡Gracias por confiar en Sovrano!</p>
         `,
@@ -255,6 +269,7 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
       time: selectedTime,
       guestName: bookingData.guestName,
       stylistName: bookingData.stylistName,
+      stylistAutoNumber: bookingData.stylistAutoNumber,
       bookingId: docRef.id,
       autoNumber, // ✅ pass booking sequential number to confirmation screen
       role: bookingData.role,
