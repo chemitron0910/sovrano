@@ -562,10 +562,6 @@ useEffect(() => {
         </>
       )}
 
-      <View style={{ marginTop: 12 }}>
-        <Button_style2 title="Cerrar" onPress={() => setBookedModalVisible(false)} />
-      </View>
-
       {bookingDetails?.status === "Reservado" && bookedSlot?.bookingId && (
         <>
           <View style={{ marginTop: 12 }}>
@@ -584,31 +580,28 @@ useEffect(() => {
       )}
 
       {bookingDetails?.status === "Terminado" && (
-        <>
-          <View style={{ marginTop: 12 }}>
-            <Button_style2
-              title="Ver notas usuario"
-              onPress={() => {
-                setNotesTitle("Notas usuario");
-                setNotesContent(bookingDetails?.notasUsuario || "");
-                setBookedModalVisible(false); // ✅ close booking modal
-                setNotesModalVisible(true);   // ✅ open notes modal
-              }}
-            />
-          </View>
-          <View style={{ marginTop: 12 }}>
-            <Button_style2
-              title="Ver notas empleado"
-              onPress={() => {
-                setNotesTitle("Notas empleado");
-                setNotesContent(bookingDetails?.notasEmpleado || "");
-                setBookedModalVisible(false);
-                setNotesModalVisible(true);
-              }}
-            />
-          </View>
-        </>
-      )}
+  <>
+    <View style={{ marginTop: 12 }}>
+      <Button_style2
+        title="Cerrar"
+        onPress={() => setBookedModalVisible(false)}
+      />
+    </View>
+    <View style={{ marginTop: 12 }}>
+      <Button_style2
+        title="Ver notas"
+        onPress={() => {
+          // preload both notes
+          setUserNotes(bookingDetails?.notasUsuario || "");
+          setStaffNotes(bookingDetails?.notasEmpleado || "");
+          setBookedModalVisible(false); // close booking modal
+          setNotesModalVisible(true);   // open notes modal
+        }}
+      />
+    </View>
+  </>
+)}
+
     </View>
   </View>
 </Modal>
@@ -621,42 +614,73 @@ useEffect(() => {
 >
   <View style={styles.modalContainer}>
     <View style={styles.modalContent}>
-      <Text style={styles.notesTitle}>{notesTitle}</Text>
+      <Text style={styles.notesTitle}>Notas de la cita</Text>
+
+      {/* Usuario Notes */}
+      <Text style={{ marginBottom: 6 }}>Notas para el usuario:</Text>
       <TextInput
         style={styles.notesContent}
-        value={notesContent}
-        onChangeText={setNotesContent}
-        placeholder="Escribe aquí..."
+        value={userNotes}
+        onChangeText={setUserNotes}
+        placeholder="Notas para el usuario"
+        multiline
+      />
+
+      {/* Empleado Notes */}
+      <Text style={{ marginTop: 16, marginBottom: 6 }}>Notas internas del empleado:</Text>
+      <TextInput
+        style={styles.notesContent}
+        value={staffNotes}
+        onChangeText={setStaffNotes}
+        placeholder="Notas internas del empleado"
         multiline
       />
 
       <View style={{ marginTop: 20 }}>
         <Button_style2
-          title="Guardar"
+          title="Guardar notas"
           onPress={async () => {
             if (bookedSlot?.bookingId) {
               try {
                 const bookingRef = doc(db, "bookings", bookedSlot.bookingId);
-                const field =
-                  notesTitle === "Notas usuario" ? "notasUsuario" : "notasEmpleado";
-                await setDoc(bookingRef, { [field]: notesContent }, { merge: true });
-                Alert.alert("Éxito", "Nota guardada.");
+                await setDoc(
+                  bookingRef,
+                  {
+                    notasUsuario: userNotes,
+                    notasEmpleado: staffNotes,
+                  },
+                  { merge: true }
+                );
+                Alert.alert("Éxito", "Notas guardadas con la cita.");
                 setNotesModalVisible(false);
+
+                // ✅ Update local state so UI reflects changes
+                setBookingDetails(prev =>
+                  prev
+                    ? {
+                        ...prev,
+                        notasUsuario: userNotes,
+                        notasEmpleado: staffNotes,
+                      }
+                    : prev
+                );
               } catch (error) {
-                console.error("Error al guardar nota:", error);
-                Alert.alert("Error", "No se pudo guardar la nota.");
+                console.error("Error al guardar notas:", error);
+                Alert.alert("Error", "No se pudieron guardar las notas.");
               }
             }
           }}
         />
         <View style={{ marginTop: 12 }}>
-          <Button_style2 title="Cancelar" onPress={() => setNotesModalVisible(false)} />
+          <Button_style2
+            title="Cancelar"
+            onPress={() => setNotesModalVisible(false)}
+          />
         </View>
       </View>
     </View>
   </View>
 </Modal>
-
 
 {/* WEEKLY EDITION */}
 <View style={{ marginTop: 24, width: '100%' }}>
