@@ -37,6 +37,7 @@ export type RootStackParamList = {
     stylist?: {
       id: string;
       name: string;
+      autoNumber?: string | null;
     };
   };
   "Cita confirmada": {

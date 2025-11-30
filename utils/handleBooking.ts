@@ -138,18 +138,6 @@ export const handleBooking = async ({
       }
     }
 
-    // ✅ Fetch stylist autoNumber from Firestore
-let stylistAutoNumber: string | null = null;
-try {
-  const stylistRef = doc(db, "users", selectedStylist.id);
-  const stylistSnap = await getDoc(stylistRef);
-  if (stylistSnap.exists()) {
-    stylistAutoNumber = stylistSnap.data().autoNumber?.toString() || null;
-  }
-} catch (err) {
-  console.error("Error fetching stylist autoNumber:", err);
-}
-
     const bookingData = {
       service: selectedService?.name || '',
       duration: selectedService?.duration || '',
@@ -169,7 +157,7 @@ try {
           : "",
       stylistId: selectedStylist.id,
       stylistName: selectedStylist.name,
-      stylistAutoNumber,
+      stylistAutoNumber: selectedStylist.autoNumber || null,
       createdAt: new Date().toISOString(),
       role,
       userId: role === "usuario" ? auth.currentUser?.uid ?? null : null,

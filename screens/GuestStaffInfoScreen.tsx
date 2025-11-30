@@ -142,6 +142,7 @@ export default function GuestStaffInfoScreen({ route, navigation }: Props) {
       stylist: {
         id: staffId,
         name: stylistName, // fetched from Firestore
+        autoNumber: stylistAutoNumber || null,
       },
     })
   }
