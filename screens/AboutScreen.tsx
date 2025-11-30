@@ -3,7 +3,7 @@ import BodyText from '@/Components/typography/BodyText';
 import SubTitleText from '@/Components/typography/SubTitleText';
 import TitelText from '@/Components/typography/TitleText';
 import { ReactElement } from "react";
-import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Linking, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 export default function AboutScreen(): ReactElement {
   const windowDimensions = useWindowDimensions();
@@ -25,6 +25,14 @@ export default function AboutScreen(): ReactElement {
           <TitelText style={[styles.title, { fontSize: windowWidth > 500 ? 40 : 28 }]}>
             Acerca de Sovrano
           </TitelText>
+
+          {/* ✅ Instagram Link */}
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={() => Linking.openURL("https://www.instagram.com/sovranohair_/")}
+          >
+            <BodyText style={styles.link}>Síguenos en Instagram</BodyText>
+          </TouchableOpacity>
 
           <SubTitleText style={styles.paragraph}>
             Sovrano — Crowning Beauty
@@ -92,5 +100,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: "#444",
     textAlign: "justify",
+  },
+  socialButton: {
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  link: {
+    color: "#0072ff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
