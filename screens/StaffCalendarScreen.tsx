@@ -453,28 +453,52 @@ useEffect(() => {
 )}
 
 {!isDayOff && selectedSlots.length > 0 && (
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 16 }}>
+  <ScrollView
+    horizontal
+    showsHorizontalScrollIndicator={false}
+    style={{ marginVertical: 16 }}
+  >
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {selectedSlots
         .sort((a, b) => a.time.localeCompare(b.time))
-        .map((slot, index) => (
-          <View
-            key={index}
-            style={[
-              styles.gridItem,
-              {
-                backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
-                borderColor: slot.booked ? '#aaa' : '#ccc',
-                borderWidth: 1,
-                opacity: slot.booked ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Text style={{ color: slot.booked ? '#888' : 'black' }}>
-              {slot.booked ? '🔒' : '✅'} {slot.time}
-            </Text>
-          </View>
-        ))}
+        .map((slot, index) => {
+          const slotContent = (
+            <View
+              key={index}
+              style={[
+                styles.gridItem,
+                {
+                  backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
+                  borderColor: slot.booked ? '#aaa' : '#ccc',
+                  borderWidth: 1,
+                  opacity: slot.booked ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text style={{ color: slot.booked ? '#888' : 'black' }}>
+                {slot.booked ? '🔒' : '✅'} {slot.time}
+              </Text>
+            </View>
+          );
+
+          // ✅ If booked, wrap in TouchableOpacity to show booking modal
+          if (slot.booked) {
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => {
+                  setBookedSlot(slot);
+                  setBookedDateIso(isoDate); // daily isoDate
+                  setBookedModalVisible(true);
+                }}
+              >
+                {slotContent}
+              </TouchableOpacity>
+            );
+          }
+
+          return slotContent;
+        })}
     </View>
   </ScrollView>
 )}
