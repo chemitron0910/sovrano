@@ -218,6 +218,11 @@ const handleDelete = async (index: number) => {
   style={styles.inputText}
 />
 
+<View style={styles.buttonRow}>
+  <Button_style2 title="Agregar servicio" onPress={addService} style={styles.button} />
+  <Button_style2 title="Guardar perfil" onPress={saveProfile} style={styles.button} />
+</View>
+
       <SubTitleText>Servicios ofrecidos</SubTitleText>
       {services.map((service, index) => (
   <View key={index} 
@@ -270,9 +275,16 @@ const handleDelete = async (index: number) => {
       }}
     />
 
-    <TouchableOpacity onPress={() => setEditingIndex(null)}>
-      <BodyText style={styles.edit}>Guardar</BodyText>
-    </TouchableOpacity>
+    {/* Action buttons */}
+    <View style={styles.editActions}>
+      <TouchableOpacity onPress={() => setEditingIndex(null)}>
+        <BodyText style={styles.edit}>Guardar</BodyText>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => setEditingIndex(null)}>
+        <BodyText style={styles.cancel}>Cancelar</BodyText>
+      </TouchableOpacity>
+    </View>
     </View>
 ) : (
   <>
@@ -295,10 +307,6 @@ const handleDelete = async (index: number) => {
 )}
   </View>
 ))}
-    <View style={styles.buttonRow}>
-  <Button_style2 title="Agregar servicio" onPress={addService} style={styles.button} />
-  <Button_style2 title="Guardar perfil" onPress={saveProfile} style={styles.button} />
-</View>
 
     </ScrollView>
     </KeyboardAvoidingView>
@@ -416,6 +424,15 @@ serviceItem: {
 serviceItemEdit: {
   flexDirection: 'column', // ✅ stack vertically when editing
   alignItems: 'stretch',
-}
-
+},
+editActions: {
+  flexDirection: 'row',
+  justifyContent: 'flex-start',
+  gap: 20, // if RN version supports gap, otherwise use marginRight
+  marginTop: 12,
+},
+cancel: {
+  color: 'red', // grey tone for cancel
+  marginLeft: 16,
+},
 });
