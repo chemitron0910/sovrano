@@ -31,11 +31,13 @@ import Button_style2 from '../Components/Button_style2';
   const [availableServices, setAvailableServices] = useState<
   { id: string; name: string; duration: string; description?: string; cost?: string }[]
   >([]);
-
+    const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadProfile = async () => {
-      if (!uid) return;
+  const loadProfile = async () => {
+    if (!uid) return;
+    setLoading(true);
+    try {
       const ref = doc(firestore, `users/${uid}/profile/info`);
       const snap = await getDoc(ref);
       if (snap.exists()) {
@@ -45,28 +47,39 @@ import Button_style2 from '../Components/Button_style2';
         setGeneralInfo(data.generalInfo ?? '');
         setServices(data.services ?? []);
       }
-    };
-    loadProfile();
-  }, [uid]);
+    } catch (err) {
+      console.error("Error loading profile:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  loadProfile();
+}, [uid]);
 
-  useEffect(() => {
+useEffect(() => {
   const loadAvailableServices = async () => {
-    const snapshot = await getDocs(collection(firestore, 'services'));
-    const list = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name,
-        duration: data.duration,
-        description: data.description,
-        cost: data.cost,
-      };
-    });
-    setAvailableServices(list);
+    setLoading(true);
+    try {
+      const snapshot = await getDocs(collection(firestore, 'services'));
+      const list = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name,
+          duration: data.duration,
+          description: data.description,
+          cost: data.cost,
+        };
+      });
+      setAvailableServices(list);
+    } catch (err) {
+      console.error("Error loading services:", err);
+    } finally {
+      setLoading(false);
+    }
   };
   loadAvailableServices();
 }, []);
-
 
   const handleEdit = (index: number) => setEditingIndex(index);
 
@@ -137,12 +150,6 @@ const handleDelete = async (index: number) => {
 
   const addService = () => setServices([...services, { id: '', name: '', duration: '' }]);
 
-  
-  const removeService = (index: number) => {
-  const updated = services.filter((_, i) => i !== index);
-  setServices(updated);
-};
-
   const saveProfile = async () => {
   if (!uid) return;
   setSaving(true);
@@ -166,9 +173,11 @@ const handleDelete = async (index: number) => {
   return (
     
     <GradientBackground>
-        {saving && (
+        {(loading || saving) && (
   <View style={styles.overlay}>
-    <BodyText style={{ color: '#fff', fontSize: 18 }}>Guardando...</BodyText>
+    <BodyText style={{ color: '#fff', fontSize: 18 }}>
+      {loading ? "Cargando..." : "Guardando..."}
+    </BodyText>
   </View>
 )}
 
@@ -211,61 +220,79 @@ const handleDelete = async (index: number) => {
 
       <SubTitleText>Servicios ofrecidos</SubTitleText>
       {services.map((service, index) => (
-  <View key={index} style={styles.serviceItem}>
+  <View key={index} 
+  style={[
+    styles.serviceItem,
+    editingIndex === index && styles.serviceItemEdit, // ✅ override layout when editing
+  ]}>
     {editingIndex === index ? (
-      <>
-      <View style={styles.pickerWrapper}>
-        <Picker
-  selectedValue={service.name}
-  onValueChange={(selectedName) => {
-    const selected = availableServices.find(s => s.name === selectedName);
-    if (selected) {
-  const updated = [...services];
-  updated[index] = {
-    id: selected.id,
-    name: selected.name,
-    duration: selected.duration,
-    cost: selected.cost,
-  };
-  setServices(updated);
-}
+      <View style={styles.editContainer}>
+      {/* Service Picker */}
+    <View style={styles.pickerWrapper}>
+      <Picker
+        selectedValue={service.name}
+        onValueChange={(selectedName) => {
+          const selected = availableServices.find((s) => s.name === selectedName);
+          if (selected) {
+            const updated = [...services];
+            updated[index] = {
+              id: selected.id,
+              name: selected.name,
+              duration: selected.duration,
+              cost: selected.cost, // ✅ always refresh from service collection
+            };
+            setServices(updated);
+          }
+        }}
+        mode={Platform.OS === "android" ? "dropdown" : undefined}
+        style={styles.picker}
+        itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
+      >
+        <Picker.Item label="Selecciona un servicio" value="" />
+        {availableServices.map((s, i) => (
+          <Picker.Item key={i} label={`${s.name} (${s.duration})`} value={s.name} />
+        ))}
+      </Picker>
+    </View>
 
-  }}
-  mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-      style={styles.picker}
-      itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
->
-  <Picker.Item label="Selecciona un servicio" value="" />
-  {availableServices.map((s, i) => (
-    <Picker.Item key={i} label={`${s.name} (${s.duration})`} value={s.name} />
-  ))}
-</Picker>
-</View>
+    {/* 👇 Editable cost lives in edit mode */}
+    <TextInput
+      style={styles.inputText}
+      value={service.cost?.toString() || ""}
+      placeholder="Costo personalizado"
+      onChangeText={(text) => {
+        const updated = [...services];
+        updated[index] = {
+          ...updated[index],
+          cost: text,
+        };
+        setServices(updated);
+      }}
+    />
 
-            <TouchableOpacity onPress={() => setEditingIndex(null)} >
-                  <BodyText style={styles.edit}>Guardar</BodyText>
-                </TouchableOpacity>
-      </>
-    ) : (
-      <>
-        <View style={{ flex: 1 }}>
-          <BodyBoldText style={styles.serviceName}>{service.name}</BodyBoldText>
-          <BodyText style={styles.serviceTime}>
-            {service.duration} {Number(service.duration) === 1 ? 'hora' : 'horas'} — ${service.cost || 'N/A'}
-          </BodyText>
+    <TouchableOpacity onPress={() => setEditingIndex(null)}>
+      <BodyText style={styles.edit}>Guardar</BodyText>
+    </TouchableOpacity>
+    </View>
+) : (
+  <>
+    <View style={{ flex: 1 }}>
+      <BodyBoldText style={styles.serviceName}>{service.name}</BodyBoldText>
+      <BodyText style={styles.serviceTime}>
+        {service.duration} {Number(service.duration) === 1 ? "hora" : "horas"} — ${service.cost || "N/A"}
+      </BodyText>
+    </View>
 
-        </View>
-
-        <View style={styles.actions}>
-                <TouchableOpacity onPress={() => handleEdit(index)}>
-                  <BodyText style={styles.edit}>Editar</BodyText>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(index)}>
-                  <BodyText style={styles.delete}>Eliminar</BodyText>
-                </TouchableOpacity>
-              </View>
-      </>
-    )}
+    <View style={styles.actions}>
+      <TouchableOpacity onPress={() => handleEdit(index)}>
+        <BodyText style={styles.edit}>Editar</BodyText>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handleDelete(index)}>
+        <BodyText style={styles.delete}>Eliminar</BodyText>
+      </TouchableOpacity>
+    </View>
+  </>
+)}
   </View>
 ))}
     <View style={styles.buttonRow}>
@@ -284,6 +311,7 @@ const styles = StyleSheet.create({
     height: 40, 
     borderColor: 'gray', 
     borderWidth: 1, 
+    marginTop: 12,
     marginBottom: 20, 
     paddingHorizontal: 10,
     borderRadius: 5,
@@ -299,16 +327,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 12,
   },
-  serviceItem: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: 16,
-  padding: 12,
-  borderWidth: 1,
-  borderColor: '#ccc',
-  borderRadius: 8,
-},
 serviceName: {
   fontSize: 16,
   marginBottom: 4,
@@ -335,10 +353,6 @@ edit: {
   centerText:{
     alignItems:'center'
   },
-  pickerWrapper: {
-    flex: 1,
-    justifyContent: 'center',
-  },
   picker: {
   ...Platform.select({
     ios: {
@@ -354,10 +368,6 @@ edit: {
   borderWidth: 1,
   borderColor: '#00796b',
 },
-  pickerItem: {
-    fontSize: 16,
-    color: 'black',
-  },
   overlay: {
   position: 'absolute',
   top: 0,
@@ -379,4 +389,33 @@ button: {
   paddingHorizontal: 12,   // ✅ optional: tighter padding
   marginBottom: 50,
 },
+editContainer: {
+  flexDirection: 'column',   // stack vertically
+  alignItems: 'stretch',     // let children fill width
+  gap: 12,                   // if RN version supports gap
+  width: '100%',             // ✅ take full width of parent
+},
+
+pickerWrapper: {
+  width: '100%',
+},
+pickerItem: {
+  fontSize: 16,
+  color: 'black',
+},
+serviceItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 16,
+  padding: 12,
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 8,
+},
+serviceItemEdit: {
+  flexDirection: 'column', // ✅ stack vertically when editing
+  alignItems: 'stretch',
+}
+
 });
