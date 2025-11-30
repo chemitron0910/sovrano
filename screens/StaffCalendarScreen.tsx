@@ -44,6 +44,8 @@ export default function StaffCalendarScreen() {
   autoNumber?: string;
   userAutoNumber?: string;
   status?: string;
+  notasUsuario?: string;
+  notasEmpleado?: string;
 };
     type TimeSlot = {
   time: string;
@@ -65,9 +67,12 @@ export default function StaffCalendarScreen() {
     const uid = auth.currentUser?.uid;
     const isoDate = format(selectedDate, 'yyyy-MM-dd');
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const [notesModalVisible, setNotesModalVisible] = useState(false);
     const [userNotes, setUserNotes] = useState("");
     const [staffNotes, setStaffNotes] = useState("");
+    const [notesModalVisible, setNotesModalVisible] = useState(false);
+    const [notesTitle, setNotesTitle] = useState("");
+    const [notesContent, setNotesContent] = useState("");
+
 
     const markAsCompleted = async (bookingId: string) => {
   try {
@@ -345,6 +350,8 @@ const booking: BookingDetails = {
   autoNumber: data.autoNumber,
   userAutoNumber: data.userAutoNumber,
   status: data.status,
+  notasUsuario: data.notasUsuario ?? "",
+  notasEmpleado: data.notasEmpleado ?? "",
 };
 setBookingDetails(booking);
       }
@@ -519,8 +526,7 @@ useEffect(() => {
         <>
           <Text>Fecha: {bookedDateIso}</Text>
           <Text>Hora: {bookedSlot.time}</Text>
-          <Text>Estado: Reservado</Text>
-          {bookedSlot.bookingId && <Text>Cita ID: {bookedSlot.bookingId}</Text>}
+          <Text>Estado: {bookingDetails?.status || "Reservado"}</Text>
         </>
       )}
       {bookingDetails && (
@@ -532,28 +538,57 @@ useEffect(() => {
         </>
       )}
 
-      <View style={{ marginTop: 12 }}><Button_style2 title="Cerrar" onPress={() => setBookedModalVisible(false)} />
+      <View style={{ marginTop: 12 }}>
+        <Button_style2 title="Cerrar" onPress={() => setBookedModalVisible(false)} />
       </View>
-      {bookedSlot?.bookingId && (
-  <>
-  <View style={{ marginTop: 12 }}>
-    <Button_style2
-      title="Cancelar cita"
-      onPress={() => cancelFromStaff(bookedSlot.bookingId!)}
-    />
-    </View>
-    <View style={{ marginTop: 12 }}>
-      <Button_style2
-        title="Terminado"
-        onPress={() => markAsCompleted(bookedSlot.bookingId!)}
-      />
-    </View>
-  </>
-)}
 
+      {bookingDetails?.status === "Reservado" && bookedSlot?.bookingId && (
+        <>
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
+              title="Cancelar cita"
+              onPress={() => cancelFromStaff(bookedSlot.bookingId!)}
+            />
+          </View>
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
+              title="Terminado"
+              onPress={() => markAsCompleted(bookedSlot.bookingId!)}
+            />
+          </View>
+        </>
+      )}
+
+      {bookingDetails?.status === "Terminado" && (
+        <>
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
+              title="Ver notas usuario"
+              onPress={() => {
+                setNotesTitle("Notas usuario");
+                setNotesContent(bookingDetails?.notasUsuario || "");
+                setBookedModalVisible(false); // ✅ close booking modal
+                setNotesModalVisible(true);   // ✅ open notes modal
+              }}
+            />
+          </View>
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
+              title="Ver notas empleado"
+              onPress={() => {
+                setNotesTitle("Notas empleado");
+                setNotesContent(bookingDetails?.notasEmpleado || "");
+                setBookedModalVisible(false);
+                setNotesModalVisible(true);
+              }}
+            />
+          </View>
+        </>
+      )}
     </View>
   </View>
 </Modal>
+
 <Modal
   visible={notesModalVisible}
   animationType="slide"
@@ -562,60 +597,42 @@ useEffect(() => {
 >
   <View style={styles.modalContainer}>
     <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Agregar notas</Text>
-
-      <Text>Notas usuario:</Text>
+      <Text style={styles.notesTitle}>{notesTitle}</Text>
       <TextInput
-        style={styles.inputText}
-        value={userNotes}
-        onChangeText={setUserNotes}
-        placeholder="Notas para el usuario"
-        multiline
-      />
-
-      <Text>Notas empleado:</Text>
-      <TextInput
-        style={styles.inputText}
-        value={staffNotes}
-        onChangeText={setStaffNotes}
-        placeholder="Notas internas del empleado"
+        style={styles.notesContent}
+        value={notesContent}
+        onChangeText={setNotesContent}
+        placeholder="Escribe aquí..."
         multiline
       />
 
       <View style={{ marginTop: 20 }}>
         <Button_style2
-          title="Guardar notas"
+          title="Guardar"
           onPress={async () => {
             if (bookedSlot?.bookingId) {
               try {
                 const bookingRef = doc(db, "bookings", bookedSlot.bookingId);
-                await setDoc(
-                  bookingRef,
-                  {
-                    notasUsuario: userNotes,
-                    notasEmpleado: staffNotes,
-                  },
-                  { merge: true }
-                );
-                Alert.alert("Éxito", "Notas guardadas con la cita.");
+                const field =
+                  notesTitle === "Notas usuario" ? "notasUsuario" : "notasEmpleado";
+                await setDoc(bookingRef, { [field]: notesContent }, { merge: true });
+                Alert.alert("Éxito", "Nota guardada.");
                 setNotesModalVisible(false);
               } catch (error) {
-                console.error("Error al guardar notas:", error);
-                Alert.alert("Error", "No se pudieron guardar las notas.");
+                console.error("Error al guardar nota:", error);
+                Alert.alert("Error", "No se pudo guardar la nota.");
               }
             }
           }}
         />
         <View style={{ marginTop: 12 }}>
-          <Button_style2
-            title="Cancelar"
-            onPress={() => setNotesModalVisible(false)}
-          />
+          <Button_style2 title="Cancelar" onPress={() => setNotesModalVisible(false)} />
         </View>
       </View>
     </View>
   </View>
 </Modal>
+
 
 {/* WEEKLY EDITION */}
 <View style={{ marginTop: 24, width: '100%' }}>
@@ -890,4 +907,21 @@ inputText: {
     fontSize: 16,
     color: '#000',
   },
+  notesTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginBottom: 12,
+  textAlign: 'center',
+  color: '#333',
+},
+notesContent: {
+  minHeight: 80,
+  borderColor: 'gray',
+  borderWidth: 1,
+  borderRadius: 6,
+  padding: 10,
+  fontSize: 16,
+  color: '#000',
+  textAlignVertical: 'top',
+},
 });
