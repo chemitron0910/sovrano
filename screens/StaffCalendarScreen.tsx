@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
@@ -46,6 +47,8 @@ export default function StaffCalendarScreen() {
   status?: string;
   notasUsuario?: string;
   notasEmpleado?: string;
+  stylistAutoNumber?: string;
+  stylistName?: string;
 };
     type TimeSlot = {
   time: string;
@@ -73,10 +76,15 @@ export default function StaffCalendarScreen() {
     const [notesTitle, setNotesTitle] = useState("");
     const [notesContent, setNotesContent] = useState("");
 
+// Create callable reference once
+const functions = getFunctions();
+const sendGuestEmail = httpsCallable(functions, "sendGuestEmail");
 
-    const markAsCompleted = async (bookingId: string) => {
+const markAsCompleted = async (bookingId: string) => {
   try {
     const bookingRef = doc(db, "bookings", bookingId);
+
+    // 1. Update status to Terminado
     await setDoc(bookingRef, { status: "Terminado" }, { merge: true });
 
     Alert.alert("Éxito", "La cita fue marcada como terminada.");
@@ -85,6 +93,44 @@ export default function StaffCalendarScreen() {
       prev ? { ...prev, status: "Terminado" } : prev
     );
 
+    // 2. Fetch the latest booking document to get fresh notes and details
+    const bookingSnap = await getDoc(bookingRef);
+    if (bookingSnap.exists()) {
+      const latestData = bookingSnap.data();
+
+      // 3. Send completion email using fresh data
+      if (latestData.email) {
+        try {
+          await sendGuestEmail({
+            to: latestData.email,
+            subject: "Tu cita ha sido completada en Sovrano",
+            text: `Hola ${latestData.guestName}, tu cita para ${latestData.service} el ${latestData.date} a las ${latestData.time} con ${latestData.stylistName} ha sido marcada como terminada.\n\nNúmero de cita: ${latestData.autoNumber}\nEstilista ID: ${latestData.stylistAutoNumber || "No disponible"}\nNotas: ${latestData.notasUsuario || "Sin notas"}`,
+            html: `
+              <p>Hola ${latestData.guestName},</p>
+              <p>Tu cita ha sido marcada como <strong>terminada</strong>:</p>
+              <ul>
+                <li><strong>Servicio:</strong> ${latestData.service}</li>
+                <li><strong>Fecha:</strong> ${latestData.date}</li>
+                <li><strong>Hora:</strong> ${latestData.time}</li>
+                <li><strong>Estilista:</strong> ${latestData.stylistName}</li>
+                <li><strong>Estilista ID:</strong> ${latestData.stylistAutoNumber || "No disponible"}</li>
+                <li><strong>Número de cita:</strong> ${latestData.autoNumber}</li>
+              </ul>
+              <p><strong>Notas del estilista:</strong> ${latestData.notasUsuario || "Sin notas"}</p>
+              <br/>
+              <p>Gracias por confiar en Sovrano.</p>
+            `,
+            autoNumber: latestData.autoNumber,
+            userAutoNumber: latestData.userAutoNumber,
+          });
+        } catch (emailError) {
+          console.error("Error sending completion email:", emailError);
+          // Don’t block flow if email fails
+        }
+      }
+    }
+
+    // 4. Continue with UI flow
     setBookedModalVisible(false);   // close booked details modal
     setNotesModalVisible(true);     // open notes modal
   } catch (error) {
@@ -546,6 +592,7 @@ useEffect(() => {
     <View style={styles.modalContent}>
       <Text style={styles.modalTitle}>Detalles de la cita</Text>
 
+      {/* Common fields shown for both statuses */}
       {bookedSlot && (
         <>
           <Text>Fecha: {bookedDateIso}</Text>
@@ -562,24 +609,8 @@ useEffect(() => {
         </>
       )}
 
+      {/* Buttons depending on status */}
       {bookingDetails?.status === "Reservado" && bookedSlot?.bookingId && (
-        <>
-          <View style={{ marginTop: 12 }}>
-            <Button_style2
-              title="Cancelar cita"
-              onPress={() => cancelFromStaff(bookedSlot.bookingId!)}
-            />
-          </View>
-          <View style={{ marginTop: 12 }}>
-            <Button_style2
-              title="Terminado"
-              onPress={() => markAsCompleted(bookedSlot.bookingId!)}
-            />
-          </View>
-        </>
-      )}
-
-      {bookingDetails?.status === "Terminado" && (
   <>
     <View style={{ marginTop: 12 }}>
       <Button_style2
@@ -589,19 +620,40 @@ useEffect(() => {
     </View>
     <View style={{ marginTop: 12 }}>
       <Button_style2
-        title="Ver notas"
-        onPress={() => {
-          // preload both notes
-          setUserNotes(bookingDetails?.notasUsuario || "");
-          setStaffNotes(bookingDetails?.notasEmpleado || "");
-          setBookedModalVisible(false); // close booking modal
-          setNotesModalVisible(true);   // open notes modal
-        }}
+        title="Cancelar cita"
+        onPress={() => cancelFromStaff(bookedSlot.bookingId!)}
+      />
+    </View>
+    <View style={{ marginTop: 12 }}>
+      <Button_style2
+        title="Terminado"
+        onPress={() => markAsCompleted(bookedSlot.bookingId!)}
       />
     </View>
   </>
 )}
 
+      {bookingDetails?.status === "Terminado" && (
+        <>
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
+              title="Cerrar"
+              onPress={() => setBookedModalVisible(false)}
+            />
+          </View>
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
+              title="Ver notas"
+              onPress={() => {
+                setUserNotes(bookingDetails?.notasUsuario || "");
+                setStaffNotes(bookingDetails?.notasEmpleado || "");
+                setBookedModalVisible(false);
+                setNotesModalVisible(true);
+              }}
+            />
+          </View>
+        </>
+      )}
     </View>
   </View>
 </Modal>
