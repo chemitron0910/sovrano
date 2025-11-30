@@ -11,7 +11,7 @@ import {
   ActivityIndicator, Alert,
   FlatList, Modal,
   Platform,
-  ScrollView, StyleSheet, Switch, Text,
+  ScrollView, StyleSheet, Switch, Text, TextInput,
   TouchableOpacity, View
 } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
@@ -34,7 +34,17 @@ export default function StaffCalendarScreen() {
     const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
     const [bulkSlots, setBulkSlots] = useState<TimeSlot[]>([]);
     const [weekDates, setWeekDates] = useState<Date[]>([]);
-    const [bookingDetails, setBookingDetails] = useState<any | null>(null);
+    const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
+
+    type BookingDetails = {
+  guestName: string;
+  email: string;
+  phoneNumber: string;
+  service: string;
+  autoNumber?: string;
+  userAutoNumber?: string;
+  status?: string;
+};
     type TimeSlot = {
   time: string;
   booked: boolean;
@@ -55,6 +65,28 @@ export default function StaffCalendarScreen() {
     const uid = auth.currentUser?.uid;
     const isoDate = format(selectedDate, 'yyyy-MM-dd');
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const [notesModalVisible, setNotesModalVisible] = useState(false);
+    const [userNotes, setUserNotes] = useState("");
+    const [staffNotes, setStaffNotes] = useState("");
+
+    const markAsCompleted = async (bookingId: string) => {
+  try {
+    const bookingRef = doc(db, "bookings", bookingId);
+    await setDoc(bookingRef, { status: "Terminado" }, { merge: true });
+
+    Alert.alert("Éxito", "La cita fue marcada como terminada.");
+
+    setBookingDetails(prev =>
+      prev ? { ...prev, status: "Terminado" } : prev
+    );
+
+    setBookedModalVisible(false);   // close booked details modal
+    setNotesModalVisible(true);     // open notes modal
+  } catch (error) {
+    console.error("Error al marcar cita como terminada:", error);
+    Alert.alert("Error", "No se pudo marcar la cita como terminada.");
+  }
+};
 
     const cancelFromStaff = async (bookingId: string) => {
   await handleCancelBooking({
@@ -304,7 +336,17 @@ useEffect(() => {
       const bookingRef = doc(db, "bookings", bookedSlot.bookingId);
       const bookingSnap = await getDoc(bookingRef);
       if (bookingSnap.exists()) {
-        setBookingDetails(bookingSnap.data()); // store guestName, email, etc.
+        const data = bookingSnap.data();
+const booking: BookingDetails = {
+  guestName: data.guestName ?? "",
+  email: data.email ?? "",
+  phoneNumber: data.phoneNumber ?? "",
+  service: data.service ?? "",
+  autoNumber: data.autoNumber,
+  userAutoNumber: data.userAutoNumber,
+  status: data.status,
+};
+setBookingDetails(booking);
       }
     }
   };
@@ -490,15 +532,87 @@ useEffect(() => {
         </>
       )}
 
-      <View style={{ marginBottom: 20 }}><Button_style2 title="Cerrar" onPress={() => setBookedModalVisible(false)} />
+      <View style={{ marginTop: 12 }}><Button_style2 title="Cerrar" onPress={() => setBookedModalVisible(false)} />
       </View>
       {bookedSlot?.bookingId && (
-  <Button_style2
-    title="Cancelar cita"
-    onPress={() => cancelFromStaff(bookedSlot.bookingId!)}
-  />
+  <>
+  <View style={{ marginTop: 12 }}>
+    <Button_style2
+      title="Cancelar cita"
+      onPress={() => cancelFromStaff(bookedSlot.bookingId!)}
+    />
+    </View>
+    <View style={{ marginTop: 12 }}>
+      <Button_style2
+        title="Terminado"
+        onPress={() => markAsCompleted(bookedSlot.bookingId!)}
+      />
+    </View>
+  </>
 )}
 
+    </View>
+  </View>
+</Modal>
+<Modal
+  visible={notesModalVisible}
+  animationType="slide"
+  transparent
+  onRequestClose={() => setNotesModalVisible(false)}
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Agregar notas</Text>
+
+      <Text>Notas usuario:</Text>
+      <TextInput
+        style={styles.inputText}
+        value={userNotes}
+        onChangeText={setUserNotes}
+        placeholder="Notas para el usuario"
+        multiline
+      />
+
+      <Text>Notas empleado:</Text>
+      <TextInput
+        style={styles.inputText}
+        value={staffNotes}
+        onChangeText={setStaffNotes}
+        placeholder="Notas internas del empleado"
+        multiline
+      />
+
+      <View style={{ marginTop: 20 }}>
+        <Button_style2
+          title="Guardar notas"
+          onPress={async () => {
+            if (bookedSlot?.bookingId) {
+              try {
+                const bookingRef = doc(db, "bookings", bookedSlot.bookingId);
+                await setDoc(
+                  bookingRef,
+                  {
+                    notasUsuario: userNotes,
+                    notasEmpleado: staffNotes,
+                  },
+                  { merge: true }
+                );
+                Alert.alert("Éxito", "Notas guardadas con la cita.");
+                setNotesModalVisible(false);
+              } catch (error) {
+                console.error("Error al guardar notas:", error);
+                Alert.alert("Error", "No se pudieron guardar las notas.");
+              }
+            }
+          }}
+        />
+        <View style={{ marginTop: 12 }}>
+          <Button_style2
+            title="Cancelar"
+            onPress={() => setNotesModalVisible(false)}
+          />
+        </View>
+      </View>
     </View>
   </View>
 </Modal>
@@ -766,4 +880,14 @@ gridItem: {
   alignItems: 'center',
   justifyContent: 'center',
 },
+inputText: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    fontSize: 16,
+    color: '#000',
+  },
 });
