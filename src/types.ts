@@ -1,5 +1,4 @@
 export type User = {
-  autoNumber: string;
   email: string;
   username: string;
   role: string;
