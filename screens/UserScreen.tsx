@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { collection, doc, getDoc, getDocs, getFirestore } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { FlatList, Image, Modal, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import Button_style2 from "../Components/Button_style2";
 import Logo from '../Components/Logo';
 import { logout } from '../Services/authService';
@@ -23,6 +23,7 @@ export default function UserScreen() {
     hour < 12 ? 'Buenos días' : 'Buenas tardes';
   const [modalVisible, setModalVisible] = useState(false);
   const [stylists, setStylists] = useState<{ id: string; name: string; profilePic?: string }[]>([]);
+  const [loading, setLoading] = useState(false); 
 
   useEffect(() => {
   const loadStylists = async () => {
@@ -73,6 +74,14 @@ export default function UserScreen() {
         <Text style={styles.welcomeText}>
           {`¡Nos alegra verte en Sovrano!`}
         </Text>
+
+        {/* ✅ Loading overlay */}
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.loadingText}>Cargando artistas...</Text>
+          </View>
+        )}
 
         <View style={{ padding: 10 }}>
         <Button_style2 
@@ -223,4 +232,18 @@ const styles = StyleSheet.create({
   fontSize: 12,
   color: '#666',
 },
+loadingOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
 });
