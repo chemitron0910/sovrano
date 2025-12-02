@@ -559,6 +559,7 @@ useEffect(() => {
           <Text>Email: {bookingDetails.email}</Text>
           <Text>Teléfono: {bookingDetails.phoneNumber}</Text>
           <Text>Servicio: {bookingDetails.service}</Text>
+          <Text>Cita numbero: {bookingDetails.autoNumber}</Text>
         </>
       )}
 
@@ -583,12 +584,6 @@ useEffect(() => {
   <>
     <View style={{ marginTop: 12 }}>
       <Button_style2
-        title="Cerrar"
-        onPress={() => setBookedModalVisible(false)}
-      />
-    </View>
-    <View style={{ marginTop: 12 }}>
-      <Button_style2
         title="Ver notas"
         onPress={() => {
           // preload both notes
@@ -601,6 +596,13 @@ useEffect(() => {
     </View>
   </>
 )}
+
+<View style={{ marginTop: 12 }}>
+      <Button_style2
+        title="Cerrar"
+        onPress={() => setBookedModalVisible(false)}
+      />
+    </View>
 
     </View>
   </View>

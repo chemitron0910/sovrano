@@ -228,12 +228,11 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
             <li><strong>Fecha:</strong> ${isoDate}</li>
             <li><strong>Hora:</strong> ${selectedTime}</li>
             <li><strong>Estilista:</strong> ${bookingData.stylistName}</li>
-            <li><strong>Estilista ID:</strong> ${bookingData.stylistAutoNumber || "No disponible"}</li>
+            <li><strong>Estilista numero:</strong> ${bookingData.stylistAutoNumber || "No disponible"}</li>
+            <li><strong>Cita numero:</strong> ${bookingData.autoNumber || "No disponible"}</li>
           </ul>
           <p>¡Gracias por confiar en Sovrano!</p>
         `,
-        autoNumber,        // booking sequential number
-        userAutoNumber,    // user sequential number (if available)
       });
     } catch (emailError) {
       console.error("Error sending confirmation email:", emailError);

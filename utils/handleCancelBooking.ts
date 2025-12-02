@@ -43,6 +43,7 @@ export const handleCancelBooking = async ({
 
     const isoDate = booking.date.split("T")[0]; // YYYY-MM-DD
     const stylistId = booking.stylistId;
+    const bookingAutonumber = booking.autoNumber;
     const startTime = normalizeTime(booking.time);
     const durationHours = Number(booking.duration) || 1;
 
@@ -102,11 +103,10 @@ export const handleCancelBooking = async ({
             <li><strong>Fecha:</strong> ${isoDate}</li>
             <li><strong>Hora:</strong> ${startTime}</li>
             <li><strong>Estilista:</strong> ${booking.stylistName}</li>
+            <li><strong>Cita numero:</strong> ${bookingAutonumber}</li>
           </ul>
           <p>Si deseas, puedes reservar otra cita en Sovrano.</p>
         `,
-        autoNumber: booking.autoNumber,       // ✅ booking sequential number
-        userAutoNumber: booking.userAutoNumber // ✅ user sequential number
       });
     } catch (emailError) {
       console.error("Error sending cancellation email:", emailError);
