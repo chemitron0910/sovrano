@@ -60,8 +60,11 @@ export default function BookingScreen() {
   const [service, setService] = useState('');
   const [date, setDate] = useState(new Date());
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [stylists, setStylists] = useState<{ id: string; name: string }[]>([]);
-  const [selectedStylist, setSelectedStylist] = useState<{ id: string; name: string } | null>(null);
+  const [stylists, setStylists] =
+  useState<{ id: string; name: string; autoNumber?: string | null }[]>([]);
+  const [selectedStylist, setSelectedStylist] =
+  useState<{ id: string; name: string; autoNumber?: string | null } | null>(null);
+
   const services = useServices();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const selectedService = services.find(s => s.id === selectedServiceId) || null;
@@ -167,6 +170,7 @@ useEffect(() => {
           return {
             id: docSnap.id,
             name: data.username || data.email || 'Sin nombre',
+            autoNumber: data.autoNumber ?? null,
             activo: data.activo ?? false, // ✅ include activo
           };
         })
@@ -273,6 +277,7 @@ return (
       {/* Service + Stylist */}
       <Text>
         {selectedService?.name} con {selectedStylist?.name}
+        {selectedStylist?.autoNumber ? ` (#${selectedStylist.autoNumber})` : ""}
       </Text>
       <Text>
         {selectedSlot?.date} a las {selectedSlot?.time}
@@ -337,13 +342,17 @@ return (
 
         await handleBooking({
           selectedSlot: selectedSlot!,
-          selectedStylist: selectedStylist!,
+          selectedStylist: {
+            id: selectedStylist!.id,
+            name: selectedStylist!.name,
+            autoNumber: selectedStylist!.autoNumber ?? undefined, // ✅ normalize here
+          },
           selectedService: selectedService!,
           role,
           guestInfo: {
-            guestName: nombre,
-            email,
-            phoneNumber,
+            guestName: nombre?.trim() || "",
+            email: email?.trim() || "",
+            phoneNumber: phoneNumber?.trim() || "",
           },
           navigation,
         });
