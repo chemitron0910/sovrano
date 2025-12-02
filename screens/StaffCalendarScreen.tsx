@@ -648,6 +648,7 @@ useEffect(() => {
                   },
                   { merge: true }
                 );
+
                 Alert.alert("Éxito", "Notas guardadas con la cita.");
                 setNotesModalVisible(false);
 
@@ -658,47 +659,52 @@ useEffect(() => {
                         ...prev,
                         notasUsuario: userNotes,
                         notasEmpleado: staffNotes,
+                        status: "Terminado",
                       }
                     : prev
-                );// ✅ Send confirmation email via Cloud Function
-        const functions = getFunctions();
-        const sendGuestEmail = httpsCallable(functions, "sendGuestEmail");
+                );
 
-        if (bookingDetails?.email) {
-          await sendGuestEmail({
-            to: bookingDetails.email,
-            subject: "Tu cita ha sido completada en Sovrano",
-            text: `Hola ${bookingDetails.guestName}, tu cita para ${bookingDetails.service} ha sido marcada como terminada.\n\nNúmero de cita: ${bookingDetails.autoNumber ?? "No disponible"}\nEstilista: ${bookingDetails.stylistName ?? "No disponible"}\nEstilista número: ${bookingDetails.stylistAutoNumber ?? "No disponible"}\nNotas del usuario: ${userNotes || "Sin notas"}\nNotas del estilista: ${staffNotes || "Sin notas"}`,
-            html: `
-              <p>Hola ${bookingDetails.guestName},</p>
-              <p>Tu cita para <strong>${bookingDetails.service}</strong> ha sido marcada como <strong>terminada</strong>.</p>
-              <ul>
-                <li><strong>Número de cita:</strong> ${bookingDetails.autoNumber ?? "No disponible"}</li>
-                <li><strong>Estilista:</strong> ${bookingDetails.stylistName ?? "No disponible"}</li>
-                <li><strong>Estilista número:</strong> ${bookingDetails.stylistAutoNumber ?? "No disponible"}</li>
-              </ul>
-              <p><strong>Notas para ti:</strong> ${userNotes || "Sin notas"}</p>
-              <br/>
-              <p>¡Gracias por confiar en Sovrano!</p>
-            `,
-          });
-        } else {
-          console.warn("⚠️ No email found for booking");
-        }
-      } catch (error) {
-        Alert.alert("Error", "No se pudieron guardar las notas.");
-      }
-    }
-  }}
-/>
-        {(userNotes.trim() !== "" || staffNotes.trim() !== "") && (
-  <View style={{ marginTop: 12 }}>
-    <Button_style2
-      title="Cerrar"
-      onPress={() => setNotesModalVisible(false)}
-    />
-  </View>
-)}
+                // ✅ Only send email if status was "Reservado"
+                if (bookingDetails?.status === "Reservado" && bookingDetails?.email) {
+                  const functions = getFunctions();
+                  const sendGuestEmail = httpsCallable(functions, "sendGuestEmail");
+
+                  await sendGuestEmail({
+                    to: bookingDetails.email,
+                    subject: "Tu cita ha sido completada en Sovrano",
+                    text: `Hola ${bookingDetails.guestName}, tu cita para ${bookingDetails.service} ha sido marcada como terminada.\n\nNúmero de cita: ${bookingDetails.autoNumber ?? "No disponible"}\nEstilista: ${bookingDetails.stylistName ?? "No disponible"}\nEstilista número: ${bookingDetails.stylistAutoNumber ?? "No disponible"}\nNotas del usuario: ${userNotes || "Sin notas"}\nNotas del estilista: ${staffNotes || "Sin notas"}`,
+                    html: `
+                      <p>Hola ${bookingDetails.guestName},</p>
+                      <p>Tu cita para <strong>${bookingDetails.service}</strong> ha sido marcada como <strong>terminada</strong>.</p>
+                      <ul>
+                        <li><strong>Número de cita:</strong> ${bookingDetails.autoNumber ?? "No disponible"}</li>
+                        <li><strong>Estilista:</strong> ${bookingDetails.stylistName ?? "No disponible"}</li>
+                        <li><strong>Estilista número:</strong> ${bookingDetails.stylistAutoNumber ?? "No disponible"}</li>
+                      </ul>
+                      <p><strong>Notas para ti:</strong> ${userNotes || "Sin notas"}</p>
+                      <br/>
+                      <p>¡Gracias por confiar en Sovrano!</p>
+                    `,
+                  });
+                  console.log("✅ Email sent successfully after notes saved");
+                }
+              } catch (error) {
+                console.error("Error al guardar notas:", error);
+                Alert.alert("Error", "No se pudieron guardar las notas.");
+              }
+            }
+          }}
+        />
+
+        {/* ✅ Show Cerrar button only if status is Terminado */}
+        {bookingDetails?.status === "Terminado" && (
+          <View style={{ marginTop: 12 }}>
+            <Button_style2
+              title="Cerrar"
+              onPress={() => setNotesModalVisible(false)}
+            />
+          </View>
+        )}
       </View>
     </View>
   </View>
