@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert,
@@ -46,6 +47,8 @@ export default function StaffCalendarScreen() {
   status?: string;
   notasUsuario?: string;
   notasEmpleado?: string;
+  stylistName?: string;              // ✅ add this
+  stylistAutoNumber?: string | null;
 };
     type TimeSlot = {
   time: string;
@@ -84,6 +87,38 @@ export default function StaffCalendarScreen() {
     setBookingDetails(prev =>
       prev ? { ...prev, status: "Terminado" } : prev
     );
+
+    // ✅ Send confirmation email via Cloud Function
+    try {
+      const functions = getFunctions();
+      const sendGuestEmail = httpsCallable(functions, "sendGuestEmail");
+
+      if (bookingDetails?.email) {
+        await sendGuestEmail({
+          to: bookingDetails.email,
+          subject: "Tu cita ha sido completada en Sovrano",
+          text: `Hola ${bookingDetails.guestName}, tu cita para ${bookingDetails.service} ha sido marcada como terminada.\n\nNúmero de cita: ${bookingDetails.autoNumber ?? "No disponible"}\nNotas del usuario: ${bookingDetails.notasUsuario ?? "Sin notas"}\nNotas del estilista: ${bookingDetails.notasEmpleado ?? "Sin notas"}`,
+          html: `
+            <p>Hola ${bookingDetails.guestName},</p>
+            <p>Tu cita para <strong>${bookingDetails.service}</strong> ha sido marcada como <strong>terminada</strong>.</p>
+            <ul>
+            <li><strong>Estilista:</strong> ${bookingDetails.autoNumber ?? "No disponible"}</li>
+            <li><strong>Número de cita:</strong> ${bookingDetails.autoNumber ?? "No disponible"}</li>
+            <li><strong>Estilista:</strong> ${bookingDetails.stylistName ?? "No disponible"}</li>
+            <li><strong>Estilista número:</strong> ${bookingDetails.stylistAutoNumber ?? "No disponible"}</li>
+            <li><strong>Notas para ti:</strong> ${bookingDetails.notasUsuario ?? "Sin notas"}</li>
+            </ul>
+            <p>¡Gracias por confiar en Sovrano!</p>
+          `,
+        });
+        console.log("✅ Email sent successfully");
+      } else {
+        console.warn("⚠️ No email found for booking");
+      }
+    } catch (emailError) {
+      console.error("Error sending confirmation email:", emailError);
+      // Don’t block booking flow if email fails
+    }
 
     setBookedModalVisible(false);   // close booked details modal
     setNotesModalVisible(true);     // open notes modal
