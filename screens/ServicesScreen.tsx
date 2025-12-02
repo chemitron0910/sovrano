@@ -30,6 +30,7 @@ type User = {
   role: string;
   username?: string;
   activo?: boolean;
+  autoNumber?: string;
 };
 
 export default function ServicesScreen() {
@@ -121,6 +122,7 @@ export default function ServicesScreen() {
       stylist: {
         id: stylist.id,
         name: stylist.username || "Sin nombre",
+        autoNumber: stylist.autoNumber,
       },
     });
     closeModal();

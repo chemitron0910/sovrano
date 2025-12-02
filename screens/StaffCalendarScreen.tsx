@@ -686,7 +686,6 @@ useEffect(() => {
                       <p>¡Gracias por confiar en Sovrano!</p>
                     `,
                   });
-                  console.log("✅ Email sent successfully after notes saved");
                 }
               } catch (error) {
                 console.error("Error al guardar notas:", error);

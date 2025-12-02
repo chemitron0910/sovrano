@@ -3,6 +3,7 @@ export type User = {
   username: string;
   role: string;
   lastLogin?: string; // ISO string or Firestore Timestamp
+  autoNumber?: string;
 };
 
 export type RootStackParamList = {
