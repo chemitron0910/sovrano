@@ -675,7 +675,7 @@ useEffect(() => {
         />
         <View style={{ marginTop: 12 }}>
           <Button_style2
-            title="Cancelar"
+            title="Cerrar"
             onPress={() => setNotesModalVisible(false)}
           />
         </View>
