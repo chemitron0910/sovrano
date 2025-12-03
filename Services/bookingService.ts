@@ -1,4 +1,4 @@
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 export type Booking = {
@@ -45,4 +45,17 @@ export const fetchAllBookings = async (): Promise<Booking[]> => {
       notasEmpleado: data.notasEmpleado ?? "",
     };
   });
+};
+
+export const fetchActiveGuests = async (): Promise<string[]> => {
+  const q = query(
+    collection(db, 'users'),
+    where('role', 'in', ['usuario', 'guest']),
+    where('activo', '==', true)
+  );
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs
+    .map(doc => doc.data().username as string)
+    .filter(Boolean);
 };
