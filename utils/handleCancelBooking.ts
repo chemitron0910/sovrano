@@ -99,13 +99,15 @@ export const handleCancelBooking = async ({
         html: `
           <p>Hola ${booking.guestName},</p>
           <p>Tu cita para <strong>${booking.service}</strong> ha sido cancelada:</p>
+          <p>⚜️ Gracias por elegir SOVRANO, donde la distinción, el arte y el detalle se unen para realzar tu belleza.</p>
           <ul>
-            <li><strong>Fecha:</strong> ${isoDate}</li>
-            <li><strong>Hora:</strong> ${startTime}</li>
-            <li><strong>Estilista:</strong> ${booking.stylistName}</li>
+            <li><strong>📅 Fecha:</strong> ${isoDate}</li>
+            <li><strong>🕐 Hora:</strong> ${startTime}</li>
+            <li><strong>🎨 Artista:</strong> ${booking.stylistName}</li>
             <li><strong>Cita numero:</strong> ${bookingAutonumber}</li>
           </ul>
-          <p>Si deseas, puedes reservar otra cita en Sovrano.</p>
+          <p>Cuando desees regresar, estaremos encantados de ofrecerte una experiencia personalizada y memorable.</p>
+          <p>✨ En SOVRANO te esperamos con la asesoría y el detalle que mereces.</p>
         `,
       });
     } catch (emailError) {

@@ -223,14 +223,29 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
         text: `Hola ${bookingData.guestName}, tu cita para ${bookingData.service} está reservada el ${isoDate} a las ${selectedTime} con ${bookingData.stylistName}.`,
         html: `
           <p>Hola ${bookingData.guestName},</p>
-          <p>Tu cita para <strong>${bookingData.service}</strong> está reservada:</p>
+          <p>Tu cita para 💇‍♀️ <strong>${bookingData.service}</strong> está reservada:</p>
+          <p>Tu cita ha sido confirmada con éxito. Este espacio ha sido reservado exclusivamente para ti, y cuidaremos cada detalle para que vivas la Experiencia SOVRANO como mereces.</p>
           <ul>
-            <li><strong>Fecha:</strong> ${isoDate}</li>
-            <li><strong>Hora:</strong> ${selectedTime}</li>
-            <li><strong>Estilista:</strong> ${bookingData.stylistName}</li>
-            <li><strong>Estilista numero:</strong> ${bookingData.stylistAutoNumber || "No disponible"}</li>
+            <li><strong>📅 Fecha:</strong> ${isoDate}</li>
+            <li><strong>🕐 Hora:</strong> ${selectedTime}</li>
+            <li><strong>🎨 Artista:</strong> ${bookingData.stylistName}</li>
+            <li><strong>Artista numero:</strong> ${bookingData.stylistAutoNumber || "No disponible"}</li>
             <li><strong>Cita numero:</strong> ${bookingData.autoNumber || "No disponible"}</li>
           </ul>
+          <p><strong>Información del salón:</strong></p>
+          <ul>
+            <li><strong>Nombre:</strong> Sovrano Peluquería</li>
+            <li><strong>📍 Dirección:</strong> 
+            <a href="https://maps.google.com/?q=Sovrano+Peluquería+Bogotá">Carrera 13 #93-35, local 101</a>
+            </li>
+            <li><strong>Teléfono:</strong> 
+            <a href="tel:+571234567890">(57) 123-456-7890</a>
+            </li>
+            <li><strong>Email:</strong> 
+            <a href="mailto:Contacto@sovranopeluqueria.com">Contacto@sovranopeluqueria.com</a>
+            </li>
+          </ul>
+          <p>🅿️ A tan solo 2 minutos caminando encontrarás tres parqueaderos públicos (sin convenio).</p>
           <p>¡Gracias por confiar en Sovrano!</p>
         `,
       });

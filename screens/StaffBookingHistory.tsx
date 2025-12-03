@@ -3,7 +3,7 @@ import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
 
@@ -156,6 +156,9 @@ export default function StaffBookingHistory() {
         <Picker
           selectedValue={selectedOption}
           onValueChange={(value) => setSelectedOption(value)}
+          mode={Platform.OS === "android" ? "dropdown" : undefined}
+          style={[styles.picker]}
+          itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
         >
           <Picker.Item label="Últimos 30 días" value="recent" />
           <Picker.Item label="Canceladas (últimos 30 días)" value="cancelledPast" />
@@ -206,5 +209,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
+  },
+  picker: {
+  ...Platform.select({
+    ios: {
+      height: 150, // enough for scroll wheel
+      justifyContent: 'center',
+    },
+    android: {
+      height: 50,
+      justifyContent: 'center',
+    },
+  }),
+  borderRadius: 6,
+  borderWidth: 1,
+  borderColor: '#00796b',
+},
+pickerItem: {
+    fontSize: 16,
+    color: 'black',
   },
 });

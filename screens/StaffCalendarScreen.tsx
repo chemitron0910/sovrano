@@ -346,6 +346,8 @@ const booking: BookingDetails = {
   status: data.status,
   notasUsuario: data.notasUsuario ?? "",
   notasEmpleado: data.notasEmpleado ?? "",
+  stylistName: data.stylistName ?? "",
+  stylistAutoNumber: data.stylistAutoNumber ?? null
 };
 setBookingDetails(booking);
       }
@@ -671,18 +673,20 @@ useEffect(() => {
 
                   await sendGuestEmail({
                     to: bookingDetails.email,
-                    subject: "Tu cita ha sido completada en Sovrano",
+                    subject: "Ha sido un placer acompañarte el día de hoy",
                     text: `Hola ${bookingDetails.guestName}, tu cita para ${bookingDetails.service} ha sido marcada como terminada.\n\nNúmero de cita: ${bookingDetails.autoNumber ?? "No disponible"}\nEstilista: ${bookingDetails.stylistName ?? "No disponible"}\nEstilista número: ${bookingDetails.stylistAutoNumber ?? "No disponible"}\nNotas del usuario: ${userNotes || "Sin notas"}\nNotas del estilista: ${staffNotes || "Sin notas"}`,
                     html: `
                       <p>Hola ${bookingDetails.guestName},</p>
                       <p>Tu cita para <strong>${bookingDetails.service}</strong> ha sido marcada como <strong>terminada</strong>.</p>
                       <ul>
                         <li><strong>Número de cita:</strong> ${bookingDetails.autoNumber ?? "No disponible"}</li>
-                        <li><strong>Estilista:</strong> ${bookingDetails.stylistName ?? "No disponible"}</li>
-                        <li><strong>Estilista número:</strong> ${bookingDetails.stylistAutoNumber ?? "No disponible"}</li>
+                        <li><strong>🎨 Artista:</strong> ${bookingDetails.stylistName ?? "No disponible"}</li>
+                        <li><strong>Artista número:</strong> ${bookingDetails.stylistAutoNumber ?? "No disponible"}</li>
                       </ul>
                       <p><strong>Notas para ti:</strong> ${userNotes || "Sin notas"}</p>
                       <br/>
+                      <p>📩 Quedamos atentos a cualquier novedad o consulta en la que podamos apoyarte.</p>
+                      <p>⚜️ Con cariño, el equipo SOVRANO te desea un día con mucho estilo. ¡Hasta pronto!</p>
                       <p>¡Gracias por confiar en Sovrano!</p>
                     `,
                   });
