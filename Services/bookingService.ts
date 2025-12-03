@@ -17,6 +17,8 @@ export type Booking = {
   role?: 'usuario' | 'guest';
   autoNumber: string; //booking sequence
   userAutoNumber: string; //user sequence
+  notasUsuario?: string;
+  notasEmpleado?: string;
 };
 
 export const fetchAllBookings = async (): Promise<Booking[]> => {
@@ -39,6 +41,8 @@ export const fetchAllBookings = async (): Promise<Booking[]> => {
       role: data.role, 
       autoNumber: data.autoNumber,
       userAutoNumber: data.userAutoNumber,
+      notasUsuario: data.notasUsuario ?? "",
+      notasEmpleado: data.notasEmpleado ?? "",
     };
   });
 };

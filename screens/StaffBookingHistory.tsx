@@ -3,7 +3,8 @@ import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, Platform, StyleSheet, Text, View } from 'react-native';
+import Button_style2 from '../Components/Button_style2';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
 
@@ -14,6 +15,8 @@ export default function StaffBookingHistory() {
   const [selectedOption, setSelectedOption] = useState<string>('recent');
   const [loading, setLoading] = useState(false);
   const stylistId = auth.currentUser?.uid;
+  const [notesModalVisible, setNotesModalVisible] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -34,7 +37,8 @@ export default function StaffBookingHistory() {
             bookingDate >= thirtyDaysAgo &&
             b.status !== "Cancelado"
           );
-        });
+        })
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         const cancelledPastBookings = data.filter(b => {
           const bookingDate = new Date(b.date);
@@ -44,7 +48,8 @@ export default function StaffBookingHistory() {
             bookingDate < now &&
             bookingDate >= thirtyDaysAgo
           );
-        });
+        })
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         const cancelledUpcomingBookings = data.filter(b => {
           const bookingDate = new Date(b.date);
@@ -54,7 +59,8 @@ export default function StaffBookingHistory() {
             bookingDate >= now &&
             bookingDate <= thirtyDaysAhead
           );
-        });
+        })
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         setRecentBookings(pastBookings);
         setCancelledPast(cancelledPastBookings);
@@ -70,19 +76,20 @@ export default function StaffBookingHistory() {
   }, [stylistId]);
 
   const renderBookingItem = ({ item }: { item: Booking }) => {
-    const dateObj = new Date(item.date);
-    const formattedDate = dateObj.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-    const formattedTime = dateObj.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const dateObj = new Date(item.date);
+  const formattedDate = dateObj.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+  const formattedTime = dateObj.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-    return (
-      <View style={styles.bookingItem}>
+  return (
+    <View style={styles.bookingItemRow}>
+      <View style={{ flex: 1 }}>
         <View style={styles.inlineText}>
           <BodyBoldText>Servicio: </BodyBoldText>
           <BodyText>{item.service}</BodyText>
@@ -99,9 +106,26 @@ export default function StaffBookingHistory() {
           <BodyBoldText>Fecha/Hora: </BodyBoldText>
           <BodyText>{formattedDate} / {formattedTime}</BodyText>
         </View>
+        <View style={styles.inlineText}>
+          <BodyBoldText>Número de cita: </BodyBoldText>
+          <BodyText>{item.autoNumber ?? "No disponible"}</BodyText>
+        </View>
       </View>
-    );
-  };
+
+      {/* Button on the right */}
+      <View style={styles.notesButtonWrapper}>
+        <Button_style2
+          title="Ver notas"
+          onPress={() => {
+            setSelectedBooking(item);
+            setNotesModalVisible(true);
+          }}
+          style={{ paddingHorizontal: 12 }}
+        />
+      </View>
+    </View>
+  );
+};
 
   const renderList = () => {
     switch (selectedOption) {
@@ -166,6 +190,38 @@ export default function StaffBookingHistory() {
         </Picker>
 
         {!loading && renderList()}
+
+        {selectedBooking && (
+  <Modal
+    visible={notesModalVisible}
+    animationType="slide"
+    transparent
+    onRequestClose={() => setNotesModalVisible(false)}
+  >
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>Notas de la cita</Text>
+
+        <BodyBoldText>Notas para el usuario:</BodyBoldText>
+        <Text style={styles.readOnlyNotes}>
+          {selectedBooking.notasUsuario || "Sin notas"}
+        </Text>
+
+        <BodyBoldText style={{ marginTop: 16 }}>Notas internas del empleado:</BodyBoldText>
+        <Text style={styles.readOnlyNotes}>
+          {selectedBooking.notasEmpleado || "Sin notas"}
+        </Text>
+
+        <Button_style2
+  title="Cerrar"
+  onPress={() => setNotesModalVisible(false)}
+  style={{ marginTop: 20 }}
+/>
+      </View>
+    </View>
+  </Modal>
+)}
+
       </View>
     </GradientBackground>
   );
@@ -228,5 +284,53 @@ const styles = StyleSheet.create({
 pickerItem: {
     fontSize: 16,
     color: 'black',
+  },
+  bookingItemRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: 8,
+  borderBottomWidth: 1,
+  borderBottomColor: '#eee',
+},
+notesButtonWrapper: {
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 12,
+},
+notesButton: {
+  color: '#00796b',
+  fontWeight: '600',
+},
+modalTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginBottom: 12,
+},
+readOnlyNotes: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 6,
+  padding: 10,
+  backgroundColor: '#f5f5f5',
+  marginTop: 6,
+},
+closeButton: {
+  marginTop: 20,
+  color: '#00796b',
+  fontWeight: '600',
+  textAlign: 'center',
+},
+modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    maxHeight: "70%",
   },
 });
