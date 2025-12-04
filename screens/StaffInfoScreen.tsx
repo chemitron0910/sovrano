@@ -12,7 +12,9 @@ import { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   ScrollView, StyleSheet, TextInput, TouchableOpacity, View
 } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
@@ -31,7 +33,9 @@ import Button_style2 from '../Components/Button_style2';
   const [availableServices, setAvailableServices] = useState<
   { id: string; name: string; duration: string; description?: string; cost?: string }[]
   >([]);
-    const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [serviceModalVisible, setServiceModalVisible] = useState(false);
+  const [editingServiceIndex, setEditingServiceIndex] = useState<number | null>(null);
 
   useEffect(() => {
   const loadProfile = async () => {
@@ -83,25 +87,45 @@ useEffect(() => {
 
   const handleEdit = (index: number) => setEditingIndex(index);
 
-const handleDelete = async (index: number) => {
+const handleDelete = (index: number) => {
   if (!uid) return;
 
-  const updated = services.filter((_, i) => i !== index);
-  setServices(updated);
+  Alert.alert(
+    "Confirmar eliminación",
+    "¿Estás seguro de que deseas eliminar este servicio?",
+    [
+      {
+        text: "Cancelar",
+        style: "cancel",
+      },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: async () => {
+          const updated = services.filter((_, i) => i !== index);
+          setServices(updated);
 
-  if (editingIndex === index) setEditingIndex(null);
+          if (editingIndex === index) setEditingIndex(null);
 
-  try {
-    const ref = doc(firestore, `users/${uid}/profile/info`);
-    await setDoc(ref, {
-      profilePic,
-      socialLinks,
-      generalInfo,
-      services: updated,
-    }, { merge: true }); // ✅ merge ensures other fields stay intact
-  } catch (err) {
-    console.error('Error deleting service from Firestore:', err);
-  }
+          try {
+            const ref = doc(firestore, `users/${uid}/profile/info`);
+            await setDoc(
+              ref,
+              {
+                profilePic,
+                socialLinks,
+                generalInfo,
+                services: updated,
+              },
+              { merge: true }
+            );
+          } catch (err) {
+            console.error("Error deleting service from Firestore:", err);
+          }
+        },
+      },
+    ]
+  );
 };
 
   const pickImage = async () => {
@@ -148,19 +172,41 @@ const handleDelete = async (index: number) => {
   }
 };
 
-  const addService = () => setServices([...services, { id: '', name: '', duration: '' }]);
+  const addService = () => {
+  const newService = { id: '', name: '', duration: '' };
+
+  // Prepend new service
+  const updated = [newService, ...services];
+
+  // Sort alphabetically by name (empty names stay at the top until edited)
+  const sorted = updated.sort((a, b) =>
+    (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' })
+  );
+
+  setServices(sorted);
+
+  // Optional: immediately open the new service in edit mode
+  setEditingIndex(0);
+};
 
   const saveProfile = async () => {
   if (!uid) return;
   setSaving(true);
   try {
+    // Sort before saving
+    const sorted = [...services].sort((a, b) =>
+      (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' })
+    );
+
     const ref = doc(firestore, `users/${uid}/profile/info`);
     await setDoc(ref, {
       profilePic,
       socialLinks,
       generalInfo,
-      services,
+      services: sorted,
     });
+
+    setServices(sorted); // ✅ keep local state consistent
     Alert.alert('Perfil guardado', 'Los cambios se han guardado correctamente.');
   } catch (err) {
     console.error('Error al guardar el perfil:', err);
@@ -234,30 +280,17 @@ const handleDelete = async (index: number) => {
       <View style={styles.editContainer}>
       {/* Service Picker */}
     <View style={styles.pickerWrapper}>
-      <Picker
-        selectedValue={service.name}
-        onValueChange={(selectedName) => {
-          const selected = availableServices.find((s) => s.name === selectedName);
-          if (selected) {
-            const updated = [...services];
-            updated[index] = {
-              id: selected.id,
-              name: selected.name,
-              duration: selected.duration,
-              cost: selected.cost, // ✅ always refresh from service collection
-            };
-            setServices(updated);
-          }
-        }}
-        mode={Platform.OS === "android" ? "dropdown" : undefined}
-        style={styles.picker}
-        itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
-      >
-        <Picker.Item label="Selecciona un servicio" value="" />
-        {availableServices.map((s, i) => (
-          <Picker.Item key={i} label={`${s.name} (${s.duration})`} value={s.name} />
-        ))}
-      </Picker>
+      <TextInput
+  style={styles.inputText}
+  placeholder="Selecciona un servicio"
+  placeholderTextColor="#888"
+  value={service.name}
+  editable={false}
+  onPressIn={() => {
+    setEditingServiceIndex(index);
+    setServiceModalVisible(true);
+  }}
+/>
     </View>
 
     {/* 👇 Editable cost lives in edit mode */}
@@ -278,7 +311,7 @@ const handleDelete = async (index: number) => {
     {/* Action buttons */}
     <View style={styles.editActions}>
       <TouchableOpacity onPress={() => setEditingIndex(null)}>
-        <BodyText style={styles.edit}>Guardar</BodyText>
+        <BodyText style={styles.edit}>Cerrar</BodyText>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => setEditingIndex(null)}>
@@ -307,6 +340,55 @@ const handleDelete = async (index: number) => {
 )}
   </View>
 ))}
+<Modal
+  visible={serviceModalVisible}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setServiceModalVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <BodyBoldText style={styles.modalTitle}>Selecciona un servicio</BodyBoldText>
+
+      <Picker
+        selectedValue={
+          editingServiceIndex !== null && services[editingServiceIndex]
+            ? services[editingServiceIndex].name
+            : ""
+        }
+        onValueChange={(selectedName) => {
+          if (editingServiceIndex !== null && services[editingServiceIndex]) {
+            const selected = availableServices.find((s) => s.name === selectedName);
+            if (selected) {
+              const updated = [...services];
+              updated[editingServiceIndex] = {
+                id: selected.id,
+                name: selected.name,
+                duration: selected.duration,
+                cost: selected.cost,
+              };
+              setServices(updated);
+            }
+          }
+        }}
+        mode={Platform.OS === "android" ? "dropdown" : undefined}
+        style={styles.picker}
+        itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
+      >
+        <Picker.Item label="Selecciona un servicio" value="" />
+        {availableServices.map((s, i) => (
+          <Picker.Item key={i} label={`${s.name} (${s.duration})`} value={s.name} />
+        ))}
+      </Picker>
+
+      <Button_style2
+        title="Aceptar"
+        onPress={() => setServiceModalVisible(false)}
+        style={{ marginTop: 20 }}
+      />
+    </View>
+  </View>
+</Modal>
 
     </ScrollView>
     </KeyboardAvoidingView>
@@ -340,7 +422,7 @@ serviceName: {
   marginBottom: 4,
 },
 serviceTime: {
-  fontSize: 14,
+  fontSize: 18,
   color: '#666',
 },
 actions: {
@@ -415,11 +497,11 @@ serviceItem: {
   flexDirection: 'row',
   alignItems: 'center',
   justifyContent: 'space-between',
-  marginBottom: 16,
-  padding: 12,
+  padding: 6,
   borderWidth: 1,
   borderColor: '#ccc',
   borderRadius: 8,
+  width: '100%',
 },
 serviceItemEdit: {
   flexDirection: 'column', // ✅ stack vertically when editing
@@ -434,5 +516,22 @@ editActions: {
 cancel: {
   color: 'red', // grey tone for cancel
   marginLeft: 16,
+},
+modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+},
+modalContent: {
+  backgroundColor: "white",
+  padding: 20,
+  borderRadius: 10,
+  width: "80%",
+},
+modalTitle: {
+  fontSize: 18,
+  fontWeight: "bold",
+  marginBottom: 12,
 },
 });
