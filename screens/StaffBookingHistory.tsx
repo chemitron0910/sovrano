@@ -1,6 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
+import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
@@ -123,6 +124,8 @@ useEffect(() => {
       ? "Usuario registrado"
       : "No definido";
 
+      const hasNotes = !!item.notasEmpleado || !!item.notasUsuario;
+
     return (
     <TouchableOpacity
       style={styles.bookingItemRow}
@@ -139,6 +142,9 @@ useEffect(() => {
         <View style={styles.inlineText}><BodyBoldText>Fecha/Hora: </BodyBoldText><BodyText>{formattedDate} / {formattedTime}</BodyText></View>
         <View style={styles.inlineText}><BodyBoldText>Número de cita: </BodyBoldText><BodyText>{item.autoNumber ?? "No disponible"}</BodyText></View>
       </View>
+      {hasNotes && (
+        <Ionicons name="document-text-outline" size={20} color="#00796b" style={{ marginRight: 10 }} />
+      )}
     </TouchableOpacity>
   );
 };

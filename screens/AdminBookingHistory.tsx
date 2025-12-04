@@ -1,6 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
+import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
 import {
@@ -329,7 +330,18 @@ export default function AdminBookingHistory() {
     setNotesModalVisible(true);
   }}
 >
-  <Text style={{ fontWeight: 'bold' }}>{time}</Text>
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Text style={{ fontWeight: 'bold' }}>{time}</Text>
+    {(b.notasEmpleado || b.notasUsuario) && (
+      <Ionicons
+        name="document-text-outline"
+        size={18}
+        color="#00796b"
+        style={{ marginLeft: 8 }}
+      />
+    )}
+  </View>
+
   <Text>Cliente: {b.guestName}</Text>
   <Text>Servicio: {b.service}</Text>
   <Text>Duración: {b.duration}h</Text>
