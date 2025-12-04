@@ -3,7 +3,7 @@ import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import { Booking, fetchActiveGuests, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
@@ -19,6 +19,8 @@ export default function StaffBookingHistory() {
   const stylistId = auth.currentUser?.uid;
   const [notesModalVisible, setNotesModalVisible] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [optionModalVisible, setOptionModalVisible] = useState(false);
+  const [guestModalVisible, setGuestModalVisible] = useState(false);
 
 useEffect(() => {
   const loadBookings = async () => {
@@ -122,47 +124,24 @@ useEffect(() => {
       : "No definido";
 
     return (
-      <View style={styles.bookingItemRow}>
-        <View style={{ flex: 1 }}>
-          <View style={styles.inlineText}>
-            <BodyBoldText>Servicio: </BodyBoldText>
-            <BodyText>{item.service}</BodyText>
-          </View>
-          <View style={styles.inlineText}>
-            <BodyBoldText>Cliente: </BodyBoldText>
-            <BodyText>{item.guestName}</BodyText>
-          </View>
-          <View style={styles.inlineText}>
-            <BodyBoldText>Email: </BodyBoldText>
-            <BodyText>{item.email}</BodyText>
-          </View>
-          <View style={styles.inlineText}>
-          <BodyBoldText>Typo de usuario: </BodyBoldText>
-          <BodyText>{roleLabel}</BodyText>
-        </View>
-          <View style={styles.inlineText}>
-            <BodyBoldText>Fecha/Hora: </BodyBoldText>
-            <BodyText>{formattedDate} / {formattedTime}</BodyText>
-          </View>
-          <View style={styles.inlineText}>
-            <BodyBoldText>Número de cita: </BodyBoldText>
-            <BodyText>{item.autoNumber ?? "No disponible"}</BodyText>
-          </View>
-        </View>
-
-        <View style={styles.notesButtonWrapper}>
-          <Button_style2
-            title="Ver notas"
-            onPress={() => {
-              setSelectedBooking(item);
-              setNotesModalVisible(true);
-            }}
-            style={{ paddingHorizontal: 12 }}
-          />
-        </View>
+    <TouchableOpacity
+      style={styles.bookingItemRow}
+      onPress={() => {
+        setSelectedBooking(item);
+        setNotesModalVisible(true);
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <View style={styles.inlineText}><BodyBoldText>Servicio: </BodyBoldText><BodyText>{item.service}</BodyText></View>
+        <View style={styles.inlineText}><BodyBoldText>Cliente: </BodyBoldText><BodyText>{item.guestName}</BodyText></View>
+        <View style={styles.inlineText}><BodyBoldText>Email: </BodyBoldText><BodyText>{item.email}</BodyText></View>
+        <View style={styles.inlineText}><BodyBoldText>Tipo de usuario: </BodyBoldText><BodyText>{roleLabel}</BodyText></View>
+        <View style={styles.inlineText}><BodyBoldText>Fecha/Hora: </BodyBoldText><BodyText>{formattedDate} / {formattedTime}</BodyText></View>
+        <View style={styles.inlineText}><BodyBoldText>Número de cita: </BodyBoldText><BodyText>{item.autoNumber ?? "No disponible"}</BodyText></View>
       </View>
-    );
-  };
+    </TouchableOpacity>
+  );
+};
 
     const renderList = () => {
     switch (selectedOption) {
@@ -208,31 +187,75 @@ useEffect(() => {
           </View>
         )}
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12 }}>
-          <Picker
-            selectedValue={selectedOption}
-            onValueChange={(value) => setSelectedOption(value)}
-            mode={Platform.OS === "android" ? "dropdown" : undefined}
-            style={[styles.picker, { flex: 1, marginRight: 8 }]}
-            itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
-          >
-            <Picker.Item label="Últimos 30 días" value="recent" />
-            <Picker.Item label="Canceladas (últimos 30 días)" value="cancelledPast" />
-            <Picker.Item label="Canceladas (próximos 30 días)" value="cancelledUpcoming" />
-          </Picker>
+        <View style={{ paddingHorizontal: 12 }}>
+  <BodyBoldText>Opciones:</BodyBoldText>
+  <TextInput
+    style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+    placeholder="Selecciona opción"
+    placeholderTextColor="#888"
+    value={
+      selectedOption === "recent"
+        ? "Últimos 30 días"
+        : selectedOption === "cancelledPast"
+        ? "Canceladas (últimos 30 días)"
+        : "Canceladas (próximos 30 días)"
+    }
+    editable={false}
+    onPressIn={() => setOptionModalVisible(true)}
+  />
 
-          <Picker
-            selectedValue={selectedGuest}
-            onValueChange={(value) => setSelectedGuest(value)}
-            mode={Platform.OS === "android" ? "dropdown" : undefined}
-            style={[styles.picker, { flex: 1, marginLeft: 8 }]}
-            itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
-          >
-            {allGuests.map((guest, index) => (
-              <Picker.Item key={index} label={guest} value={guest} />
-            ))}
-          </Picker>
-        </View>
+  <BodyBoldText style={{ marginTop: 12 }}>Cliente:</BodyBoldText>
+  <TextInput
+    style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+    placeholder="Todos"
+    placeholderTextColor="#888"
+    value={selectedGuest}
+    editable={false}
+    onPressIn={() => setGuestModalVisible(true)}
+  />
+</View>
+
+{/* Option Modal */}
+<Modal visible={optionModalVisible} transparent animationType="slide">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <BodyBoldText style={styles.modalTitle}>Selecciona opción</BodyBoldText>
+      <Picker
+        selectedValue={selectedOption}
+        onValueChange={(value) => setSelectedOption(value)}
+        mode={Platform.OS === "android" ? "dropdown" : undefined}
+        style={styles.picker}
+        itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
+      >
+        <Picker.Item label="Últimos 30 días" value="recent" />
+        <Picker.Item label="Canceladas (últimos 30 días)" value="cancelledPast" />
+        <Picker.Item label="Canceladas (próximos 30 días)" value="cancelledUpcoming" />
+      </Picker>
+      <Button_style2 title="Aceptar" onPress={() => setOptionModalVisible(false)} />
+    </View>
+  </View>
+</Modal>
+
+{/* Guest Modal */}
+<Modal visible={guestModalVisible} transparent animationType="slide">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <BodyBoldText style={styles.modalTitle}>Selecciona cliente</BodyBoldText>
+      <Picker
+        selectedValue={selectedGuest}
+        onValueChange={(value) => setSelectedGuest(value)}
+        mode={Platform.OS === "android" ? "dropdown" : undefined}
+        style={styles.picker}
+        itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
+      >
+        {allGuests.map((guest, index) => (
+          <Picker.Item key={index} label={guest} value={guest} />
+        ))}
+      </Picker>
+      <Button_style2 title="Aceptar" onPress={() => setGuestModalVisible(false)} />
+    </View>
+  </View>
+</Modal>
 
         {!loading && renderList()}
 
@@ -383,4 +406,10 @@ const styles = StyleSheet.create({
     width: "80%",
     maxHeight: "70%",
   },
+  input: {
+  borderWidth: 1,
+  borderColor: "#ccc",
+  borderRadius: 6,
+  padding: 10,
+},
 });

@@ -2,17 +2,19 @@ import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
 import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import Button_style2 from "../Components/Button_style2";
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 
 // Normalize any date string into YYYY-MM-DD
@@ -40,6 +42,8 @@ export default function AdminBookingsScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedStylist, setSelectedStylist] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [stylistModalVisible, setStylistModalVisible] = useState(false);
+  const [dateModalVisible, setDateModalVisible] = useState(false);
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -91,57 +95,98 @@ export default function AdminBookingsScreen() {
         <View style={styles.filtersContainer}>
           <View style={styles.pickerWrapper}>
             <BodyBoldText style={styles.pickerLabel}>Estilista:</BodyBoldText>
-            <LinearGradient colors={['#E9E4D4', '#E0CFA2']}>
-              <Picker
-                selectedValue={selectedStylist}
-                onValueChange={(value) => setSelectedStylist(value)}
-                mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-                style={styles.picker}
-                itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-              >
-                <Picker.Item label="Todos" value={null} />
-                {Array.from(new Set(bookings.map(b => b.stylistName))).map(name => (
-                  <Picker.Item key={name} label={name} value={name} />
-                ))}
-              </Picker>
-            </LinearGradient>
+<TextInput
+  style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+  placeholder="Todos"
+  placeholderTextColor="#888"
+  value={selectedStylist ?? "Todos"}
+  editable={false}
+  onPressIn={() => setStylistModalVisible(true)}
+/>
           </View>
 
           <View style={styles.pickerWrapper}>
             <BodyBoldText style={styles.pickerLabel}>Fecha:</BodyBoldText>
-            <Picker
-              selectedValue={selectedDate}
-              onValueChange={(value) => setSelectedDate(value)}
-              mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-              style={styles.picker}
-              itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-            >
-              <Picker.Item label="Todas" value={null} />
-              {Array.from(
-                new Set(
-                  bookings
-                    .filter(b => {
-                      const bookingDate = normalizeDateString(b.date);
-                      return (
-                        bookingDate >= today &&
-                        (!selectedStylist || b.stylistName === selectedStylist)
-                      );
-                    })
-                    .map(b => normalizeDateString(b.date))
-                )
-              )
-                .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
-                .map(date => {
-                  const [year, month, day] = date.split('-');
-                  const localDate = new Date(Number(year), Number(month) - 1, Number(day));
-                  const formatted = localDate.toLocaleDateString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                  });
-                  return <Picker.Item key={date} label={formatted} value={date} />;
-                })}
-            </Picker>
+<TextInput
+  style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+  placeholder="Todas"
+  placeholderTextColor="#888"
+  value={
+    selectedDate
+      ? new Date(selectedDate).toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
+      : "Todas"
+  }
+  editable={false}
+  onPressIn={() => setDateModalVisible(true)}
+/>
+
+<Modal visible={stylistModalVisible} transparent animationType="slide">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <BodyBoldText style={styles.modalTitle}>Selecciona estilista</BodyBoldText>
+      <Picker
+        selectedValue={selectedStylist}
+        onValueChange={(value) => setSelectedStylist(value)}
+        mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+        style={styles.picker}
+        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+      >
+        <Picker.Item label="Todos" value={null} />
+        {Array.from(new Set(bookings.map(b => b.stylistName))).map(name => (
+          <Picker.Item key={name} label={name} value={name} />
+        ))}
+      </Picker>
+      <Button_style2 title="Aceptar" onPress={() => setStylistModalVisible(false)} />
+    </View>
+  </View>
+</Modal>
+
+<Modal visible={dateModalVisible} transparent animationType="slide">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <BodyBoldText style={styles.modalTitle}>Selecciona fecha</BodyBoldText>
+      <Picker
+        selectedValue={selectedDate}
+        onValueChange={(value) => setSelectedDate(value)}
+        mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+        style={styles.picker}
+        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+      >
+        <Picker.Item label="Todas" value={null} />
+        {Array.from(
+          new Set(
+            bookings
+              .filter(b => {
+                const bookingDate = normalizeDateString(b.date);
+                return (
+                  bookingDate >= today &&
+                  (!selectedStylist || b.stylistName === selectedStylist)
+                );
+              })
+              .map(b => normalizeDateString(b.date))
+          )
+        )
+          .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+          .map(date => {
+            const [year, month, day] = date.split('-');
+            const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+            const formatted = localDate.toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            });
+            return <Picker.Item key={date} label={formatted} value={date} />;
+          })}
+      </Picker>
+      <Button_style2 title="Aceptar" onPress={() => setDateModalVisible(false)} />
+    </View>
+  </View>
+</Modal>
+
           </View>
         </View>
 
@@ -223,15 +268,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
   title: { fontWeight: 'bold', fontSize: 20, marginBottom: 16, textAlign: 'center' },
   filtersContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginBottom: 20,
-  },
-  pickerWrapper: {
-    flex: 1,
-    justifyContent: 'center',
-  },
+  flexDirection: 'column',
+},
+pickerWrapper: {
+  width: '100%',         // fallback spacing if gap not supported
+},
   pickerLabel: {
     fontSize: 14,
     marginBottom: 4,
@@ -274,4 +315,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 8, // spacing between slots
   },
+  input: {
+  borderWidth: 1,
+  borderColor: "#ccc",
+  borderRadius: 6,
+  padding: 10,
+  marginBottom: 10,
+},
+modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+},
+modalContent: {
+  backgroundColor: "white",
+  padding: 20,
+  borderRadius: 10,
+  width: "80%",
+},
+modalTitle: {
+  fontSize: 18,
+  fontWeight: "bold",
+  marginBottom: 12,
+},
 });
