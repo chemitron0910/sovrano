@@ -1,19 +1,18 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyBoldText from '@/Components/typography/BodyBoldText';
-import BodyText from '@/Components/typography/BodyText';
 import { Picker } from '@react-native-picker/picker';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Keyboard,
+  Modal,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Button_style2 from "../Components/Button_style2";
@@ -34,7 +33,8 @@ export default function AdminServiceScreen() {
     cost: '',
   });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);   // ✅ new state
+  const [saving, setSaving] = useState(false);
+  const [durationModalVisible, setDurationModalVisible] = useState(false);
 
   const loadServices = async () => {
     const data = await fetchServices();
@@ -108,34 +108,29 @@ export default function AdminServiceScreen() {
 };
 
   const renderItem = ({ item }: { item: Service }) => {
-    return (
-      <View style={styles.serviceItem}>
-        <View style={{ flex: 1 }}>
-          <BodyBoldText style={styles.serviceName}>{item.name}</BodyBoldText>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <BodyText style={styles.serviceTime}>
-              {item.duration} {Number(item.duration) === 1 ? 'hora' : 'horas'}
-            </BodyText>
-          </View>
-          {item.description ? <BodyText>{item.description}</BodyText> : null}
-          {item.cost ? (
-            <BodyText style={styles.serviceCost}>Costo: ${item.cost}</BodyText>
-          ) : null}
+  return (
+    <View style={styles.serviceItem} key={item.id}>
+      <View style={{ flex: 1 }}>
+        <BodyBoldText style={styles.serviceName}>{item.name}</BodyBoldText>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+         <Text style={styles.serviceTime}>
+  {item.duration === "1" ? "1 hora" : `${item.duration} horas`}
+</Text>
         </View>
-        <View style={styles.actions}>
-          <TouchableOpacity onPress={() => handleEdit(item)}>
-            <BodyText style={styles.edit}>Editar</BodyText>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDelete(item.id!)}>
-            <BodyText style={styles.delete}>Eliminar</BodyText>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.serviceCost}>${item.cost}</Text>
       </View>
-    );
-  };
+
+      <View style={styles.actions}>
+        <Text style={styles.edit} onPress={() => handleEdit(item)}>Editar</Text>
+        <Text style={styles.delete} onPress={() => handleDelete(item.id!)}>Eliminar</Text>
+      </View>
+    </View>
+  );
+};
 
   return (
-    <GradientBackground>
+  <GradientBackground>
+    <ScrollView contentContainerStyle={styles.scrollContent}>
       <View style={styles.container}>
         <BodyBoldText style={styles.title}>
           {editingId ? 'Editar Servicio' : 'Agregar Servicio'}
@@ -162,22 +157,53 @@ export default function AdminServiceScreen() {
           onChangeText={(text) => setForm({ ...form, name: text })}
         />
 
+        <Modal
+  visible={durationModalVisible}
+  animationType="slide"
+  transparent
+  onRequestClose={() => setDurationModalVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <BodyBoldText style={styles.modalTitle}>Selecciona duración en horas</BodyBoldText>
+
+      <Picker
+        selectedValue={form.duration}
+        onValueChange={(value) => setForm({ ...form, duration: value })}
+        mode={Platform.OS === 'android' ? 'dropdown' : undefined}
+        style={styles.picker}
+        itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
+      >
+        <Picker.Item label="Selecciona duración" value="" />
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+          <Picker.Item key={num} label={`${num}`} value={String(num)} />
+        ))}
+      </Picker>
+
+      <Button_style2
+        title="Aceptar"
+        onPress={() => setDurationModalVisible(false)}
+        style={{ marginTop: 20 }}
+      />
+    </View>
+  </View>
+</Modal>
+
         <BodyBoldText>Duración</BodyBoldText>
-        <View style={[styles.input, { backgroundColor: '#f0f0f0' }]}>
-          <Picker
-            selectedValue={form.duration}
-            onValueChange={(value) => setForm({ ...form, duration: value })}
-            mode={Platform.OS === 'android' ? 'dropdown' : undefined}
-            style={styles.picker}
-            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-          >
-            <Picker.Item label="Selecciona duración" value="" />
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-              <Picker.Item key={num} label={`${num}`} value={String(num)} />
-            ))}
-          </Picker>
-          <Text style={{ marginLeft: 8 }}>horas</Text>
-        </View>
+<TextInput
+  style={[styles.input, { backgroundColor: '#f0f0f0' }]}
+  placeholder="Selecciona duración"
+  placeholderTextColor="#888"
+  value={
+    form.duration
+      ? form.duration === "1"
+        ? "1 hora"
+        : `${form.duration} horas`
+      : ""
+  }
+  editable={false}
+  onPressIn={() => setDurationModalVisible(true)}
+/>
 
         <BodyBoldText>Descripción</BodyBoldText>
         <TextInput
@@ -193,7 +219,6 @@ export default function AdminServiceScreen() {
           style={[styles.input, { backgroundColor: '#f0f0f0' }]}
           placeholder="Costo"
           placeholderTextColor="#888"
-          keyboardType="numeric"
           value={form.cost}
           onChangeText={(text) => setForm({ ...form, cost: text })}
         />
@@ -204,13 +229,8 @@ export default function AdminServiceScreen() {
         />
 
         <BodyBoldText style={styles.subtitle}>Servicios existentes</BodyBoldText>
-        <FlatList
-          data={services}
-          keyExtractor={(item) => item.id!}
-          renderItem={renderItem}
-        />
+        {services.map((service) => renderItem({ item: service }))}
 
-        {/* ✅ Saving overlay */}
         {saving && (
           <View style={styles.overlay}>
             <ActivityIndicator size="large" color="#fff" />
@@ -218,8 +238,9 @@ export default function AdminServiceScreen() {
           </View>
         )}
       </View>
-    </GradientBackground>
-  );
+    </ScrollView>
+  </GradientBackground>
+);
 }
 
 const styles = StyleSheet.create({
@@ -306,5 +327,25 @@ loadingText: {
     color: 'black',
     fontSize: 16,
   },
+  scrollContent: {
+  paddingBottom: 40,
+},
+modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+},
+modalContent: {
+  backgroundColor: "white",
+  padding: 20,
+  borderRadius: 10,
+  width: "80%",
+},
+modalTitle: {
+  fontSize: 18,
+  fontWeight: "bold",
+  marginBottom: 12,
+},
 });
 
