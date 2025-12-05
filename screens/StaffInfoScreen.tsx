@@ -310,9 +310,15 @@ const handleDelete = (index: number) => {
 
     {/* Action buttons */}
     <View style={styles.editActions}>
-      <TouchableOpacity onPress={() => setEditingIndex(null)}>
-        <BodyText style={styles.edit}>Cerrar</BodyText>
-      </TouchableOpacity>
+      <TouchableOpacity
+  onPress={async () => {
+    await saveProfile();   // ✅ save to Firestore
+    Alert.alert("Servicio guardado", "Los cambios se han guardado correctamente.");
+    setEditingIndex(null); // ✅ exit edit mode
+  }}
+>
+  <BodyText style={styles.edit}>Cerrar</BodyText>
+</TouchableOpacity>
 
       <TouchableOpacity onPress={() => setEditingIndex(null)}>
         <BodyText style={styles.cancel}>Cancelar</BodyText>
