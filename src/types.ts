@@ -68,7 +68,7 @@ export type RootStackParamList = {
   "Registro exitoso": {
     username: string;
     email: string;
-    userId: string;
+    autoNumber: number;
   };
   "Calendario-Empleado": undefined;
   "Perfil-Empleado": undefined;

@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
-import { doc, runTransaction, setDoc } from 'firebase/firestore';
+import { doc, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { ReactElement, useState } from 'react';
 import {
   ActivityIndicator,
@@ -122,7 +122,7 @@ async function getNextUserNumber() {
     navigation.navigate('Registro exitoso', {
       username,
       email,
-      userId: uid,
+      autoNumber,
     });
 
     setUsername('');
@@ -135,10 +135,17 @@ async function getNextUserNumber() {
         const loginCredential = await signInWithEmailAndPassword(auth, email, password);
         const uid = loginCredential.user.uid;
 
+        // ✅ Fetch existing autoNumber from Firestore
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      let autoNumber = 0;
+      if (userDoc.exists()) {
+        autoNumber = userDoc.data().autoNumber || 0;
+      }
+
         navigation.navigate('Registro exitoso', {
           username: loginCredential.user.displayName || '',
           email,
-          userId: uid,
+          autoNumber,
         });
 
         Alert.alert('Inicio de sesión', 'Ya tenías una cuenta. Has iniciado sesión correctamente.');

@@ -15,7 +15,7 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
 
-  const { username, email, userId } = route.params;
+  const { username, email, autoNumber } = route.params;
 
   return (
     <GradientBackground>
@@ -42,7 +42,7 @@ export default function SignUpConfirmationScreen({ navigation, route }: Props) {
           </View>
           <View style={styles.inlineText}>
             <BodyBoldText>Usuario ID: </BodyBoldText>
-            <BodyText>{userId}</BodyText>
+            <BodyText>{autoNumber}</BodyText>
           </View>
 
           <View style={{ padding: 24 }}>
