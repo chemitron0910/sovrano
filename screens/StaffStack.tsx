@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../src/types';
+import AdminTabNav from "./AdminTabNav";
 import StaffBookingHistory from './StaffBookingHistory';
 import StaffBookingScreen from './StaffBookingScreen';
 import StaffTabNav from './StaffTabNav';
@@ -22,6 +23,19 @@ export default function StaffStack() {
           },
         }}
       />
+      <Stack.Screen
+              name="Menu-Admin"
+              component={AdminTabNav}
+              options={{
+                headerBackVisible: true,
+                headerTitleStyle: {
+                  fontFamily: "Playfair-Bold",
+                  fontSize: 22,
+                  fontWeight: "400",
+                  color: "#3e3e3e",
+                },
+              }}
+            />
       <Stack.Screen
         name="Calendario de citas."
         component={StaffBookingScreen}
