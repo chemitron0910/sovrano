@@ -156,7 +156,7 @@ export default function ServicesScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
-                Elige un estilista
+                Elige un artista
               </Text>
               {(selectedService && serviceProviders[selectedService.id] || []).map((stylistId, idx) => {
                 const stylist = empleados.find(e => e.id === stylistId);

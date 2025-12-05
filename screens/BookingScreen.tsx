@@ -475,7 +475,7 @@ return (
   <View style={styles.modalOverlay}>
     <View style={styles.modalContent}>
       <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
-        Elige un estilista
+        Elige un artista
       </Text>
       {(selectedServiceId && serviceProviders[selectedServiceId] || []).map((stylistId, idx) => {
         const stylist = stylists.find(s => s.id === stylistId);
