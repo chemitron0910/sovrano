@@ -17,6 +17,7 @@ import {
   Platform,
   ScrollView, StyleSheet, TextInput, TouchableOpacity, View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button_style2 from '../Components/Button_style2';
 
   export default function StaffInfoScreen(){
@@ -36,6 +37,7 @@ import Button_style2 from '../Components/Button_style2';
   const [loading, setLoading] = useState(true);
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
   const [editingServiceIndex, setEditingServiceIndex] = useState<number | null>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
   const loadProfile = async () => {
@@ -232,7 +234,7 @@ const handleDelete = (index: number) => {
   style={{ flex: 1 }}
   keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // adjust as needed
 >
-    <ScrollView style={{ flex: 1, padding: 16 }}>
+    <ScrollView style={{ flex: 1, padding: 16, paddingBottom: insets.bottom + 40 }}>
         <View style ={styles.centerText}>
       <TouchableOpacity onPress={pickImage}>
         {profilePic ? (
@@ -395,7 +397,7 @@ const handleDelete = (index: number) => {
     </View>
   </View>
 </Modal>
-
+<View style={{ height: insets.bottom + 40 }} />
     </ScrollView>
     </KeyboardAvoidingView>
     </GradientBackground>
