@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import Button_style2 from "../Components/Button_style2";
 import { db } from "../Services/firebaseConfig";
-import { RootStackParamList } from "../src/types";
+import { RootStackParamList, User } from "../src/types";
 
 type Service = {
   id: string;
@@ -23,14 +23,6 @@ type Service = {
   description: string;
   duration: string;
   cost: string,
-};
-
-type User = {
-  id: string;
-  role: string;
-  username?: string;
-  activo?: boolean;
-  autoNumber?: string;
 };
 
 export default function ServicesScreen() {
@@ -72,7 +64,7 @@ export default function ServicesScreen() {
         })
         .filter(user =>
           (user.role === "empleado" || user.role === "admin") &&
-          user.activo === true // ✅ only active empleados/admins
+          user.activo === true
         );
       setEmpleados(empleadosList);
 
@@ -80,14 +72,20 @@ export default function ServicesScreen() {
       for (const empleado of empleadosList) {
         try {
           const infoDoc = await getDoc(doc(db, `users/${empleado.id}/profile/info`));
-          if (!infoDoc.exists()) continue;
+          if (!infoDoc.exists()) {
+            continue;
+          }
           const info = infoDoc.data();
+
           const providedServices = info?.services || [];
+          const costMap: Record<string, string> = {};
           for (const service of providedServices) {
             if (!service.id) continue;
+            costMap[service.id] = service.cost || "";
             if (!providersMap[service.id]) providersMap[service.id] = [];
             providersMap[service.id].push(empleado.id);
           }
+          empleado.serviceCosts = costMap;
         } catch (error) {
           console.error(`❌ Error fetching profile for ${empleado.id}:`, error);
         }
@@ -159,18 +157,25 @@ export default function ServicesScreen() {
                 Elige un artista
               </Text>
               {(selectedService && serviceProviders[selectedService.id] || []).map((stylistId, idx) => {
-                const stylist = empleados.find(e => e.id === stylistId);
-                if (!stylist) return null;
-                return (
-                  <TouchableOpacity
-                    key={idx}
-                    style={styles.stylistButton}
-                    onPress={() => handleSelectStylist(stylist)}
-                  >
-                    <Text style={{ color: "white" }}>{stylist.username || "Sin nombre"}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+  const stylist = empleados.find(e => e.id === stylistId);
+  if (!stylist) {
+    return null;
+  }
+  if (!selectedService) return null;
+
+  const cost = stylist.serviceCosts?.[selectedService.id] || "N/A";
+
+  return (
+    <TouchableOpacity
+      key={idx}
+      style={styles.stylistButton}
+      onPress={() => handleSelectStylist(stylist)}
+    >
+      <Text style={{ color: "white" }}>{stylist.username || "Sin nombre"}</Text>
+      <Text style={{ color: "white" }}>Costo estimado: ${cost}</Text>
+    </TouchableOpacity>
+  );
+})}
               <TouchableOpacity onPress={closeModal} style={styles.cancelButton}>
                 <Text style={{ color: "#333" }}>Cancelar</Text>
               </TouchableOpacity>

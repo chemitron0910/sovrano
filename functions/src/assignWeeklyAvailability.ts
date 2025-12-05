@@ -1,4 +1,4 @@
-import {getFirestore} from "./firebase";
+import { getFirestore } from "./firebase";
 
 const db = getFirestore();
 
@@ -72,8 +72,6 @@ export const assignWeeklyAvailability = async (
         },
         {merge: true}
       );
-
-      console.log(`Assigned availability for ${isoDate}`, timeSlots);
     }
   } catch (error) {
     console.error("Error assigning weekly availability:", error);

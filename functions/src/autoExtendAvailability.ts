@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions/v1";
-import {getFirestore} from "./firebase";
-import {assignWeeklyAvailability} from "./assignWeeklyAvailability";
+import { assignWeeklyAvailability } from "./assignWeeklyAvailability";
+import { getFirestore } from "./firebase";
 
 const db = getFirestore();
 
@@ -17,9 +17,7 @@ export const autoExtendAvailability = functions.pubsub
 
       try {
         await assignWeeklyAvailability(uid, 4);
-        console.log(`Extended availability for stylist ${uid}`);
       } catch (err) {
-        console.error(`Failed to extend availability for ${uid}:`, err);
       }
     }
 

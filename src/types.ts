@@ -4,6 +4,9 @@ export type User = {
   role: string;
   lastLogin?: string; // ISO string or Firestore Timestamp
   autoNumber?: string;
+  serviceCosts?: Record<string, string>;
+  id: string;
+  activo?: boolean;
 };
 
 export type RootStackParamList = {
