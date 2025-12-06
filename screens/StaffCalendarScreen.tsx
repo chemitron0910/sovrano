@@ -747,10 +747,8 @@ useEffect(() => {
 // ✅ Update stylist counters using stylistId (Firebase UID)
 if (bookingDetails?.stylistId && bookingDetails?.stylistName) {
   try {
-    console.log("🔧 Updating counters for stylistId:", bookingDetails.stylistId);
 
     const stylistRef = doc(db, "users", bookingDetails.stylistId, "profile", "info");
-    console.log("📄 stylistRef path:", stylistRef.path);
 
     // Increment completedAppointments
     await setDoc(
@@ -758,7 +756,6 @@ if (bookingDetails?.stylistId && bookingDetails?.stylistName) {
       { completedAppointments: increment(1) },
       { merge: true }
     );
-    console.log("✅ completedAppointments incremented");
 
     // Increment clientsServed only if this client hasn't been counted before
     const servedClientRef = doc(
@@ -768,22 +765,17 @@ if (bookingDetails?.stylistId && bookingDetails?.stylistName) {
       "servedClients",
       bookingDetails.email
     );
-    console.log("📄 servedClientRef path:", servedClientRef.path);
 
     const servedSnap = await getDoc(servedClientRef);
-    console.log("🔍 servedSnap.exists():", servedSnap.exists());
 
     if (!servedSnap.exists()) {
-      console.log("➕ Adding new served client:", bookingDetails.email);
       await setDoc(servedClientRef, { email: bookingDetails.email });
       await setDoc(
         stylistRef,
         { clientsServed: increment(1) },
         { merge: true }
       );
-      console.log("✅ clientsServed incremented");
     } else {
-      console.log("ℹ️ Client already counted:", bookingDetails.email);
     }
   } catch (err) {
     console.error("❌ Error updating counters:", err);
