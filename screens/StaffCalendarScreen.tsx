@@ -54,7 +54,8 @@ export default function StaffCalendarScreen() {
     type TimeSlot = {
   time: string;
   booked: boolean;
-  bookingId: string | null; // allow null explicitly
+  bookingId: string | null;
+  status?: string;
 };
 
     type Availability = {
@@ -116,10 +117,10 @@ export default function StaffCalendarScreen() {
         setWeeklyAvailability(prev => {
           const updated = { ...prev };
           const slots = updated[bookedDateIso]?.timeSlots.map(s =>
-            s.bookingId === bookingId
-              ? { ...s, booked: false, bookingId: null, status: null }
-              : s
-          );
+  s.bookingId === bookingId
+    ? { ...s, booked: false, bookingId: null, status: undefined } // ✅ matches string | undefined
+    : s
+);
           updated[bookedDateIso] = { ...updated[bookedDateIso], timeSlots: slots };
           return updated;
         });
@@ -129,25 +130,51 @@ export default function StaffCalendarScreen() {
 };
 
   const loadAvailability = async () => {
-    if (!uid) return;
-    setLoading(true);
-    try {
-      const ref = doc(db, 'users', uid, 'availability', isoDate);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        setSelectedSlots(data.timeSlots || []);
-        setIsDayOff(data.isDayOff || false);
-      } else {
-        setSelectedSlots([]);
-        setIsDayOff(false);
+  if (!uid) return;
+  setLoading(true);
+  try {
+    const ref = doc(db, 'users', uid, 'availability', isoDate);
+    const snap = await getDoc(ref);
+
+    if (snap.exists()) {
+      const data = snap.data();
+      const rawSlots: TimeSlot[] = data.timeSlots || [];
+      const enrichedSlots: TimeSlot[] = [];
+
+      for (const s of rawSlots) {
+        if (s.bookingId) {
+          try {
+            const bookingRef = doc(db, "bookings", s.bookingId);
+            const bookingSnap = await getDoc(bookingRef);
+            if (bookingSnap.exists()) {
+              enrichedSlots.push({
+                ...s,
+                status: bookingSnap.data().status ?? "Reservado", // ✅ populate status
+              });
+            } else {
+              enrichedSlots.push({ ...s, status: undefined });
+            }
+          } catch (err) {
+            console.error("❌ Error fetching booking for slot:", s.bookingId, err);
+            enrichedSlots.push({ ...s, status: undefined });
+          }
+        } else {
+          enrichedSlots.push({ ...s, status: undefined });
+        }
       }
-    } catch (error) {
-      console.error('Error loading availability:', error);
-    } finally {
-      setLoading(false);
+
+      setSelectedSlots(enrichedSlots);
+      setIsDayOff(data.isDayOff || false);
+    } else {
+      setSelectedSlots([]);
+      setIsDayOff(false);
     }
-  };
+  } catch (error) {
+    console.error('Error loading availability:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const saveAvailability = async () => {
   if (!uid) return;
@@ -187,14 +214,38 @@ const fetchWeek = async () => {
       const iso = format(date, 'yyyy-MM-dd');
       const ref = doc(db, 'users', uid, 'availability', iso);
       const snap = await getDoc(ref);
+
+      let rawSlots: TimeSlot[] = snap.exists() ? snap.data().timeSlots || [] : [];
+      const enrichedSlots: TimeSlot[] = [];
+
+      for (const s of rawSlots) {
+        if (s.bookingId) {
+          try {
+            const bookingRef = doc(db, "bookings", s.bookingId);
+            const bookingSnap = await getDoc(bookingRef);
+            if (bookingSnap.exists()) {
+              enrichedSlots.push({
+                ...s,
+                status: bookingSnap.data().status ?? "Reservado", // ✅ populate status
+              });
+            } else {
+              enrichedSlots.push({ ...s, status: undefined });
+            }
+          } catch (err) {
+            console.error("❌ Error fetching booking for slot:", s.bookingId, err);
+            enrichedSlots.push({ ...s, status: undefined });
+          }
+        } else {
+          enrichedSlots.push({ ...s, status: undefined });
+        }
+      }
+
       return {
         iso,
-        data: snap.exists()
-          ? {
-              timeSlots: snap.data().timeSlots || [],
-              isDayOff: snap.data().isDayOff || false,
-            }
-          : { timeSlots: [], isDayOff: false },
+        data: {
+          timeSlots: enrichedSlots,
+          isDayOff: snap.exists() ? snap.data().isDayOff || false : false,
+        },
       };
     });
 
@@ -504,7 +555,15 @@ useEffect(() => {
               ]}
             >
               <Text style={{ color: pastCutoff ? '#999' : slot.booked ? '#888' : 'black' }}>
-                {slot.booked ? '🔒' : pastCutoff ? '🕒' : '✅'} {slot.time}
+                {slot.booked
+    ? slot.status === "Terminado"
+      ? "✔️"   // ✅ finished appointment
+      : "📅"   // 📅 booked but not finished
+    : pastCutoff
+    ? "🕒"     // 🕒 past cutoff
+    : "✅"}
+  {" "}
+  {slot.time}
               </Text>
             </View>
           );
@@ -748,6 +807,39 @@ if (bookingDetails?.stylistId && bookingDetails?.stylistName) {
                     : prev
                 );
 
+                // ✅ Update selectedSlots so the daily view shows ✔️ immediately
+if (bookedSlot?.bookingId) {
+  setSelectedSlots(prev =>
+    prev.map(s =>
+      s.bookingId === bookedSlot.bookingId
+        ? { ...s, status: "Terminado" } // ✅ mark finished
+        : s
+    )
+  );
+}
+
+                // ✅ Update weeklyAvailability and selectedSlots so slot shows ✔️ immediately
+if (bookedDateIso && bookedSlot?.bookingId) {
+  setWeeklyAvailability(prev => {
+    const updated = { ...prev };
+    const slots = updated[bookedDateIso]?.timeSlots.map(s =>
+      s.bookingId === bookedSlot.bookingId
+        ? { ...s, status: "Terminado" } // ✅ mark finished
+        : s
+    );
+    updated[bookedDateIso] = { ...updated[bookedDateIso], timeSlots: slots };
+    return updated;
+  });
+
+  setSelectedSlots(prev =>
+    prev.map(s =>
+      s.bookingId === bookedSlot.bookingId
+        ? { ...s, status: "Terminado" } // ✅ mark finished
+        : s
+    )
+  );
+}
+
                 // ✅ Only send email if status was "Reservado"
                 if (bookingDetails?.status === "Reservado" && bookingDetails?.email) {
                   const functions = getFunctions();
@@ -879,7 +971,15 @@ if (bookingDetails?.stylistId && bookingDetails?.stylistName) {
                     ]}
                   >
                     <Text style={{ color: pastCutoff ? '#999' : slot.booked ? '#888' : 'black' }}>
-                      {slot.booked ? '🔒' : pastCutoff ? '🕒' : '✅'} {slot.time}
+                      {slot.booked
+    ? slot.status === "Terminado"
+      ? "✔️"   // ✅ finished appointment
+      : "📅"   // 📅 booked but not finished
+    : pastCutoff
+    ? "🕒"     // 🕒 past cutoff
+    : "✅"}
+  {" "}
+  {slot.time}
                     </Text>
                   </View>
                 );
