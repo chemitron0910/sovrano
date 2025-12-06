@@ -76,6 +76,23 @@ export default function StaffCalendarScreen() {
     const [notesTitle, setNotesTitle] = useState("");
     const [notesContent, setNotesContent] = useState("");
 
+    function isPastCutoff(slotTime: string, date: Date): boolean {
+  const now = new Date();
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  if (!isToday) return false;
+
+  const cutoff = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+  const [hour, minute] = slotTime.replace(/['"]+/g, "").trim().split(":").map(Number);
+  const slotDate = new Date(date);
+  slotDate.setHours(hour, minute, 0, 0);
+
+  return slotDate < cutoff; // ✅ true if slot is before cutoff
+}
 
     const markAsCompleted = (bookingId: string) => {
   try {
@@ -302,7 +319,6 @@ const applyBulkAvailability = async (
   }
 };
 
-
 // wrapper for the button
 const handleApplyBulk = async () => {
   if (!uid) {
@@ -456,28 +472,42 @@ useEffect(() => {
   >
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {selectedSlots
-        .sort((a, b) => a.time.localeCompare(b.time))
+        .sort((a, b) => {
+          const [ah, am] = a.time.replace(/['"]+/g, "").trim().split(":").map(Number);
+          const [bh, bm] = b.time.replace(/['"]+/g, "").trim().split(":").map(Number);
+          return ah === bh ? am - bm : ah - bh;
+        })
         .map((slot, index) => {
+          const pastCutoff = isPastCutoff(slot.time, selectedDate);
+
           const slotContent = (
             <View
               key={index}
               style={[
                 styles.gridItem,
                 {
-                  backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
-                  borderColor: slot.booked ? '#aaa' : '#ccc',
+                  backgroundColor: slot.booked
+                    ? '#ddd'
+                    : pastCutoff
+                    ? '#f5f5f5'
+                    : '#f0f0f0',
+                  borderColor: slot.booked
+                    ? '#aaa'
+                    : pastCutoff
+                    ? '#ccc'
+                    : '#ccc',
                   borderWidth: 1,
-                  opacity: slot.booked ? 0.6 : 1,
+                  opacity: slot.booked ? 0.6 : pastCutoff ? 0.5 : 1,
                 },
               ]}
             >
-              <Text style={{ color: slot.booked ? '#888' : 'black' }}>
-                {slot.booked ? '🔒' : '✅'} {slot.time}
+              <Text style={{ color: pastCutoff ? '#999' : slot.booked ? '#888' : 'black' }}>
+                {slot.booked ? '🔒' : pastCutoff ? '🕒' : '✅'} {slot.time}
               </Text>
             </View>
           );
 
-          // ✅ If booked, wrap in TouchableOpacity to show booking modal
+          // Keep booked slots clickable to open booking modal
           if (slot.booked) {
             return (
               <TouchableOpacity
@@ -493,6 +523,7 @@ useEffect(() => {
             );
           }
 
+          // For unbooked slots, keep them non-clickable (just greyed or normal)
           return slotContent;
         })}
     </View>
@@ -767,50 +798,60 @@ useEffect(() => {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {slots
-  .sort((a, b) => {
-    const [ah, am] = a.time.replace(/['"]+/g, '').trim().split(':').map(Number);
-    const [bh, bm] = b.time.replace(/['"]+/g, '').trim().split(':').map(Number);
-    return ah === bh ? am - bm : ah - bh;
-  })
-  .map((slot, index) => {
-    const slotContent = (
-      <View
-        key={index}
-        style={[
-          styles.gridItem,
-          {
-            backgroundColor: slot.booked ? '#ddd' : '#f0f0f0',
-            borderColor: slot.booked ? '#aaa' : '#ccc',
-            borderWidth: 1,
-            opacity: slot.booked ? 0.6 : 1,
-          },
-        ]}
-      >
-        <Text style={{ color: slot.booked ? '#888' : 'black' }}>
-          {slot.booked ? '🔒' : '✅'} {slot.time}
-        </Text>
-      </View>
-    );
+              .sort((a, b) => {
+                const [ah, am] = a.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+                const [bh, bm] = b.time.replace(/['"]+/g, '').trim().split(':').map(Number);
+                return ah === bh ? am - bm : ah - bh;
+              })
+              .map((slot, index) => {
+                const pastCutoff = isPastCutoff(slot.time, date);
 
-    // If booked, wrap in TouchableOpacity to show booked details modal
-if (slot.booked) {
-  return (
-    <TouchableOpacity
-      key={index}
-      onPress={() => {
-        setBookedSlot(slot);
-        setBookedDateIso(iso);
-        setBookedModalVisible(true);
-      }}
-    >
-      {slotContent}
-    </TouchableOpacity>
-  );
-}
+                const slotContent = (
+                  <View
+                    key={index}
+                    style={[
+                      styles.gridItem,
+                      {
+                        backgroundColor: slot.booked
+                          ? '#ddd'
+                          : pastCutoff
+                          ? '#f5f5f5'
+                          : '#f0f0f0',
+                        borderColor: slot.booked
+                          ? '#aaa'
+                          : pastCutoff
+                          ? '#ccc'
+                          : '#ccc',
+                        borderWidth: 1,
+                        opacity: slot.booked ? 0.6 : pastCutoff ? 0.5 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={{ color: pastCutoff ? '#999' : slot.booked ? '#888' : 'black' }}>
+                      {slot.booked ? '🔒' : pastCutoff ? '🕒' : '✅'} {slot.time}
+                    </Text>
+                  </View>
+                );
 
-    return slotContent;
-  })}
+                // Keep booked slots clickable to open booking modal
+                if (slot.booked) {
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => {
+                        setBookedSlot(slot);
+                        setBookedDateIso(iso);
+                        setBookedModalVisible(true);
+                      }}
+                    >
+                      {slotContent}
+                    </TouchableOpacity>
+                  );
+                }
 
+                // Unbooked slots: show but not clickable
+                return slotContent;
+              })}
           </View>
         </ScrollView>
       )}
