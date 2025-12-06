@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, increment, setDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { useEffect, useState } from 'react';
 import {
@@ -47,6 +47,7 @@ export default function StaffCalendarScreen() {
   status?: string;
   notasUsuario?: string;
   notasEmpleado?: string;
+  stylistId?: string | null;  
   stylistName?: string;              // ✅ add this
   stylistAutoNumber?: string | null;
 };
@@ -363,7 +364,8 @@ const booking: BookingDetails = {
   notasUsuario: data.notasUsuario ?? "",
   notasEmpleado: data.notasEmpleado ?? "",
   stylistName: data.stylistName ?? "",
-  stylistAutoNumber: data.stylistAutoNumber ?? null
+  stylistAutoNumber: data.stylistAutoNumber ?? null,
+  stylistId: data.stylistId ?? null,
 };
 setBookingDetails(booking);
       }
@@ -681,6 +683,55 @@ useEffect(() => {
                   },
                   { merge: true }
                 );
+
+                // ✅ Update stylist counters using stylistId (Firebase UID)
+// ✅ Update stylist counters using stylistId (Firebase UID)
+if (bookingDetails?.stylistId && bookingDetails?.stylistName) {
+  try {
+    console.log("🔧 Updating counters for stylistId:", bookingDetails.stylistId);
+
+    const stylistRef = doc(db, "users", bookingDetails.stylistId, "profile", "info");
+    console.log("📄 stylistRef path:", stylistRef.path);
+
+    // Increment completedAppointments
+    await setDoc(
+      stylistRef,
+      { completedAppointments: increment(1) },
+      { merge: true }
+    );
+    console.log("✅ completedAppointments incremented");
+
+    // Increment clientsServed only if this client hasn't been counted before
+    const servedClientRef = doc(
+      db,
+      "users",
+      bookingDetails.stylistId,
+      "servedClients",
+      bookingDetails.email
+    );
+    console.log("📄 servedClientRef path:", servedClientRef.path);
+
+    const servedSnap = await getDoc(servedClientRef);
+    console.log("🔍 servedSnap.exists():", servedSnap.exists());
+
+    if (!servedSnap.exists()) {
+      console.log("➕ Adding new served client:", bookingDetails.email);
+      await setDoc(servedClientRef, { email: bookingDetails.email });
+      await setDoc(
+        stylistRef,
+        { clientsServed: increment(1) },
+        { merge: true }
+      );
+      console.log("✅ clientsServed incremented");
+    } else {
+      console.log("ℹ️ Client already counted:", bookingDetails.email);
+    }
+  } catch (err) {
+    console.error("❌ Error updating counters:", err);
+  }
+} else {
+  console.warn("⚠️ bookingDetails missing stylistId or stylistName", bookingDetails);
+}
 
                 Alert.alert("Éxito", "Notas guardadas con la cita.");
                 setNotesModalVisible(false);

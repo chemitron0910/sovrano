@@ -15,7 +15,9 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  ScrollView, StyleSheet, TextInput, TouchableOpacity, View
+  ScrollView, StyleSheet,
+  Text,
+  TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button_style2 from '../Components/Button_style2';
@@ -38,6 +40,8 @@ import Button_style2 from '../Components/Button_style2';
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
   const [editingServiceIndex, setEditingServiceIndex] = useState<number | null>(null);
   const insets = useSafeAreaInsets();
+  const [completedAppointments, setCompletedAppointments] = useState<number>(0);
+  const [clientsServed, setClientsServed] = useState<number>(0);
 
   useEffect(() => {
   const loadProfile = async () => {
@@ -52,6 +56,8 @@ import Button_style2 from '../Components/Button_style2';
         setSocialLinks(data.socialLinks ?? {});
         setGeneralInfo(data.generalInfo ?? '');
         setServices(data.services ?? []);
+        setCompletedAppointments(data.completedAppointments ?? 0);
+        setClientsServed(data.clientsServed ?? 0);
       }
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -265,6 +271,21 @@ const handleDelete = (index: number) => {
   }
   style={styles.inputText}
 />
+
+<SubTitleText>Estadísticas</SubTitleText>
+<View style={styles.statsRow}>
+  <View style={styles.readOnlyBox}>
+    <Text style={styles.icon}>✅</Text>
+    <BodyBoldText>Citas completadas</BodyBoldText>
+    <BodyText>{completedAppointments}</BodyText>
+  </View>
+
+  <View style={styles.readOnlyBox}>
+    <Text style={styles.icon}>👥</Text>
+    <BodyBoldText>Clientes atendidos</BodyBoldText>
+    <BodyText>{clientsServed}</BodyText>
+  </View>
+</View>
 
 <View style={styles.buttonRow}>
   <Button_style2 title="Agregar servicio" onPress={addService} style={styles.button} />
@@ -541,5 +562,24 @@ modalTitle: {
   fontSize: 18,
   fontWeight: "bold",
   marginBottom: 12,
+},
+statsRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginVertical: 16,
+},
+readOnlyBox: {
+  flex: 1,
+  borderWidth: 1,
+  borderColor: 'black',
+  borderRadius: 8,
+  padding: 12,
+  marginHorizontal: 6,
+  backgroundColor: 'transparent',
+  alignItems: 'center',
+},
+icon: {
+  fontSize: 24,
+  marginBottom: 6,
 },
 });
