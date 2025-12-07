@@ -44,3 +44,14 @@ export function logWarn(message: string, data?: any) {
     console.warn(`[WARN] ${message}`, data ?? "");
   }
 }
+
+export function setUserContext(uid: string, role?: string, email?: string) {
+  if (crashlytics) {
+    crashlytics().setUserId(uid);
+    if (role) crashlytics().setAttribute("role", role);
+    if (email) crashlytics().setAttribute("email", email);
+  } else {
+    // In Expo Go, just log it
+    console.log(`[USER CONTEXT] uid=${uid}, role=${role}, email=${email}`);
+  }
+}

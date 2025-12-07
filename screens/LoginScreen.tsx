@@ -23,7 +23,7 @@ import Logo from '../Components/Logo';
 import { auth, db } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
 import { ensureAvailability } from "../utils/ensureAvailability";
-import { logError } from "../utils/logger";
+import { logError, setUserContext } from "../utils/logger";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "Inicio-Sovrano">;
 
@@ -88,6 +88,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         await new Promise(res => setTimeout(res, 1000));
         claims = await user.getIdTokenResult(true);
         if (claims.claims.role === "guest") {
+          setUserContext(user.uid, "guest", user.email ?? undefined);
           setLoading(false);
           navigation.navigate("Inicio-Invitado", { role: "guest" });
           // 🧹 Clean up: delete the guest record from users collection
@@ -165,6 +166,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
 
     await registerPushToken(user.uid);
+    setUserContext(user.uid, userData?.role, user.email ?? undefined);
 
     switch (userData?.role) {
       case 'admin':
