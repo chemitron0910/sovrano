@@ -26,6 +26,17 @@ import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
 import { handleBooking } from '../utils/handleBooking';
 
+function isPastCutoff(slotTime: string, date: string): boolean {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + 2 * 60 * 60 * 1000); // now + 2 hours
+
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute = 0] = slotTime.split(":").map(Number);
+
+  const slotDate = new Date(year, month - 1, day, hour, minute);
+  return slotDate < cutoff;
+}
+
 function formatDateWithWeekday(dateString: string) {
   // Parse safely in local time
   const [year, month, day] = dateString.split('-').map(Number);
@@ -42,6 +53,8 @@ function formatDateWithWeekday(dateString: string) {
 type TimeSlot = {
   time: string;
   booked: boolean;
+  bookingId: string | null;
+  status?: string;
 };
 
 type AvailabilityDay = {
@@ -213,25 +226,49 @@ useEffect(() => {
       const results: { date: string; timeSlots: TimeSlot[]; isDayOff: boolean }[] = [];
 
       for (const date of dates) {
-        const match = snapshot.docs.find(doc => doc.id === date);
-        if (match) {
-          const data = match.data();
+  const match = snapshot.docs.find(doc => doc.id === date);
+  if (match) {
+    const data = match.data();
 
-          // Normalize slots: strip quotes immediately
-          const slots: TimeSlot[] = (data.timeSlots || []).map((slot: any) => ({
-            time: (slot.time ?? slot).replace(/['"]+/g, '').trim(),
-            booked: slot.booked ?? false,
-          }));
+    // Step 2: normalize + enrich with booking status
+    const rawSlots: TimeSlot[] = (data.timeSlots || []).map((slot: any) => ({
+      time: (slot.time ?? slot).replace(/['"]+/g, '').trim(),
+      booked: slot.booked ?? false,
+      bookingId: slot.bookingId ?? null,   // ✅ include bookingId
+      status: slot.status ?? undefined,
+    }));
 
-          results.push({
-            date,
-            timeSlots: slots,
-            isDayOff: data.isDayOff ?? false,
-          });
-        } else {
-          results.push({ date, timeSlots: [], isDayOff: false });
+    const enrichedSlots: TimeSlot[] = [];
+    for (const s of rawSlots) {
+      if (s.bookingId) {
+        try {
+          const bookingRef = doc(db, "bookings", s.bookingId);
+          const bookingSnap = await getDoc(bookingRef);
+          if (bookingSnap.exists()) {
+            enrichedSlots.push({
+              ...s,
+              status: bookingSnap.data().status ?? "Reservado", // ✅ populate status
+            });
+          } else {
+            enrichedSlots.push({ ...s, status: undefined });
+          }
+        } catch {
+          enrichedSlots.push({ ...s, status: undefined });
         }
+      } else {
+        enrichedSlots.push({ ...s, status: undefined });
       }
+    }
+
+    results.push({
+      date,
+      timeSlots: enrichedSlots,
+      isDayOff: data.isDayOff ?? false,
+    });
+  } else {
+    results.push({ date, timeSlots: [], isDayOff: false });
+  }
+}
 
       setWeeklyAvailability(results);
     } catch (error) {
@@ -619,16 +656,29 @@ return (
               }}
             >
               <Text
-                style={{
-                  color: isSelected
-                    ? 'white'
-                    : slot.booked
-                    ? '#888'
-                    : 'black',
-                }}
-              >
-                {slot.booked ? '🔒' : '✅'} {slot.time}
-              </Text>
+  style={{
+    color: isSelected
+      ? 'white'
+      : slot.status === "Terminado"
+      ? '#666'   // grey for finished
+      : slot.booked
+      ? '#888'
+      : isPastCutoff(slot.time, date)
+      ? '#999'
+      : 'black',
+  }}
+>
+  {slot.booked
+    ? slot.status === "Terminado"
+      ? "✔️"   // grey checkmark for finished
+      : "🔒"   // booked but not finished
+    : isPastCutoff(slot.time, date)
+    ? "🕓"     // past cutoff
+    : "✅"}
+  {" "}
+  {slot.time}
+</Text>
+
             </TouchableOpacity>
           );
         })}

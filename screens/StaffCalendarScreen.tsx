@@ -558,7 +558,7 @@ useEffect(() => {
                 {slot.booked
     ? slot.status === "Terminado"
       ? "✔️"   // ✅ finished appointment
-      : "📅"   // 📅 booked but not finished
+      : "🔒"   // 🔒 booked but not finished
     : pastCutoff
     ? "🕒"     // 🕒 past cutoff
     : "✅"}
@@ -966,7 +966,7 @@ if (bookedDateIso && bookedSlot?.bookingId) {
                       {slot.booked
     ? slot.status === "Terminado"
       ? "✔️"   // ✅ finished appointment
-      : "📅"   // 📅 booked but not finished
+      : "🔒"   // 🔒 booked but not finished
     : pastCutoff
     ? "🕒"     // 🕒 past cutoff
     : "✅"}
