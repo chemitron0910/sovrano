@@ -2,6 +2,7 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { Alert } from "react-native";
 import { db } from "../Services/firebaseConfig";
+import { logError } from "../utils/logger";
 
 export const normalizeTime = (t: string) => {
   const [h, m] = t.split(":").map(Number);
@@ -111,7 +112,7 @@ export const handleCancelBooking = async ({
         `,
       });
     } catch (emailError) {
-      console.error("Error sending cancellation email:", emailError);
+      logError("Error sending cancellation email:", emailError);
       // Don’t block cancellation flow if email fails
     }
 
@@ -120,7 +121,7 @@ export const handleCancelBooking = async ({
       onAfterCancel();
     }
   } catch (error) {
-    console.error("❌ Error cancelling booking:", error);
+    logError("❌ Error cancelling booking:", error);
     Alert.alert("Error", "No se pudo cancelar la cita.");
   }
 };

@@ -7,6 +7,7 @@ import { ActivityIndicator, Alert, Keyboard, StyleSheet, Text, TextInput, View }
 import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
+import { logError } from "../utils/logger";
 
 export default function UserProfileScreen() {
   type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -37,7 +38,7 @@ export default function UserProfileScreen() {
           setUserAutoNumber(data.autoNumber || '');
         }
       } catch (err) {
-        console.error('Error fetching user profile:', err);
+        logError('Error fetching user profile:', err);
       } finally {
         setLoading(false);
       }
@@ -60,7 +61,7 @@ export default function UserProfileScreen() {
 
     Alert.alert('Perfil actualizado', 'Tu número telefónico ha sido guardado correctamente.');
   } catch (err) {
-    console.error('Error updating phone number:', err);
+    logError('Error updating phone number:', err);
     Alert.alert('Error', 'No se pudo guardar el número. Intenta de nuevo.');
   } finally {
     setSaving(false);

@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import { RootStackParamList } from '../src/types';
+import { logError } from "../utils/logger";
 
 // Define route type
 type GuestStaffInfoScreenRouteProp = RouteProp<RootStackParamList, "Nuestros artistas">;
@@ -64,7 +65,7 @@ export default function GuestStaffInfoScreen({ route, navigation }: Props) {
         setServices(data.services ?? []);
       }
     } catch (err) {
-      console.error("Error loading staff profile:", err);
+      logError("Error loading staff profile:", err);
     } finally {
       setLoading(false);
     }

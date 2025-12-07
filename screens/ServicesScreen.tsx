@@ -16,6 +16,7 @@ import {
 import Button_style2 from "../Components/Button_style2";
 import { db } from "../Services/firebaseConfig";
 import { RootStackParamList, User } from "../src/types";
+import { logError } from "../utils/logger";
 
 type Service = {
   id: string;
@@ -87,12 +88,12 @@ export default function ServicesScreen() {
           }
           empleado.serviceCosts = costMap;
         } catch (error) {
-          console.error(`❌ Error fetching profile for ${empleado.id}:`, error);
+          logError(`❌ Error fetching profile for ${empleado.id}:`, error);
         }
       }
       setServiceProviders(providersMap);
     } catch (error) {
-      console.error("❌ General fetch error:", error);
+      logError("❌ General fetch error:", error);
     } finally {
       setLoading(false);
     }

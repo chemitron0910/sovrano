@@ -23,6 +23,7 @@ import Logo from '../Components/Logo';
 import { auth, db } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
 import { ensureAvailability } from "../utils/ensureAvailability";
+import { logError } from "../utils/logger";
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, "Inicio-Sovrano">;
 
@@ -99,8 +100,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       Alert.alert("Error", "Guest role not yet assigned. Please try again.");
     } catch (error) {
       setLoading(false);
-      console.error("Guest login error:", error);
-      Alert.alert("Error", "No se pudo iniciar sesión como invitado");
+      logError("Guest login error:", error);
+      Alert.alert("Error", "No se pudo iniciar sesión como invitado.");
     }
   };
 
@@ -208,7 +209,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           await sendPasswordResetEmail(auth, email.trim());
           Alert.alert('Correo enviado', 'Revisa tu bandeja de entrada para restablecer tu clave.');
         } catch (error) {
-          console.error('Password reset error:', error);
+          logError('Password reset error:', error);
           Alert.alert('Error', 'No se pudo enviar el correo de recuperación.');
         }
         },

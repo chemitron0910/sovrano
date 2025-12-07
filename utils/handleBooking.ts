@@ -2,6 +2,7 @@ import { addDoc, collection, doc, getDoc, runTransaction, setDoc } from 'firebas
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { Alert } from "react-native";
 import { auth, db } from '../Services/firebaseConfig';
+import { logError } from "../utils/logger";
 
 type BookingParams = {
   selectedSlot: { date: string; time: string };
@@ -250,7 +251,7 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
         `,
       });
     } catch (emailError) {
-      console.error("Error sending confirmation email:", emailError);
+      logError("Error sending confirmation email:", emailError);
       // Don’t block booking flow if email fails
     }
 
@@ -278,7 +279,7 @@ El siguiente horario disponible que sí acomoda la duración es ${suggestion.dat
       userAutoNumber: bookingData.userAutoNumber, // ✅ pass user sequential number to confirmation screen
     });
   } catch (error) {
-    console.error('Error saving booking:', error);
+    logError('Error saving booking:', error);
     Alert.alert('Error', 'No se pudo crear tu cita');
   }
 };

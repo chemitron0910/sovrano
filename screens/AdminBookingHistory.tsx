@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import Button_style2 from '../Components/Button_style2';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
+import { logError } from "../utils/logger";
 
 // Normalize any date string into YYYY-MM-DD
 function normalizeDateString(dateStr: string): string {
@@ -57,7 +58,7 @@ export default function AdminBookingHistory() {
         const data = await fetchAllBookings();
         setBookings(data);
       } catch (err) {
-        console.error('Error fetching bookings:', err);
+        logError('Error fetching bookings:', err);
       } finally {
         setLoading(false);
       }

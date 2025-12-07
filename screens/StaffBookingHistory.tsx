@@ -8,6 +8,7 @@ import { ActivityIndicator, FlatList, Modal, Platform, StyleSheet, Text, TextInp
 import Button_style2 from '../Components/Button_style2';
 import { Booking, fetchActiveGuests, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
+import { logError } from "../utils/logger";
 
 export default function StaffBookingHistory() {
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
@@ -97,7 +98,7 @@ useEffect(() => {
       setCancelledPast(cancelledPastBookings);
       setCancelledUpcoming(cancelledUpcomingBookings);
     } catch (err) {
-      console.error('Error fetching booking history:', err);
+      logError('Error fetching booking history:', err);
     } finally {
       setLoading(false);
     }

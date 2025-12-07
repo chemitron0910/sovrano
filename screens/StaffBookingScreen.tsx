@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
+import { logError } from "../utils/logger";
 
 // Normalize any date string into YYYY-MM-DD
 function normalizeDateString(dateStr: string): string {
@@ -55,7 +56,7 @@ export default function StaffBookingsScreen() {
 
         setBookings(filtered);
       } catch (err) {
-        console.error('Error fetching bookings:', err);
+        logError('Error fetching bookings:', err);
       } finally {
         setLoading(false);
       }

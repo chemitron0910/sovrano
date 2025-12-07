@@ -8,6 +8,7 @@ import { ROLES } from '../constants/roles';
 import { auth } from '../Services/firebaseConfig';
 import { fetchAllUsers, updateUserRoleByUsername } from '../Services/userService';
 import { User } from '../src/types';
+import { logError } from "../utils/logger";
 
 export default function RoleAssignmentScreen() {
   const [username, setUsername] = useState('');
@@ -21,7 +22,7 @@ export default function RoleAssignmentScreen() {
         const userList = await fetchAllUsers();
         setUsers(userList);
       } catch (err) {
-        console.error('Error loading users:', err);
+        logError('Error loading users:', err);
       }
     };
     loadUsers();

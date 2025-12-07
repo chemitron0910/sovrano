@@ -1,3 +1,4 @@
+import { logError } from "../../utils/logger";
 import { getFirestore } from "./firebase";
 
 const db = getFirestore();
@@ -74,6 +75,6 @@ export const assignWeeklyAvailability = async (
       );
     }
   } catch (error) {
-    console.error("Error assigning weekly availability:", error);
+    logError("Error assigning weekly availability:", error);
   }
 };

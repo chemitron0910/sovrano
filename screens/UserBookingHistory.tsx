@@ -7,6 +7,7 @@ import Button_style2 from '../Components/Button_style2';
 import { Booking, fetchAllBookings } from '../Services/bookingService';
 import { auth } from '../Services/firebaseConfig';
 import { handleCancelBooking } from "../utils/handleCancelBooking";
+import { logError } from "../utils/logger";
 
 export default function UserBookingHistory() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -37,7 +38,7 @@ export default function UserBookingHistory() {
 
       setBookings(sorted);
     } catch (err) {
-      console.error('Error fetching booking history:', err);
+      logError('Error fetching booking history:', err);
     } finally {
       setLoading(false); // hide overlay
     }

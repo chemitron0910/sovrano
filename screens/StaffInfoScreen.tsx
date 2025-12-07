@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button_style2 from '../Components/Button_style2';
+import { logError } from "../utils/logger";
 
   export default function StaffInfoScreen(){
 
@@ -59,8 +60,8 @@ import Button_style2 from '../Components/Button_style2';
         setCompletedAppointments(data.completedAppointments ?? 0);
         setClientsServed(data.clientsServed ?? 0);
       }
-    } catch (err) {
-      console.error("Error loading profile:", err);
+    } catch (error) {
+      logError("Error loading profile:", error);
     } finally {
       setLoading(false);
     }
@@ -84,8 +85,8 @@ useEffect(() => {
         };
       });
       setAvailableServices(list);
-    } catch (err) {
-      console.error("Error loading services:", err);
+    } catch (error) {
+      logError("Error loading services:", error);
     } finally {
       setLoading(false);
     }
@@ -127,8 +128,8 @@ const handleDelete = (index: number) => {
               },
               { merge: true }
             );
-          } catch (err) {
-            console.error("Error deleting service from Firestore:", err);
+          } catch (error) {
+            logError("Error deleting service from Firestore:", error);
           }
         },
       },
@@ -168,7 +169,7 @@ const handleDelete = (index: number) => {
       'state_changed',
       null,
       (error) => {
-        console.error('Upload error:', error.code, error.message, error.customData);
+        logError('Upload error:', error.code);
       },
       async () => {
         const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
@@ -176,7 +177,7 @@ const handleDelete = (index: number) => {
       }
     );
   } catch (err) {
-    console.error('Unexpected error during image upload:', err);
+    logError('Unexpected error during image upload:', err);
   }
 };
 
@@ -217,7 +218,7 @@ const handleDelete = (index: number) => {
     setServices(sorted); // ✅ keep local state consistent
     Alert.alert('Perfil guardado', 'Los cambios se han guardado correctamente.');
   } catch (err) {
-    console.error('Error al guardar el perfil:', err);
+    logError('Error al guardar el perfil:', err);
     Alert.alert('Error', 'No se pudo guardar el perfil. Intenta de nuevo.');
   } finally {
     setSaving(false);

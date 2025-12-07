@@ -19,6 +19,7 @@ import Button_style2 from '../Components/Button_style2';
 import { auth, db } from '../Services/firebaseConfig';
 import type { RootStackParamList } from '../src/types';
 import { handleCancelBooking, normalizeTime } from "../utils/handleCancelBooking";
+import { logError } from "../utils/logger";
 
 export default function StaffCalendarScreen() {
     const availableTimes = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
@@ -101,7 +102,7 @@ export default function StaffCalendarScreen() {
     setBookedModalVisible(false);   // close booked details modal
     setNotesModalVisible(true);     // open notes modal
   } catch (error) {
-    console.error("Error opening notes modal:", error);
+    logError("Error opening notes modal:", error);
     Alert.alert("Error", "No se pudo abrir el modal de notas.");
   }
 };
@@ -154,8 +155,8 @@ export default function StaffCalendarScreen() {
             } else {
               enrichedSlots.push({ ...s, status: undefined });
             }
-          } catch (err) {
-            console.error("❌ Error fetching booking for slot:", s.bookingId, err);
+          } catch (error) {
+            logError("❌ Error fetching booking for slot:", error);
             enrichedSlots.push({ ...s, status: undefined });
           }
         } else {
@@ -170,7 +171,7 @@ export default function StaffCalendarScreen() {
       setIsDayOff(false);
     }
   } catch (error) {
-    console.error('Error loading availability:', error);
+    logError('Error loading availability:', error);
   } finally {
     setLoading(false);
   }
@@ -197,7 +198,7 @@ export default function StaffCalendarScreen() {
 
     Alert.alert('Guardado', `Disponibilidad actualizada para ${isoDate}`);
   } catch (error) {
-    console.error('Error saving availability:', error);
+    logError('Error saving availability:', error);
     Alert.alert('Error', 'No se pudo guardar la disponibilidad.');
   } finally {
     setLoading(false);
@@ -231,8 +232,8 @@ const fetchWeek = async () => {
             } else {
               enrichedSlots.push({ ...s, status: undefined });
             }
-          } catch (err) {
-            console.error("❌ Error fetching booking for slot:", s.bookingId, err);
+          } catch (error) {
+            logError("❌ Error fetching booking for slot:", error);
             enrichedSlots.push({ ...s, status: undefined });
           }
         } else {
@@ -258,7 +259,7 @@ const fetchWeek = async () => {
 
     setWeeklyAvailability(results);
   } catch (error) {
-    console.error('Error loading weekly availability:', error);
+    logError('Error loading weekly availability:', error);
   } finally {
     setLoading(false);
   }
@@ -365,7 +366,7 @@ const applyBulkAvailability = async (
       if (onAfterApply) onAfterApply(true);
     }
   } catch (error) {
-    console.error("❌ Error applying bulk availability:", error);
+    logError("❌ Error applying bulk availability:", error);
     Alert.alert("Error", "No se pudo aplicar la disponibilidad semanal.");
     if (onAfterApply) onAfterApply(false);
   }
@@ -778,7 +779,7 @@ if (bookingDetails?.stylistId && bookingDetails?.stylistName) {
     } else {
     }
   } catch (err) {
-    console.error("❌ Error updating counters:", err);
+    logError("❌ Error updating counters:", err);
   }
 } else {
   console.warn("⚠️ bookingDetails missing stylistId or stylistName", bookingDetails);
@@ -858,7 +859,7 @@ if (bookedDateIso && bookedSlot?.bookingId) {
                   });
                 }
               } catch (error) {
-                console.error("Error al guardar notas:", error);
+                logError("Error al guardar notas:", error);
                 Alert.alert("Error", "No se pudieron guardar las notas.");
               }
             }

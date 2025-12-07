@@ -1,12 +1,13 @@
 import { signInAnonymously, signOut } from 'firebase/auth';
 import { auth } from '../Services/firebaseConfig';
+import { logError } from "../utils/logger";
 
 export const signInAsGuest = async () => {
   try {
     const result = await signInAnonymously(auth);
     return result.user;
   } catch (error) {
-    console.error('Anonymous sign-in error:', error);
+    logError('Anonymous sign-in error:', error);
     throw error;
   }
 };
@@ -14,6 +15,6 @@ export const logout = async () => {
   try {
     await signOut(auth);
   } catch (error) {
-    console.error('Logout error:', error);
+    logError('Logout error:', error);
   }
 };

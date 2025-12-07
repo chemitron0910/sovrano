@@ -23,6 +23,7 @@ import {
   fetchServices,
   Service,
 } from '../src/serviceApi';
+import { logError } from "../utils/logger";
 
 export default function AdminServiceScreen() {
   const [services, setServices] = useState<Service[]>([]);
@@ -67,7 +68,7 @@ export default function AdminServiceScreen() {
       loadServices();
       Alert.alert('Éxito', 'Servicio guardado correctamente.');
     } catch (err) {
-      console.error('Error saving service:', err);
+      logError('Error saving service:', err);
       Alert.alert('Error', 'No se pudo guardar el servicio.');
     } finally {
       setSaving(false); // ✅ hide indicator
@@ -99,7 +100,7 @@ export default function AdminServiceScreen() {
           const sorted = updated.sort((a, b) => a.name.localeCompare(b.name));
           setServices(sorted);
         } catch (err) {
-          console.error('Error deleting service:', err);
+          logError('Error deleting service:', err);
           Alert.alert('Error', 'No se pudo eliminar el servicio.');
         }
       },

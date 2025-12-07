@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../Services/firebaseConfig";
+import { logError } from "../utils/logger";
 
 const dayMap = [
   "Domingo",
@@ -111,10 +112,10 @@ export const assignWeeklyAvailability = async (
           { merge: true }
         );
       } catch (writeError) {
-        console.error("❌ Write failed:", writeError);
+        logError("❌ Write failed:", writeError);
       }
     }
   } catch (error) {
-    console.error("❌ Error assigning weekly availability:", error);
+    logError("❌ Error assigning weekly availability:", error);
   }
 };

@@ -3,6 +3,7 @@ import { Alert, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button_style2 from "../Components/Button_style2";
 import { auth } from '../Services/firebaseConfig';
+import { logError } from "../utils/logger";
 
 export default function ResendEmailScreen() {
   const windowDimensions = useWindowDimensions();
@@ -21,7 +22,7 @@ export default function ResendEmailScreen() {
         Alert.alert('Error', 'No hay usuario autenticado.');
       }
     } catch (error) {
-      console.error("Verification error:", error);
+      logError("Verification error:", error);
       Alert.alert('Error', 'No se pudo enviar el correo de verificación.');
     }
   };

@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { db } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
+import { logError } from "../utils/logger";
 
 type UserRecord = {
   autoNumber: string;
@@ -69,7 +70,7 @@ export default function AdminStaffManageScreen() {
 
       setUsers(data);
     } catch (err) {
-      console.error('Error fetching users:', err);
+      logError('Error fetching users:', err);
     } finally {
       setLoading(false);
     }
@@ -88,7 +89,7 @@ export default function AdminStaffManageScreen() {
         }));
         setUsers(data);
       } catch (err) {
-        console.error('Error fetching users:', err);
+        logError('Error fetching users:', err);
       } finally {
         setLoading(false);
       }
@@ -133,7 +134,7 @@ export default function AdminStaffManageScreen() {
       );
       setEditingUser(null);
     } catch (err) {
-      console.error('Error updating user:', err);
+      logError('Error updating user:', err);
     }
   };
 

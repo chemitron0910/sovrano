@@ -25,6 +25,7 @@ import { fetchUserProfile } from '../Services/userService';
 import { useServices } from '../hooks/useServices';
 import { RootStackParamList } from '../src/types';
 import { handleBooking } from '../utils/handleBooking';
+import { logError } from "../utils/logger";
 
 function isPastCutoff(slotTime: string, date: string): boolean {
   const now = new Date();
@@ -158,7 +159,7 @@ useEffect(() => {
 
       setServiceProviders(providersMap);
     } catch (err) {
-      console.error("Error building serviceProviders:", err);
+      logError("Error building serviceProviders:", err);
     }
   };
 
@@ -191,7 +192,7 @@ useEffect(() => {
 
       setStylists(stylistList);
     } catch (error) {
-      console.error('Error fetching stylists:', error);
+      logError('Error fetching stylists:', error);
     }
   };
   loadStylists();
@@ -272,7 +273,7 @@ useEffect(() => {
 
       setWeeklyAvailability(results);
     } catch (error) {
-      console.error('Error fetching availability:', error);
+      logError('Error fetching availability:', error);
     } finally {
       setLoadingAvailability(false);
     }

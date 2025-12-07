@@ -9,6 +9,7 @@ import Logo from '../Components/Logo';
 import { logout } from '../Services/authService';
 import { auth } from '../Services/firebaseConfig';
 import { RootStackParamList } from '../src/types';
+import { logError } from "../utils/logger";
 
 export default function UserScreen() {
 
@@ -43,7 +44,7 @@ export default function UserScreen() {
               profilePic = profileSnap.data().profilePic;
             }
           } catch (err) {
-            console.error("Error fetching profile info:", err);
+            logError("Error fetching profile info:", err);
           }
 
           list.push({
@@ -57,7 +58,7 @@ export default function UserScreen() {
 
       setStylists(list);
     } catch (err) {
-      console.error("Error loading stylists:", err);
+      logError("Error loading stylists:", err);
     }
   };
   loadStylists();
