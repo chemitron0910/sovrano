@@ -1,6 +1,7 @@
 import GradientBackground from '@/Components/GradientBackground';
 import BodyText from '@/Components/typography/BodyText';
 import TitleText from '@/Components/typography/TitleText';
+import NetInfo from "@react-native-community/netinfo";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
 import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
@@ -46,12 +47,24 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const firestore = getFirestore();
+  const [isConnected, setIsConnected] = useState(true); 
 
   useEffect(() => {
     ensureAvailability();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsConnected(state.isConnected ?? false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleGuestLogin = async () => {
+    if (!isConnected) {
+      Alert.alert("Error", "No hay conexión a internet. No se pudo iniciar sesión como invitado.");
+      return;
+    }
     try {
       setLoading(true);
       setLoadingMessage('Iniciando sesión como invitado...'); // 👈 overlay text for guest
@@ -101,6 +114,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   const handleLogin = async () => {
   if (!validateForm()) return;
+  if (!isConnected) {
+      Alert.alert("Error", "No hay conexión a internet. No se pudo iniciar sesión como invitado.");
+      return;
+    }
   setLoading(true);
   setLoadingMessage('Verificando credenciales...'); // 👈 overlay text for normal login
   try {
@@ -166,6 +183,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 };
 
   const handleForgotPassword = async () => {
+    if (!isConnected) {
+      Alert.alert("Error", "No hay conexión a internet. No se pudo iniciar sesión como invitado.");
+      return;
+    }
   if (!email.trim()) {
     Alert.alert('Error', 'Por favor ingresa tu correo electrónico para recuperar la clave.');
     return;

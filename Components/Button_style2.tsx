@@ -8,6 +8,7 @@ interface ButtonStyle2Props {
   gradientColors?: [ColorValue, ColorValue, ...ColorValue[]];
   textColor?: string;
   style?: ViewStyle;
+  disabled?: boolean;   // ✅ new prop
 }
 
 export default function Button_style2({
@@ -16,11 +17,26 @@ export default function Button_style2({
   gradientColors = ['#c2b280', '#a68f5b'],
   textColor = '#3e3e3e',
   style = {},
+  disabled = false,     // ✅ default false
 }: ButtonStyle2Props) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.wrapper, style, pressed && styles.pressed]}>
-      <LinearGradient colors={gradientColors} style={styles.gradient}>
-        <ButtonText style={{ color: textColor }}>{title}</ButtonText>
+    <Pressable
+      onPress={disabled ? undefined : onPress}   // ✅ block presses when disabled
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.wrapper,
+        style,
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabledWrapper,      // ✅ add disabled style
+      ]}
+    >
+      <LinearGradient
+        colors={disabled ? ['#d3d3d3', '#a9a9a9'] : gradientColors} // ✅ grey gradient when disabled
+        style={styles.gradient}
+      >
+        <ButtonText style={{ color: disabled ? '#888' : textColor }}>
+          {title}
+        </ButtonText>
       </LinearGradient>
     </Pressable>
   );
@@ -46,5 +62,8 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.8,
   },
+  disabledWrapper: {
+    opacity: 0.6,   // ✅ visually dim the whole button
+    shadowOpacity: 0.1,
+  },
 });
-

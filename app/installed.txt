@@ -24,3 +24,4 @@ npm install --save-dev @types/node-fetch
 npm install @sendgrid/mail
 npm install --save-dev @types/markdown-it
 npm install react-native-root-toast
+npm install @react-native-community/netinfo
