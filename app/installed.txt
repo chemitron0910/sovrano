@@ -25,4 +25,4 @@ npm install @sendgrid/mail
 npm install --save-dev @types/markdown-it
 npm install react-native-root-toast
 npm install @react-native-community/netinfo
-npm install @react-native-firebase/app @react-native-firebase/crashlytics
+npm install @react-native-firebase/app @react-native-firebase/crashlytics 'removed because it did not work
