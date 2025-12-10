@@ -9,8 +9,7 @@ import { deleteDoc, doc, getDoc, getFirestore, setDoc } from 'firebase/firestore
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  ScrollView,
+  Alert, Modal, Pressable, ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -49,6 +48,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const firestore = getFirestore();
   const [isConnected, setIsConnected] = useState(true); 
+  const [privacyVisible, setPrivacyVisible] = useState(false);
 
   useEffect(() => {
     ensureAvailability();
@@ -220,6 +220,36 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   );
 };
 
+<Modal
+  animationType="slide"
+  transparent={true}
+  visible={privacyVisible}
+  onRequestClose={() => setPrivacyVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <TitleText>Política de Privacidad de Sovrano</TitleText>
+      <ScrollView style={{ marginVertical: 10 }}>
+        <Text style={styles.modalText}>
+          Sovrano respeta tu privacidad. Toda la información personal que
+          compartes con nosotros se utiliza únicamente para brindarte nuestros
+          servicios de belleza y bienestar.{"\n\n"}
+          No compartimos, vendemos ni transferimos tus datos a terceros bajo
+          ninguna circunstancia.{"\n\n"}
+          Tus datos se almacenan de manera segura y se utilizan solo para
+          mejorar tu experiencia dentro de la aplicación.
+        </Text>
+      </ScrollView>
+      <Pressable
+        style={styles.modalButton}
+        onPress={() => setPrivacyVisible(false)}
+      >
+        <Text style={{ color: "#fff" }}>Cerrar</Text>
+      </Pressable>
+    </View>
+  </View>
+</Modal>
+
   return (
     <GradientBackground>
       {loading && (
@@ -291,6 +321,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             title="¿Olvidaste tu clave?"
             onPress={handleForgotPassword}
           />
+
+          <Button_style2
+            title="Política de Privacidad"
+            onPress={() => setPrivacyVisible(true)}
+          />
+
         </View>
       </ScrollView>
     </GradientBackground>
@@ -357,6 +393,31 @@ const styles = StyleSheet.create({
   },
   sovranoContainer:{
     alignItems: 'center',     // centers horizontally
-  }
+  },
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+modalContent: {
+  backgroundColor: '#fff',
+  borderRadius: 10,
+  padding: 20,
+  width: '85%',
+  maxHeight: '70%',
+},
+modalText: {
+  fontSize: 16,
+  color: '#333',
+  lineHeight: 22,
+},
+modalButton: {
+  marginTop: 15,
+  backgroundColor: '#d46b37ff',
+  paddingVertical: 10,
+  borderRadius: 5,
+  alignItems: 'center',
+},
 });
 
