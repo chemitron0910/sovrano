@@ -9,7 +9,8 @@ import { deleteDoc, doc, getDoc, getFirestore, setDoc } from 'firebase/firestore
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert, Modal, Pressable, ScrollView,
+  Alert,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -223,36 +224,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   return (
     <GradientBackground>
 
-      <Modal
-  animationType="slide"
-  transparent={true}
-  visible={privacyVisible}
-  onRequestClose={() => setPrivacyVisible(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalContent}>
-      <TitleText>Política de Privacidad de Sovrano</TitleText>
-      <ScrollView style={{ marginVertical: 10 }}>
-        <Text style={styles.modalText}>
-          Sovrano respeta tu privacidad. Toda la información personal que
-          compartes con nosotros se utiliza únicamente para brindarte nuestros
-          servicios de belleza y bienestar.{"\n\n"}
-          No compartimos, vendemos ni transferimos tus datos a terceros bajo
-          ninguna circunstancia.{"\n\n"}
-          Tus datos se almacenan de manera segura y se utilizan solo para
-          mejorar tu experiencia dentro de la aplicación.
-        </Text>
-      </ScrollView>
-      <Pressable
-        style={styles.modalButton}
-        onPress={() => setPrivacyVisible(false)}
-      >
-        <Text style={{ color: "#fff" }}>Cerrar</Text>
-      </Pressable>
-    </View>
-  </View>
-</Modal>
-
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
@@ -324,8 +295,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           />
 
           <Button_style2
-            title="Política de Privacidad"
-            onPress={() => setPrivacyVisible(true)}
+            title="Nuestras politicas"
+            onPress={() => navigation.navigate("Nuestras politicas")}
           />
 
         </View>

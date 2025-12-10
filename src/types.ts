@@ -84,4 +84,5 @@ export type RootStackParamList = {
 
   // Sovrano entry point
   "Inicio-Sovrano": undefined;
+  "Nuestras politicas": undefined;
 };

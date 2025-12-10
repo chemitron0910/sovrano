@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AdminStack from "../screens/AdminStack";
 import GuestStack from "../screens/GuestStack";
 import LoginScreen from "../screens/LoginScreen";
+import PoliciesScreen from "../screens/PoliciesScreen";
 import ResendEmailScreen from "../screens/ResendEmailScreen";
 import StaffStack from "../screens/StaffStack";
 import UserStack from "../screens/UserStack";
@@ -31,6 +32,7 @@ export default function LoginStack() {
       <Stack.Screen name="Administrador" component={AdminStack} options={{headerBackVisible: false }}/>
       <Stack.Screen name="Inicio-Invitado" component={GuestStack} options={{headerBackVisible: false, title: '' }}/>
       <Stack.Screen name="Re-enviar correo electronico" component={ResendEmailScreen}/>
+      <Stack.Screen name="Nuestras politicas" component={PoliciesScreen}/>
     </Stack.Navigator>
   );
 };
