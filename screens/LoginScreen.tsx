@@ -220,7 +220,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   );
 };
 
-<Modal
+  return (
+    <GradientBackground>
+
+      <Modal
   animationType="slide"
   transparent={true}
   visible={privacyVisible}
@@ -250,8 +253,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   </View>
 </Modal>
 
-  return (
-    <GradientBackground>
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
